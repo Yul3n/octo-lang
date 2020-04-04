@@ -2,12 +2,15 @@ exception Syntax_error of string
 
 type token
   = IF
+  | THEN
+  | ELSE
   | WHERE
   | BACKSLASH
   | LPARENT 
   | RPARENT
   | PLUS 
   | MINUS
+  | AND
   | TIMES
   | DIVIDE
   | MOD
@@ -20,10 +23,7 @@ type token
   | RBRACKET
   | EQUAL
   | IDENT of string
-  | FLOAT of float
-  | INT   of int 
-
-
+  | INT   of int
 
 let rec lexer input pos linum rel_pos =
   let catch pos chr =
@@ -33,13 +33,20 @@ let rec lexer input pos linum rel_pos =
       | _              -> false
   with _ -> false
   in
-  let is_digit chr = (Char.code('0') <= Char.code chr) && (Char.code('9') >= Char.code chr)
+  let unexpected_char linum pos chr =
+    raise (Syntax_error ("Unexpected character: '" ^ (String.make 1 chr) ^ "', line " ^
+                         (string_of_int linum) ^ ", character " ^ string_of_int pos))
   in
-  let is_alpha chr = (Char.code('A') <= Char.code chr) && (Char.code('Z') >= Char.code chr)
-                     || (Char.code('a') <= Char.code chr) && (Char.code('z') >= Char.code chr)
+
+  let is_digit chr = (Char.code('0') <= Char.code chr) &&
+                     (Char.code('9') >= Char.code chr)
   in
-  let is_ident chr = is_alpha chr || is_digit chr || chr = '_'
+  let is_alpha chr = (Char.code('A') <= Char.code chr) &&
+                     (Char.code('Z') >= Char.code chr) ||
+                     (Char.code('a') <= Char.code chr) &&
+                     (Char.code('z') >= Char.code chr)
   in
+  let is_ident chr = is_alpha chr || is_digit chr || chr = '_' in
   let rec parse_f f str pos =
     match pos with
       len when len = String.length str -> ""
@@ -73,10 +80,23 @@ let rec lexer input pos linum rel_pos =
       begin
         match catch (pos + 1) ':' with
           true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2)
-        | false -> raise (Syntax_error ("Unexpected character ':', line " ^
-                                        (string_of_int linum) ^ ", character " ^
-                                        string_of_int(rel_pos)))
+        | false -> unexpected_char linum (rel_pos) ':'
       end
     | n when is_digit n ->
-
-  with _ -> [] 
+      let num = parse_f is_digit input pos in
+      let len = String.length num          in
+      INT (int_of_string num) :: lexer input (pos + len) linum (rel_pos + len)
+    | a when is_alpha a ->
+      let ide = parse_f is_ident input pos in
+      let len = String.length ide          in
+      begin
+        match ide with
+          "if"    -> IF
+        | "and"   -> AND
+        | "where" -> WHERE
+        | "mod"   -> MOD
+        | _       ->
+          IDENT ide
+      end :: lexer input (pos + len) linum (rel_pos + len)
+    | c -> unexpected_char linum (rel_pos) c
+  with Invalid_argument _ -> []
