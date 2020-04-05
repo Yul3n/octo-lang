@@ -1,26 +1,15 @@
 exception Syntax_error of string
 
 type token
-  = IF
-  | THEN
-  | ELSE
-  | WHERE
+  = WHERE
   | BACKSLASH
   | LPARENT 
   | RPARENT
   | PLUS 
   | MINUS
-  | AND
   | TIMES
   | DIVIDE
-  | MOD
   | ARROW
-  | DOT
-  | CONS
-  | UNION
-  | COMMA
-  | LBRACKET
-  | RBRACKET
   | EQUAL
   | IDENT of string
   | INT   of int
@@ -61,26 +50,16 @@ let rec lexer input pos linum rel_pos =
     | '\t' -> lexer input (pos + 1) linum (rel_pos + 1)
     | '+'  -> PLUS      :: lexer input (pos + 1) linum (rel_pos + 1)
     | '='  -> EQUAL     :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '.'  -> DOT       :: lexer input (pos + 1) linum (rel_pos + 1)
+    | '*'  -> TIMES     :: lexer input (pos + 1) linum (rel_pos + 1)
+    | '/'  -> DIVIDE    :: lexer input (pos + 1) linum (rel_pos + 1)
     | '\\' -> BACKSLASH :: lexer input (pos + 1) linum (rel_pos + 1)
     | '('  -> LPARENT   :: lexer input (pos + 1) linum (rel_pos + 1)
     | ')'  -> RPARENT   :: lexer input (pos + 1) linum (rel_pos + 1)
-    | ']'  -> LBRACKET  :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '['  -> RBRACKET  :: lexer input (pos + 1) linum (rel_pos + 1)
-    | ','  -> COMMA     :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '*'  -> TIMES     :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '@'  -> UNION     :: lexer input (pos + 1) linum (rel_pos + 1)
     | '-'  ->
       begin
         match catch (pos + 1) '>' with
           true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2)
         | false -> MINUS :: lexer input (pos + 1) linum (rel_pos + 1)
-      end
-    | ':'  ->
-      begin
-        match catch (pos + 1) ':' with
-          true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2)
-        | false -> unexpected_char linum (rel_pos) ':'
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
@@ -91,12 +70,17 @@ let rec lexer input pos linum rel_pos =
       let len = String.length ide          in
       begin
         match ide with
-          "if"    -> IF
-        | "and"   -> AND
-        | "where" -> WHERE
-        | "mod"   -> MOD
+          "where" -> WHERE
         | _       ->
           IDENT ide
       end :: lexer input (pos + len) linum (rel_pos + len)
     | c -> unexpected_char linum (rel_pos) c
   with Invalid_argument _ -> []
+
+let string_of_token token =
+  match token with
+    PLUS  -> "+"
+  | MINUS -> "-"
+  | EQUAL -> "="
+  | TIMES -> "*"
+  | _ -> raise (Syntax_error "Not implemented")
