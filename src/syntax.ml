@@ -11,7 +11,5 @@ type expr
   | Lambda of string * expr
   | App    of expr * expr
   | Where  of expr * string * expr
-  | If     of expr * expr * expr
   | Binop  of expr * op * expr
   | Num    of int
-  | Mu     of string * expr
