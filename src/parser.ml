@@ -5,7 +5,7 @@ let parse_error str =
   raise (Syntax_error ("Parser error: unexpected token:" ^ str))
 
 let rec parser tokens exprs =
-  let rec parse_factor tokens lval =
+  let rec parse_mul tokens lval =
     let nval, ntl =
       match tokens with
         TIMES :: tl  -> let rval, tl = parser tl [] in
@@ -16,7 +16,23 @@ let rec parser tokens exprs =
     in
     match ntl with
       TIMES :: _ | DIVIDE :: _ ->
-      parse_factor ntl nval
+      parse_mul ntl nval
+    | _                          -> nval, ntl
+  in
+  let parse_add tokens lval =
+    let nval, ntl =
+      match tokens with
+        PLUS :: tl  -> let mul_val, tl = parser tl []  in
+        let rval, ntl   = parse_mul tl mul_val in
+        Binop (lval, Plus, rval), ntl
+      | MINUS :: tl -> let mul_val, tl = parser tl []  in
+        let rval, ntl   = parse_mul tl mul_val in
+        Binop (lval, Minus, rval), ntl
+      | tl           -> lval, tl
+    in
+    match ntl with
+      TIMES :: _ | DIVIDE :: _ ->
+      parse_mul ntl nval
     | _                          -> nval, ntl
   in
   match tokens with
@@ -45,3 +61,13 @@ let rec parser tokens exprs =
     end
   | IDENT var :: tl -> Var var, tl
   | INT num :: tl   -> Num num, tl
+  | PLUS :: _ | MINUS :: _ ->
+    begin
+      match exprs with
+        _ :: lst :: [] ->
+        parse_add tokens lst
+      | lst :: [] ->
+        parse_add tokens lst
+      | _ -> parse_error "Operation function without a body."
+    end
+  | _ -> parse_error "Unimplemented"
