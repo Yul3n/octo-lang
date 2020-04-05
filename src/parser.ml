@@ -43,21 +43,9 @@ let rec parser tokens exprs =
   in
   match tokens with
     [] -> exprs, []
-  | BACKSLASH :: tl ->
-    begin
-      match tl with
-        IDENT ident :: tl ->
-        begin
-          match tl with
-            ARROW :: tl ->
-            let body, tl = parser tl [] in
-            exprs @ [Lambda (ident, (reduce body))], tl
-          | tok :: _    -> parse_error (string_of_token tok)
-          | []          -> parse_error "Lambda function without a body."
-        end
-      | tok :: _          -> parse_error (string_of_token tok)
-      | []                -> parse_error "Lambda function without a body."
-    end
+  | BACKSLASH :: IDENT ident :: ARROW :: tl ->
+    let body, tl = parser tl [] in
+    exprs @ [Lambda (ident, (reduce body))], tl
   | IDENT var :: tl -> exprs @ [Var var], tl
   | INT num :: tl   -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
@@ -79,6 +67,11 @@ let rec parser tokens exprs =
     in
     let expr, ntl = parse_rparent tl [] in
     exprs @ [expr], ntl
+  | WHERE :: IDENT var :: EQUAL :: tl ->
+    let body, tl = parser tl []       in
+    let lst      = Utils.last exprs   in
+    let fsts     = Utils.firsts exprs in
+    fsts @ [Where (lst, var, (reduce body))], tl
   | _ -> parse_error "Unimplemented"
 
 let rec parse_all tokens exprs =
