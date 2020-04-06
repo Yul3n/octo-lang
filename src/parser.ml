@@ -2,7 +2,7 @@ open Syntax
 open Lexer
 
 let parse_error str =
-  raise (Syntax_error ("Parser error: unexpected token:" ^ str))
+  raise (Syntax_error ("Parser error: unexpected token: " ^ str))
 
 let rec reduce exprs =
     match exprs with
@@ -73,7 +73,7 @@ let rec parser tokens exprs =
     let lst      = Utils.last exprs   in
     let fsts     = Utils.firsts exprs in
     fsts @ [Where (lst, var, (reduce body))], tl
-  | _ -> parse_error "Unimplemented"
+  | tok :: _-> parse_error (string_of_token tok)
 
 let rec parse_all tokens exprs =
   match tokens with

@@ -10,3 +10,8 @@ let rec firsts l =
     []      
   | _ :: []  -> []
   | hd :: tl -> hd :: firsts tl
+
+let rec snd_map f l =
+  match l with
+    []               -> []
+  | (fst, snd) :: tl -> (fst, f snd) :: snd_map f tl
