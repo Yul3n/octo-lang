@@ -1,6 +1,8 @@
 open Syntax
 open Utils
 
+exception Error of string
+
 type expr_t
   = TInt
   | TVar of int
@@ -41,6 +43,17 @@ let subst_context subst context =
 let compose_subst subst1 subst2 =
   (snd_map (app_subst subst1) subst2) @ subst1
 
+let inst scheme nvar =
+  let Forall(vars, t) = scheme in
+  let rec fresh l nvars =
+    match l with
+      [] -> []
+    | _ :: tl -> TVar nvars :: fresh tl (nvars + 1)
+  in
+  let new_vars = fresh vars nvar in
+  let subst = List.combine vars new_vars in
+  app_subst subst t
+
 let rec infer expr context nvar =
   match expr with
     Lambda (var, body)       ->
@@ -54,4 +67,11 @@ let rec infer expr context nvar =
     let tmp_ctx      = (var, (Forall ([], expr_t))) :: context in
     let nsub2, body_t, nvar = infer body (subst_context nsub1 tmp_ctx) nvar in
     (compose_subst nsub1 nsub2), body_t, nvar
+  | Var var                 ->
+    begin
+      match fst_lookup var context with
+        None     -> raise (Error ("Use of an unbound variable:" ^ var))
+      | Some sch -> let Forall(l,_) = sch in
+        [], (inst sch nvar), (nvar + List.length l)
+    end
   | _     -> raise Not_found
