@@ -37,3 +37,9 @@ let subst_scheme subst scheme =
 let rec infer expr context nvar =
   match expr with
     Lambda (var, body) ->
+    let var_t        = TVar nvar                              in
+    let tmp_ctx      = (var, (Forall ([], var_t))) :: context in
+    let nsub, body_t = infer body tmp_ctx (nvar + 1)          in
+    nsub, TFun ((app_subst nsub var_t), body_t)
+  | Num _ -> [], TInt
+  |
