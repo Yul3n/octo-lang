@@ -28,10 +28,10 @@ let rec parser tokens exprs =
   let parse_add tokens lval =
     let nval, ntl =
       match tokens with
-        PLUS :: tl  -> let mul_val, tl = parser tl []  in
+        PLUS :: tl  -> let mul_val, tl = parser tl []   in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
         Binop (lval, Plus, rval), ntl
-      | MINUS :: tl -> let mul_val, tl = parser tl []  in
+      | MINUS :: tl -> let mul_val, tl = parser tl []   in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
         Binop (lval, Minus, rval), ntl
       | tl           -> lval, tl
@@ -39,7 +39,7 @@ let rec parser tokens exprs =
     match ntl with
       TIMES :: _ | DIVIDE :: _ ->
       parse_mul ntl nval
-    | _                          -> nval, ntl
+    | _                        -> nval, ntl
   in
   match tokens with
     [] -> exprs, []
@@ -61,6 +61,7 @@ let rec parser tokens exprs =
     let rec parse_rparent tokens exprs =
       match tokens with
         RPARENT :: tl -> reduce exprs, tl
+      | []            -> parse_error "Opened parenthesis without a closing one."
       | tl            ->
         let nexpr, ntl = parser tl exprs in
         parse_rparent ntl nexpr
