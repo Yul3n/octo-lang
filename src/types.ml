@@ -54,19 +54,44 @@ let inst scheme nvar =
   let subst = List.combine vars new_vars in
   app_subst subst t
 
+let rec ftv t =
+  match t with
+    TInt        -> []
+  | TVar v      -> [v]
+  | TFun (l, r) -> (ftv l) @ (ftv r)
+
+let rec unify t1 t2 =
+  let bind var t =
+    match var with
+      v when TVar v = t -> []
+    | v when List.find_opt ((=) v) (ftv t) <> None ->
+      raise (Error "Occurs check failed: infinite datatype.")
+    | _ -> [var, t]
+  in
+  match t1, t2 with
+    TInt, TInt -> []
+  | TFun (l1, r1), TFun (l2, r2) ->
+    let sub1 = unify l1 l2 in
+    let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
+    compose_subst sub1 sub2
+  | t, TVar v
+  | TVar v, t ->
+    bind v t
+  | _, _ -> raise (Error "Can't unify types")
+
 let rec infer expr context nvar =
   match expr with
     Lambda (var, body)       ->
     let var_t        = TVar nvar                              in
     let tmp_ctx      = (var, (Forall ([], var_t))) :: context in
-    let nsub, body_t,nvar = infer body tmp_ctx (nvar + 1)     in
-    nsub, TFun ((app_subst nsub var_t), body_t), nvar
+    let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)     in
+    sub, TFun ((app_subst sub var_t), body_t), nvar
   | Num _                   -> [], TInt, nvar
   | Where (body, var, expr) ->
-    let nsub1, expr_t, nvar = infer expr context nvar in
+    let sub1, expr_t, nvar = infer expr context nvar in
     let tmp_ctx      = (var, (Forall ([], expr_t))) :: context in
-    let nsub2, body_t, nvar = infer body (subst_context nsub1 tmp_ctx) nvar in
-    (compose_subst nsub1 nsub2), body_t, nvar
+    let sub2, body_t, nvar = infer body (subst_context sub1 tmp_ctx) nvar in
+    (compose_subst sub1 sub2), body_t, nvar
   | Var var                 ->
     begin
       match fst_lookup var context with
@@ -74,4 +99,11 @@ let rec infer expr context nvar =
       | Some sch -> let Forall(l,_) = sch in
         [], (inst sch nvar), (nvar + List.length l)
     end
+  | App (fn, arg)          ->
+    let res_t             = TVar nvar in
+    let sub1, fun_t, nvar = infer fn context (nvar + 1) in
+    let sub2, arg_t, nvar = infer arg (subst_context sub1 context) nvar in
+    let sub3              = unify (app_subst sub2 fun_t) (TFun (arg_t, res_t)) in
+    let fsub              = compose_subst sub3 (compose_subst sub2 sub1) in
+    fsub, (app_subst sub3 res_t), nvar
   | _     -> raise Not_found
