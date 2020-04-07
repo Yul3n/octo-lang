@@ -12,7 +12,7 @@ type scheme = Forall of int list * expr_t
 
 let rec app_subst subst ty =
   match ty with
-    TVar var ->
+    TVar var            ->
     let rec findvar subst =
       match subst with
         []                               -> TVar var
@@ -20,7 +20,7 @@ let rec app_subst subst ty =
       | _ :: tl                          -> findvar tl
     in
     findvar subst
-  | TInt -> TInt
+  | TInt                -> TInt
   | TFun (ltype, rtype) -> TFun ((app_subst subst ltype), (app_subst subst rtype))
 
 let subst_scheme subst scheme =
@@ -47,7 +47,7 @@ let inst scheme nvar =
   let Forall(vars, t) = scheme in
   let rec fresh l nvars =
     match l with
-      [] -> []
+      []      -> []
     | _ :: tl -> TVar nvars :: fresh tl (nvars + 1)
   in
   let new_vars = fresh vars nvar in
@@ -63,21 +63,19 @@ let rec ftv t =
 let rec unify t1 t2 =
   let bind var t =
     match var with
-      v when TVar v = t -> []
+      v when TVar v = t                            -> []
     | v when List.find_opt ((=) v) (ftv t) <> None ->
       raise (Error "Occurs check failed: infinite datatype.")
-    | _ -> [var, t]
+    | _                                            -> [var, t]
   in
   match t1, t2 with
-    TInt, TInt -> []
+    TInt, TInt                   -> []
   | TFun (l1, r1), TFun (l2, r2) ->
     let sub1 = unify l1 l2 in
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
     compose_subst sub1 sub2
-  | t, TVar v
-  | TVar v, t ->
-    bind v t
-  | _, _ -> raise (Error "Can't unify types")
+  | t, TVar v | TVar v, t        -> bind v t
+  | _, _                         -> raise (Error "Can't unify types")
 
 let rec infer expr context nvar =
   match expr with
@@ -106,4 +104,10 @@ let rec infer expr context nvar =
     let sub3              = unify (app_subst sub2 fun_t) (TFun (arg_t, res_t)) in
     let fsub              = compose_subst sub3 (compose_subst sub2 sub1) in
     fsub, (app_subst sub3 res_t), nvar
-  | _     -> raise Not_found
+  | Binop (lval, _, rval) ->
+    let ls1, lt, nvar = infer lval context nvar in
+    let ls2           = unify lt TInt           in
+    let ls3           = compose_subst ls2 ls1   in
+    let rs1, rt, nvar = infer rval (subst_context ls3 context) nvar in
+    let rs2           = unify rt TInt           in
+    compose_subst rs2 (compose_subst rs1 ls3), TInt, nvar
