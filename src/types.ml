@@ -89,7 +89,7 @@ let rec infer expr context nvar =
     let sub1, expr_t, nvar = infer expr context nvar in
     let tmp_ctx      = (var, (Forall ([], expr_t))) :: context in
     let sub2, body_t, nvar = infer body (subst_context sub1 tmp_ctx) nvar in
-    (compose_subst sub1 sub2), body_t, nvar
+    (compose_subst sub2 sub1), body_t, nvar
   | Var var                 ->
     begin
       match fst_lookup var context with

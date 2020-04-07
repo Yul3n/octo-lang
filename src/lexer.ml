@@ -11,10 +11,11 @@ type token
   | DIVIDE
   | ARROW
   | EQUAL
+  | BLOCK of token list
   | IDENT of string
   | INT   of int
 
-let rec lexer input pos linum rel_pos =
+let rec lexer input pos linum rel_pos act_ident =
   let catch pos chr =
     try
       match String.get input pos with
@@ -45,26 +46,34 @@ let rec lexer input pos linum rel_pos =
   in
   try
     match String.get input pos with
-      '\n' -> lexer input (pos + 1) (linum + 1) 0
+      '\n' -> let ident = String.length (parse_f ((=) ' ') input (pos + 1)) in
+      begin
+        match ident with
+          len when len = act_ident ->
+          lexer input (pos + 1 + ident) (linum + 1) ident act_ident
+        | len when len < act_ident -> [], pos + 1
+        | len when len < act_ident ->
+          let block = in 
+      end
     | ' '
-    | '\t' -> lexer input (pos + 1) linum (rel_pos + 1)
-    | '+'  -> PLUS      :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '='  -> EQUAL     :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '*'  -> TIMES     :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '/'  -> DIVIDE    :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '\\' -> BACKSLASH :: lexer input (pos + 1) linum (rel_pos + 1)
-    | '('  -> LPARENT   :: lexer input (pos + 1) linum (rel_pos + 1)
-    | ')'  -> RPARENT   :: lexer input (pos + 1) linum (rel_pos + 1)
+    | '\t' -> lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '+'  -> PLUS, (pos + 1)      :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '='  -> EQUAL, (pos + 1)     :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '*'  -> TIMES,  (pos + 1)    :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '/'  -> DIVIDE, (pos + 1)    :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '\\' -> BACKSLASH, (pos + 1) :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '('  -> LPARENT, (pos + 1)   :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | ')'  -> RPARENT, (pos + 1)   :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
     | '-'  ->
       begin
         match catch (pos + 1) '>' with
-          true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2)
-        | false -> MINUS :: lexer input (pos + 1) linum (rel_pos + 1)
+          true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2) act_ident
+        | false -> MINUS :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
       let len = String.length num          in
-      INT (int_of_string num) :: lexer input (pos + len) linum (rel_pos + len)
+      INT (int_of_string num) :: lexer input (pos + len) linum (rel_pos + len) act_ident
     | a when is_alpha a ->
       let ide = parse_f is_ident input pos in
       let len = String.length ide          in
@@ -73,9 +82,9 @@ let rec lexer input pos linum rel_pos =
           "where" -> WHERE
         | _       ->
           IDENT ide
-      end :: lexer input (pos + len) linum (rel_pos + len)
+      end :: lexer input (pos + len) linum (rel_pos + len) act_ident
     | c -> unexpected_char linum (rel_pos) c
-  with Invalid_argument _ -> []
+  with Invalid_argument _ -> [], pos
 
 let string_of_token token =
   match token with
