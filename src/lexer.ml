@@ -50,39 +50,56 @@ let rec lexer input pos linum rel_pos act_ident =
       begin
         match ident with
           len when len = act_ident ->
-          lexer input (pos + 1 + ident) (linum + 1) ident act_ident
-        | len when len < act_ident -> [], pos + 1
-        | len when len < act_ident ->
-          let block = in 
+          lexer input (pos + 1 + ident) (linum + 1) ident len
+        | len when len < act_ident -> [], pos + len + 1
+        | len when len > act_ident ->
+          let block, fpos1 = lexer input (pos + ident + 1) (linum + 1) ident len   in
+          print_int fpos1;
+          let toks, fpos2  = lexer input (fpos1) (linum + 1) ident act_ident in
+          BLOCK(block) :: toks, fpos2
+        | _ -> unexpected_char linum pos ' '
       end
     | ' '
     | '\t' -> lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '+'  -> PLUS, (pos + 1)      :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '='  -> EQUAL, (pos + 1)     :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '*'  -> TIMES,  (pos + 1)    :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '/'  -> DIVIDE, (pos + 1)    :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '\\' -> BACKSLASH, (pos + 1) :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '('  -> LPARENT, (pos + 1)   :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | ')'  -> RPARENT, (pos + 1)   :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '+'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      PLUS :: toks, fpos
+    | '='  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      EQUAL :: toks, fpos
+    | '*'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      TIMES :: toks, fpos
+    | '/'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      DIVIDE :: toks, fpos
+    | '\\' -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      BACKSLASH :: toks, fpos
+    | '('  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      LPARENT :: toks, fpos
+    | ')'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+      RPARENT :: toks, fpos
     | '-'  ->
       begin
         match catch (pos + 1) '>' with
-          true  -> ARROW :: lexer input (pos + 2) linum (rel_pos + 2) act_ident
-        | false -> MINUS :: lexer input (pos + 1) linum (rel_pos + 1) act_ident
+          true  ->
+          let toks, fpos = lexer input (pos + 2) linum (rel_pos + 1) act_ident in
+          ARROW :: toks, fpos
+        | false ->
+          let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
+          MINUS :: toks, fpos
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
       let len = String.length num          in
-      INT (int_of_string num) :: lexer input (pos + len) linum (rel_pos + len) act_ident
+      let toks, fpos = lexer input (pos + len) linum (rel_pos + 1) act_ident in
+      INT (int_of_string num) :: toks, fpos
     | a when is_alpha a ->
       let ide = parse_f is_ident input pos in
       let len = String.length ide          in
+      let toks, fpos = lexer input (pos + len) linum (rel_pos + 1) act_ident in
       begin
         match ide with
           "where" -> WHERE
         | _       ->
           IDENT ide
-      end :: lexer input (pos + len) linum (rel_pos + len) act_ident
+      end :: toks, fpos
     | c -> unexpected_char linum (rel_pos) c
   with Invalid_argument _ -> [], pos
 
