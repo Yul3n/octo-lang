@@ -44,6 +44,10 @@ let rec lexer input pos linum rel_pos act_ident =
         chr when f chr -> (String.make 1 chr) ^ parse_f f str (pos + 1)
       | _ -> ""
   in
+  let slex l t =
+    let toks, fpos = lexer input (pos + l) linum (rel_pos + l) act_ident in
+    t :: toks, fpos
+  in
   try
     match String.get input pos with
       '\n' -> let ident = String.length (parse_f ((=) ' ') input (pos + 1)) in
@@ -61,45 +65,34 @@ let rec lexer input pos linum rel_pos act_ident =
       end
     | ' '
     | '\t' -> lexer input (pos + 1) linum (rel_pos + 1) act_ident
-    | '+'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      PLUS :: toks, fpos
-    | '='  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      EQUAL :: toks, fpos
-    | '*'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      TIMES :: toks, fpos
-    | '/'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      DIVIDE :: toks, fpos
-    | '\\' -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      BACKSLASH :: toks, fpos
-    | '('  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      LPARENT :: toks, fpos
-    | ')'  -> let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-      RPARENT :: toks, fpos
+    | '+'  -> slex 1 PLUS
+    | '='  -> slex 1 EQUAL
+    | '*'  -> slex 1 TIMES
+    | '/'  -> slex 1 DIVIDE
+    | '\\' -> slex 1 BACKSLASH
+    | '('  -> slex 1 LPARENT
+    | ')'  -> slex 1 RPARENT
     | '-'  ->
       begin
         match catch (pos + 1) '>' with
-          true  ->
-          let toks, fpos = lexer input (pos + 2) linum (rel_pos + 1) act_ident in
-          ARROW :: toks, fpos
-        | false ->
-          let toks, fpos = lexer input (pos + 1) linum (rel_pos + 1) act_ident in
-          MINUS :: toks, fpos
+          true  -> slex 2 ARROW
+        | false -> slex 1 MINUS
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
       let len = String.length num          in
-      let toks, fpos = lexer input (pos + len) linum (rel_pos + 1) act_ident in
-      INT (int_of_string num) :: toks, fpos
+      slex len (INT (int_of_string num))
     | a when is_alpha a ->
       let ide = parse_f is_ident input pos in
       let len = String.length ide          in
-      let toks, fpos = lexer input (pos + len) linum (rel_pos + 1) act_ident in
-      begin
-        match ide with
-          "where" -> WHERE
-        | _       ->
-          IDENT ide
-      end :: toks, fpos
+      let tok =
+        begin
+          match ide with
+            "where" -> WHERE
+          | _       -> IDENT ide
+        end
+      in
+      slex len tok
     | c -> unexpected_char linum (rel_pos) c
   with Invalid_argument _ -> [], pos
 
