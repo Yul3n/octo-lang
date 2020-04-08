@@ -41,7 +41,6 @@ let rec parse_expr tokens exprs =
       parse_mul ntl nval
     | _                        -> nval, ntl
   in
-
   match tokens with
     [] -> exprs, []
   | BACKSLASH :: IDENT ident :: ARROW :: tl ->
@@ -94,3 +93,11 @@ let rec parse_all tokens exprs =
   | tk ->
     let nexpr, ntl = parse_expr tk exprs in
     parse_all ntl nexpr
+
+let rec parse_tops tokens =
+  match tokens with
+    []                                -> []
+  | IDENT v :: EQUAL :: BLOCK b :: tl ->
+    let e = parse_all b [] in
+    Decl (v, e) :: parse_tops tl
+  | _                                 -> parse_error "Expected a function declaration"

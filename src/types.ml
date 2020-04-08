@@ -10,6 +10,20 @@ type expr_t
 
 type scheme = Forall of int list * expr_t
 
+(* Return the list of all free type variables in the type t. *)
+let rec ftv t =
+  match t with
+    TInt        -> []
+  | TVar v      -> [v]
+  | TFun (l, r) -> (ftv l) @ (ftv r)
+
+let ftv_sch (Forall(v, t)) =
+  List.filter (fun x -> List.exists ((<>) x) v) (ftv t)
+
+let ftv_env env =
+  List.flatten (List.map ftv_sch (List.map snd env))
+
+(* Apply the substitution subst to the type ty and return it. *)
 let rec app_subst subst ty =
   match ty with
     TVar var            ->
@@ -23,8 +37,8 @@ let rec app_subst subst ty =
   | TInt                -> TInt
   | TFun (ltype, rtype) -> TFun ((app_subst subst ltype), (app_subst subst rtype))
 
-let subst_scheme subst scheme =
-  let Forall(vars, ty) = scheme in
+(* Apply a substitution to a scheme by ignoring bound variables. *)
+let subst_scheme subst (Forall(vars, ty)) =
   let rec delete_bound vars subst =
     match subst with
       []              -> []
@@ -37,9 +51,12 @@ let subst_scheme subst scheme =
   in
   Forall (vars, (app_subst (delete_bound vars subst) ty))
 
+(* Apply a substitution to a context by applying it to every scheme in the
+   context. *)
 let subst_context subst context =
   snd_map (subst_scheme subst) context
 
+(* Apply the substitution 1 to the 2. *)
 let compose_subst subst1 subst2 =
   (snd_map (app_subst subst1) subst2) @ subst1
 
@@ -54,11 +71,15 @@ let inst scheme nvar =
   let subst = List.combine vars new_vars in
   app_subst subst t
 
-let rec ftv t =
-  match t with
-    TInt        -> []
-  | TVar v      -> [v]
-  | TFun (l, r) -> (ftv l) @ (ftv r)
+let gen env t =
+  let e    = ftv_env env in
+
+  let vars =
+    match e with
+      [] -> ftv t
+    | _  -> List.filter (fun x -> List.exists ((<>) x) e) (ftv t)
+  in
+  Forall (vars, t)
 
 let rec unify t1 t2 =
   let bind var t =

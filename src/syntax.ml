@@ -15,4 +15,4 @@ type expr
   | Num    of int
 
 type fun_decl
-  = Decl of string * expr list
+  = Decl of string * expr
