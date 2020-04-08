@@ -41,6 +41,7 @@ let rec parser tokens exprs =
       parse_mul ntl nval
     | _                        -> nval, ntl
   in
+
   match tokens with
     [] -> exprs, []
   | BACKSLASH :: IDENT ident :: ARROW :: tl ->
@@ -73,7 +74,19 @@ let rec parser tokens exprs =
     let lst      = Utils.last exprs   in
     let fsts     = Utils.firsts exprs in
     fsts @ [Where (lst, var, (reduce body))], tl
-  | tok :: _-> parse_error (string_of_token tok)
+  | WHERE :: BLOCK(bl) :: tl          ->
+    let rec parse_where expr tokens =
+      match tokens with
+        []                     -> expr
+      | IDENT v :: EQUAL :: tl ->
+        let e, tl = parser tl [] in
+        parse_where (Where (expr, v, reduce(e))) tl
+      | tok :: _               -> parse_error (string_of_token tok)
+    in
+    let lst  = Utils.last exprs   in
+    let fsts = Utils.firsts exprs in
+    fsts @ [(parse_where lst bl)], tl
+  | tok :: _ -> parse_error (string_of_token tok)
 
 let rec parse_all tokens exprs =
   match tokens with
