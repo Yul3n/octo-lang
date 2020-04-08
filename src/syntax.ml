@@ -13,3 +13,6 @@ type expr
   | Where  of expr * string * expr
   | Binop  of expr * op * expr
   | Num    of int
+
+type fun_decl
+  = Decl of string * expr list

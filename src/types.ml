@@ -97,14 +97,14 @@ let rec infer expr context nvar =
       | Some sch -> let Forall(l,_) = sch in
         [], (inst sch nvar), (nvar + List.length l)
     end
-  | App (fn, arg)          ->
+  | App (fn, arg)           ->
     let res_t             = TVar nvar in
     let sub1, fun_t, nvar = infer fn context (nvar + 1) in
     let sub2, arg_t, nvar = infer arg (subst_context sub1 context) nvar in
     let sub3              = unify (app_subst sub2 fun_t) (TFun (arg_t, res_t)) in
     let fsub              = compose_subst sub3 (compose_subst sub2 sub1) in
     fsub, (app_subst sub3 res_t), nvar
-  | Binop (lval, _, rval) ->
+  | Binop (lval, _, rval)   ->
     let ls1, lt, nvar = infer lval context nvar in
     let ls2           = unify lt TInt           in
     let ls3           = compose_subst ls2 ls1   in
