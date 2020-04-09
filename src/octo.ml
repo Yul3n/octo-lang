@@ -18,3 +18,6 @@ let compile str =
       def_ctx tl n_ctx nvar
   in
   def_ctx decls [] 0
+
+let _ =
+  Utils.print_context (compile (read_from_file (Sys.argv.(1))))

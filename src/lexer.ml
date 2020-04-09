@@ -58,7 +58,6 @@ let rec lexer input pos linum rel_pos act_ident =
         | len when len < act_ident -> [], pos + len + 1
         | len when len > act_ident ->
           let block, fpos1 = lexer input (pos + ident + 1) (linum + 1) ident len   in
-          print_int fpos1;
           let toks, fpos2  = lexer input (fpos1) (linum + 1) ident act_ident in
           BLOCK(block) :: toks, fpos2
         | _ -> unexpected_char linum pos ' '
@@ -95,11 +94,3 @@ let rec lexer input pos linum rel_pos act_ident =
       slex len tok
     | c -> unexpected_char linum (rel_pos) c
   with Invalid_argument _ -> [], pos
-
-let string_of_token token =
-  match token with
-    PLUS  -> "+"
-  | MINUS -> "-"
-  | EQUAL -> "="
-  | TIMES -> "*"
-  | _ -> raise (Syntax_error "Not implemented")

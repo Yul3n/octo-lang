@@ -80,12 +80,12 @@ let rec parse_expr tokens exprs =
       | IDENT v :: EQUAL :: tl ->
         let e, tl = parse_expr tl [] in
         parse_where (Where (expr, v, reduce(e))) tl
-      | tok :: _               -> parse_error (string_of_token tok)
+      | tok :: _               -> parse_error (Utils.string_of_token tok)
     in
     let lst  = Utils.last exprs   in
     let fsts = Utils.firsts exprs in
     fsts @ [(parse_where lst bl)], tl
-  | tok :: _ -> parse_error (string_of_token tok)
+  | tok :: _ -> parse_error (Utils.string_of_token tok)
 
 let rec parse_all tokens exprs =
   match tokens with

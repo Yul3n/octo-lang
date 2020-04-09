@@ -3,12 +3,6 @@ open Utils
 
 exception Error of string
 
-type expr_t
-  = TInt
-  | TVar of int
-  | TFun of expr_t * expr_t
-
-type scheme = Forall of int list * expr_t
 
 (* Return the list of all free type variables in the type t. *)
 let rec ftv t =
