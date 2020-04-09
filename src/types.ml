@@ -73,21 +73,20 @@ let inst scheme nvar =
 
 let gen env t =
   let e    = ftv_env env in
-
   let vars =
-    match e with
+    match e with 
       [] -> ftv t
     | _  -> List.filter (fun x -> List.exists ((<>) x) e) (ftv t)
   in
-  Forall (vars, t)
+  Forall (List.sort_uniq compare vars, t)
 
 let rec unify t1 t2 =
   let bind var t =
     match var with
-      v when TVar v = t                            -> []
-    | v when List.find_opt ((=) v) (ftv t) <> None ->
+      v when TVar v = t                -> []
+    | v when List.mem v (ftv t) = true ->
       raise (Error "Occurs check failed: infinite datatype.")
-    | _                                            -> [var, t]
+    | _                                -> [var, t]
   in
   match t1, t2 with
     TInt, TInt                   -> []
@@ -103,7 +102,7 @@ let rec infer expr context nvar =
     Lambda (var, body)       ->
     let var_t        = TVar nvar                              in
     let tmp_ctx      = (var, (Forall ([], var_t))) :: context in
-    let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)     in
+    let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)      in
     sub, TFun ((app_subst sub var_t), body_t), nvar
   | Num _                   -> [], TInt, nvar
   | Where (body, var, expr) ->
@@ -113,9 +112,9 @@ let rec infer expr context nvar =
     (compose_subst sub2 sub1), body_t, nvar
   | Var var                 ->
     begin
-      match fst_lookup var context with
+      match List.assoc_opt var context with
         None     -> raise (Error ("Use of an unbound variable:" ^ var))
-      | Some sch -> let Forall(l,_) = sch in
+      | Some sch -> let Forall(l, _) = sch in
         [], (inst sch nvar), (nvar + List.length l)
     end
   | App (fn, arg)           ->
