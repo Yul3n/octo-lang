@@ -1,7 +1,7 @@
 open Syntax
 open Utils
 
-exception Error of string
+exception Type_error of string
 
 
 (* Return the list of all free type variables in the type t. *)
@@ -79,7 +79,8 @@ let rec unify t1 t2 =
     match var with
       v when TVar v = t                -> []
     | v when List.mem v (ftv t) = true ->
-      raise (Error "Occurs check failed: infinite datatype.")
+      raise (Type_error ("Occurs check failed: infinite datatype, can't unify : " ^
+               (string_of_type t1) ^ " and " ^ (string_of_type t2)))
     | _                                -> [var, t]
   in
   match t1, t2 with
@@ -89,7 +90,9 @@ let rec unify t1 t2 =
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
     compose_subst sub1 sub2
   | t, TVar v | TVar v, t        -> bind v t
-  | _, _                         -> raise (Error "Can't unify types")
+  | t1, t2                       ->
+    raise (Type_error ("Can't unify types: " ^ (string_of_type t1) ^ " and "
+                       ^ (string_of_type t2)))
 
 let rec infer expr context nvar =
   match expr with
@@ -107,7 +110,7 @@ let rec infer expr context nvar =
   | Var var                 ->
     begin
       match List.assoc_opt var context with
-        None     -> raise (Error ("Use of an unbound variable:" ^ var))
+        None     -> raise (Type_error ("Use of an unbound variable:" ^ var))
       | Some sch -> let Forall(l, _) = sch in
         [], (inst sch nvar), (nvar + List.length l)
     end
