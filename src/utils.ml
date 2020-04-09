@@ -57,4 +57,4 @@ let print_context ctx =
     Printf.printf "%s: " name;
     print_scheme sch
   in
-  List.iter (fun x -> print_ctx_elem x; print_newline()) ctx;
+  List.iter (fun x -> print_ctx_elem x; print_newline()) ctx
