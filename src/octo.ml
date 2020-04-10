@@ -1,4 +1,2 @@
-open Utils
-
 let _ =
-  print_context (compile (read_from_file (Sys.argv.(1))))
+  print_string (Closure.compile (Sys.argv.(1)))

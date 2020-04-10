@@ -102,11 +102,6 @@ let rec infer expr context nvar =
     let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)      in
     sub, TFun ((app_subst sub var_t), body_t), nvar
   | Num _                   -> [], TInt, nvar
-  | Where (body, var, expr) ->
-    let sub1, expr_t, nvar = infer expr context nvar in
-    let tmp_ctx      = (var, (Forall ([], expr_t))) :: context in
-    let sub2, body_t, nvar = infer body (subst_context sub1 tmp_ctx) nvar in
-    (compose_subst sub2 sub1), body_t, nvar
   | Var var                 ->
     begin
       match List.assoc_opt var context with
@@ -128,3 +123,4 @@ let rec infer expr context nvar =
     let rs1, rt, nvar = infer rval (subst_context ls3 context) nvar in
     let rs2           = unify rt TInt           in
     compose_subst rs2 (compose_subst rs1 ls3), TInt, nvar
+  | _ -> raise (Type_error "shouldn't append!")
