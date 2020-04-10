@@ -32,7 +32,7 @@ let rec parse_expr tokens exprs =
         match tl with
           EQUAL :: tl ->
           let e, tl  = parse_expr tl [] in
-          parse_equ tl (Where (body, v, wrap_lam (List.rev vars) (reduce e)))
+          parse_equ tl (App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)))
         | tok :: _ -> parse_error ("Unexpected token :" ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
     end

@@ -1,3 +1,5 @@
+open Syntax
+
 let read_from_file f =
   let ic = open_in f in
   let n = in_channel_length ic in
@@ -12,9 +14,10 @@ let compile str =
   let rec def_ctx decls context nvar =
     match decls with
       [] -> context
-    | Syntax.Decl(v, body) :: tl ->
+    | Decl(v, body) :: tl ->
       let s, t, nvar = Types.infer body context nvar in
       let n_ctx      = (Types.subst_context s context) @ [v, Types.gen context t] in
       def_ctx tl n_ctx nvar
   in
   def_ctx decls [] 0
+

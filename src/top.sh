@@ -6,7 +6,8 @@ ocamlc -a utils.ml -o utils.cma
 ocamlc -a parser.ml -o parser.cma
 ocamlc -a types.ml -o types.cma
 ocamlc -a compile.ml -o compile.cma
+ocamlc -a closure.ml -o closure.cma
 
-utop lexer.cma syntax.cma utils.cma parser.cma types.cma compile.cma
+utop lexer.cma syntax.cma utils.cma parser.cma types.cma compile.cma closure.cma
 
 rm ./*.cm*
