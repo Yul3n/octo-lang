@@ -73,7 +73,7 @@ let rec closure_to_c clo nlam =
       | "/" -> "div"
       | _   -> v
     in
-    Printf.sprintf "make_closure(%s, NULL, 0)" fn, "", nlam
+    Printf.sprintf "%s" fn, "", nlam
   | Closure (_, body) ->
     let cbody, nf, nnlam = closure_to_c body (nlam + 1) in
     Printf.sprintf "make_closure(__lam%d, tenv, sizeof(tenv))" nlam, nf ^ (Printf.sprintf "
@@ -89,22 +89,21 @@ let rec decls_to_c decls funs body nlam =
     funs ^
     "\nint main (int argc, char* argv[]) {
          int *tenv = NULL;
-         Value n = make_int(atoi(argv[1]));
-         return (" ^
+         Value n = make_int(atoi(argv[1]));\n" ^
     body ^
-    ").n.value;\n}\n"
+    "}\n"
   | hd :: tl ->
     begin
       match hd with
         Decl (v, b) when v = "main"->
-        let body, nf, nlam = closure_to_c (to_closure (deB b ("", 1))) nlam in
-        decls_to_c tl (funs ^ nf) body nlam
+        let nbody, nf, nlam = closure_to_c (to_closure (deB b ("", 1))) nlam in
+        decls_to_c tl (funs ^ nf) (body ^ "\nreturn(" ^ nbody ^ ").n.value;\n") nlam
       | Decl (v, b) ->
         let fn, nf, nlam = closure_to_c (to_closure (deB b ("", 1))) nlam in
         let f =
-          Printf.sprintf "Value %s(int *env, Value n) {%s return %s;}" v pr fn
+          Printf.sprintf "Value %s;" v
         in
-        decls_to_c tl (funs ^ nf ^ f) body nlam
+        decls_to_c tl (funs ^ nf ^ f) (body ^ (Printf.sprintf "%s = %s;\n" v fn))  nlam
     end
 
 let compile f =

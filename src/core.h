@@ -29,7 +29,7 @@ union Value {
 
 typedef union Value Value ;
 
-static Value make_closure(Lambda lam, int *env, int env_len) {
+ Value make_closure(Lambda lam, int *env, int env_len) {
   Value v ;
   v.clo.t = CLOSURE ;
   v.clo.lam = lam ;
@@ -38,7 +38,7 @@ static Value make_closure(Lambda lam, int *env, int env_len) {
   return v ;
 }
 
-static Value make_int(int n) {
+ Value make_int(int n) {
   Value v ;
   v.n.t = INT ;
   v.n.value = n ;
@@ -49,7 +49,7 @@ Value lambda_sum(int *env, Value n){
   return make_int(*env + n.n.value);
 }
 
-static Value sum (int *env, Value n) {
+Value sum (int *env, Value n) {
   int *tmp_env = malloc((sizeof(env) + 1) * sizeof(int));
   int len = sizeof (env);
   memcpy (tmp_env + 1, env, len);
