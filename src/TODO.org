@@ -1,0 +1,12 @@
+#+TITLE: Todo
+
+* Compiler
+** TODO Better errors
+** TODO Custom datatypes
+** TODO Pattern matching
+** TODO Lists
+* Standard library
+** TODO Boolean Type
+* Tooling
+** TODO GNU/Emacs syntax highlighting mode
+** TODO CLI interface with GNU/Emacs
