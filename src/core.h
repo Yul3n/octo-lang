@@ -16,15 +16,15 @@ struct Int {
 } ;
 
 struct Closure {
-  enum Tag t ;
-  Lambda lam ;
-  union Value *env ;
+  enum Tag t;
+  Lambda lam;
+  union Value *env;
 } ;
 
 union Value {
-  enum Tag t ;
-  struct Int n ;
-  struct Closure clo ;
+  enum   Tag t;
+  struct Int n;
+  struct Closure clo;
 } ;
 
 typedef union Value Value ;
@@ -55,4 +55,17 @@ Value sum (Value *env, Value n, int len) {
   *tenv = n;
   return (make_closure(lambda_sum, tenv, len + 1));
 }
+
+Value lambda_dif(Value *env, Value n){
+  return make_int((*env).n.value - n.n.value);
+}
+
+Value dif (Value *env, Value n, int len) {
+  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_dif, tenv, len + 1));
+}
+
+
 #endif // __CORE_H_

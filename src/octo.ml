@@ -1,2 +1,2 @@
 let _ =
-  print_string (Closure.compile (Sys.argv.(1)))
+  print_string (Compile.compile (Sys.argv.(1)))

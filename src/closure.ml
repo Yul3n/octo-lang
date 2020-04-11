@@ -41,10 +41,10 @@ let rec to_closure expr =
   | Binop (l, o, r) ->
     let f =
       match o with
-        Plus   -> "+"
-      | Minus  -> "-"
-      | Times  -> "*"
-      | Divide -> "/"
+        Plus   -> "suml"
+      | Minus  -> "difl"
+      | Times  -> "timl"
+      | Divide -> "divl"
     in
     ClosApp (ClosApp (CloGVar f, to_closure l), to_closure r)
   | Lambda(_, b)    -> Closure (free expr 1, to_closure b)
@@ -66,20 +66,12 @@ let rec closure_to_c clo nlam env =
     n, nf ^ na, p1 ^ (Printf.sprintf "%s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2)
                 ^ p2 , nlam + 1, v
   | CloGVar v        ->
-    let fn =
-      match v with
-        "+" -> "sum"
-      | "-" -> "dif"
-      | "*" -> "tim"
-      | "/" -> "div"
-      | _   -> v
-    in
-    Printf.sprintf "%s" fn, "", "", nlam, env
+    Printf.sprintf "%s" v, "", "", nlam, env
   | Closure (_, body) ->
     let n = Printf.sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, v = closure_to_c body (nlam + 1) "tenv" in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s" nlam pr) ^ c ^ "\nreturn " ^ cbody ^";}\n",
+     %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
     (Printf.sprintf "%s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, v
 
@@ -89,14 +81,15 @@ let rec decls_to_c decls funs body nlam =
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
-    "#include \"core.h\"
-#include <stdlib.h>\n" ^ s ^
+    "#include \"core.h\"\n#include <stdlib.h>\nValue suml;\nValue difl;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         Value *tenv = malloc(sizeof(Value));
         Value n = make_int(atoi(argv[1]));
         *tenv = n;
-        int len = 0;\n" ^
+        int len = 0;
+        difl = make_closure(dif, NULL, 0);
+        suml = make_closure(sum, NULL, 0);\n" ^
     body ^
     "}\n"
   | hd :: tl ->
@@ -116,10 +109,3 @@ let rec decls_to_c decls funs body nlam =
         in
         decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "%s = %s;\n" v fn))  nlam
     end
-
-let compile f =
-  let s = Compile.read_from_file f in
-  let _ = Compile.compile s in
-  let t, _ = Lexer.lexer s 0 1 0 0  in
-  let f = Parser.parse_tops t in
-  decls_to_c f "" "" 0
