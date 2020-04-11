@@ -18,7 +18,7 @@ struct Int {
 struct Closure {
   enum Tag t ;
   Lambda lam ;
-  int *env ;
+  union Value *env ;
 } ;
 
 union Value {
@@ -29,12 +29,12 @@ union Value {
 
 typedef union Value Value ;
 
- Value make_closure(Lambda lam, int *env, int env_len) {
+ Value make_closure(Lambda lam, Value *env, int env_len) {
   Value v ;
   v.clo.t = CLOSURE ;
   v.clo.lam = lam ;
-  v.clo.env = malloc(sizeof(env) * sizeof(int));
-  memcpy(v.clo.env, env, env_len);
+  v.clo.env = malloc(env_len * sizeof(Value));
+  memcpy(v.clo.env, env, env_len * sizeof(Value));
   return v ;
 }
 
@@ -45,15 +45,14 @@ typedef union Value Value ;
   return v ;
 }
 
-Value lambda_sum(int *env, Value n){
-  return make_int(*env + n.n.value);
+Value lambda_sum(Value *env, Value n){
+  return make_int((*env).n.value + n.n.value);
 }
 
-Value sum (int *env, Value n) {
-  int *tmp_env = malloc((sizeof(env) + 1) * sizeof(int));
-  int len = sizeof (env);
-  memcpy (tmp_env + 1, env, len);
-  *tmp_env = n.n.value;
-  return (make_closure(lambda_sum, tmp_env, len + 1));
+Value sum (Value *env, Value n, int len) {
+  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_sum, tenv, len + 1));
 }
 #endif // __CORE_H_
