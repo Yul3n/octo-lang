@@ -15,19 +15,11 @@ type token
   | IDENT of string
   | INT   of int
 
-let rec lexer input pos linum rel_pos act_ident =
-  let catch pos chr =
-    try
-      match String.get input pos with
-        c when c = chr -> true
-      | _              -> false
-  with _ -> false
-  in
+let rec lexer input pos act_ident =
   let unexpected_char linum pos chr =
     raise (Syntax_error ("Unexpected character: '" ^ (String.make 1 chr) ^ "', line " ^
                          (string_of_int linum) ^ ", character " ^ string_of_int pos))
   in
-
   let is_digit chr = (Char.code('0') <= Char.code chr) &&
                      (Char.code('9') >= Char.code chr)
   in
@@ -45,7 +37,7 @@ let rec lexer input pos linum rel_pos act_ident =
       | _ -> ""
   in
   let slex l t =
-    let toks, fpos = lexer input (pos + l) linum (rel_pos + l) act_ident in
+    let toks, fpos = lexer input (pos + l) act_ident in
     t :: toks, fpos
   in
   try
@@ -54,16 +46,16 @@ let rec lexer input pos linum rel_pos act_ident =
       begin
         match ident with
           len when len = act_ident ->
-          lexer input (pos + 1 + ident) (linum + 1) ident len
+          lexer input (pos + 1 + ident) len
         | len when len < act_ident -> [], pos + len + 1
         | len when len > act_ident ->
-          let block, fpos1 = lexer input (pos + ident + 1) (linum + 1) ident len   in
-          let toks, fpos2  = lexer input (fpos1) (linum + 1) ident act_ident in
+          let block, fpos1 = lexer input (pos + ident + 1) len   in
+          let toks, fpos2  = lexer input (fpos1) act_ident in
           BLOCK(block) :: toks, fpos2
-        | _ -> unexpected_char linum pos ' '
+        | _ -> unexpected_char 0 0 ' '
       end
     | ' '
-    | '\t' -> lexer input (pos + 1) linum (rel_pos + 1) act_ident
+    | '\t' -> lexer input (pos + 1) act_ident
     | '+'  -> slex 1 PLUS
     | '='  -> slex 1 EQUAL
     | '*'  -> slex 1 TIMES
@@ -73,9 +65,11 @@ let rec lexer input pos linum rel_pos act_ident =
     | ')'  -> slex 1 RPARENT
     | '-'  ->
       begin
-        match catch (pos + 1) '>' with
-          true  -> slex 2 ARROW
-        | false -> slex 1 MINUS
+        match String.get input (pos + 1) with
+          '>' -> slex 2 ARROW
+        | '-' -> let l = String.length (parse_f ((<>) '\n') input (pos + 2)) in
+          lexer input (pos + 2 + l) act_ident
+        | _   -> slex 1 MINUS
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
@@ -92,5 +86,5 @@ let rec lexer input pos linum rel_pos act_ident =
         end
       in
       slex len tok
-    | c -> unexpected_char linum (rel_pos) c
+    | c -> unexpected_char 0 0 c
   with Invalid_argument _ -> [], pos

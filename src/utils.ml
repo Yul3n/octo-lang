@@ -39,7 +39,7 @@ let rec string_of_type t =
     match t with
       TInt        -> "int"
     | TVar v      -> to_greek (Char.chr (Char.code 'a' + v))
-    | TFun (f, t) -> (string_of_type f) ^ " ――→ " ^ (string_of_type t)
+    | TFun (f, t) -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
 
 let print_scheme (Forall(v, t)) =
   begin

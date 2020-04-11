@@ -1,7 +1,7 @@
 open Syntax
 
 let pr = "Value *tenv = malloc((len + 1) * sizeof(Value));
-     memcpy (tenv + 1, env, len);
+     memcpy (tenv + 1, env, len * sizeof(Value));
      *tenv = n;\n"
 
 type closure
@@ -36,7 +36,7 @@ let rec deB e (v, n) =
 let rec to_closure expr =
   match expr with
     Num n           -> CloNum  n
-  | Var n           -> CloGVar n
+  | Var n           -> CloGVar ("_" ^ n)
   | IndVar n        -> CloVar  n
   | Binop (l, o, r) ->
     let f =
@@ -57,7 +57,7 @@ let rec closure_to_c clo nlam env =
     begin
       match n with
         1 -> "n"
-      | n -> Printf.sprintf "*(env + %d)" (n - 2)
+      | n -> Printf.sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
   | ClosApp (f, arg) ->
     let s1, nf, p1, nlam, nv = closure_to_c f nlam env in
@@ -104,5 +104,5 @@ let rec decls_to_c decls funs body nlam =
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in
-      let f = Printf.sprintf "Value %s;\n" v in
-      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "%s = %s;\n" v fn))  nlam
+      let f = Printf.sprintf "Value _%s;\n" v in
+      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn))  nlam

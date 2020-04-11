@@ -1,0 +1,22 @@
+-- Booleans
+
+true x y =
+  x
+
+false x y =
+  y
+
+not x =
+  x false true
+
+and x y =
+  x y false
+
+or x y =
+  x true y
+
+xor x y =
+  x (not y) y
+ 
+if c t f =
+  c t f
