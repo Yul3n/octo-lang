@@ -17,9 +17,9 @@ let compile f =
       let n_ctx      = (Types.subst_context s context) @ [v, Types.gen context t] in
       def_ctx tl n_ctx nvar
   in
-  let s    = read_from_file f       in
-  let t, _ = Lexer.lexer s 0 1 0 0  in
-  let f    = Parser.parse_tops t    in
-  let ctx  = def_ctx f [] 0         in
+  let s    = read_from_file f    in
+  let t, _ = Lexer.lexer s 0 0   in
+  let f    = Parser.parse_tops t in
+  let ctx  = def_ctx f [] 0      in
   Utils.print_context ctx;
   Closure.decls_to_c f "" "" 0

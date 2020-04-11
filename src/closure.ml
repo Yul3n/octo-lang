@@ -99,7 +99,7 @@ let rec decls_to_c decls funs body nlam =
           nlam "tenv"
       in
       decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nreturn(" ^
-                                 nbody ^ ").n.value;\n") nlam
+                                 nbody ^ ").clo.lam(NULL, n, 0).n.value;\n") nlam
     | Decl (v, b) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"

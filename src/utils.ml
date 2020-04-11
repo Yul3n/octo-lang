@@ -58,11 +58,3 @@ let print_context ctx =
     print_scheme sch
   in
   List.iter (fun x -> print_ctx_elem x; print_newline()) ctx
-
-let read_from_file f =
-  let ic = open_in f in
-  let n = in_channel_length ic in
-  let s = Bytes.create n in
-  really_input ic s 0 n;
-  close_in ic;
-  Bytes.unsafe_to_string s
