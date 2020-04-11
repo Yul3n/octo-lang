@@ -1,3 +1,18 @@
+type token
+  = WHERE
+  | BACKSLASH
+  | LPARENT
+  | RPARENT
+  | PLUS
+  | MINUS
+  | TIMES
+  | DIVIDE
+  | ARROW
+  | EQUAL
+  | BLOCK of token list
+  | IDENT of string
+  | INT   of int
+
 type op
   = Plus
   | Minus

@@ -1,24 +1,12 @@
+open Syntax
+
 exception Syntax_error of string
 
-type token
-  = WHERE
-  | BACKSLASH
-  | LPARENT 
-  | RPARENT
-  | PLUS 
-  | MINUS
-  | TIMES
-  | DIVIDE
-  | ARROW
-  | EQUAL
-  | BLOCK of token list
-  | IDENT of string
-  | INT   of int
-
 let rec lexer input pos act_ident =
-  let unexpected_char linum pos chr =
+  let unexpected_char pos chr =
+    let l, r = Utils.get_pos input 1 0 0 pos in
     raise (Syntax_error ("Unexpected character: '" ^ (String.make 1 chr) ^ "', line " ^
-                         (string_of_int linum) ^ ", character " ^ string_of_int pos))
+                         (string_of_int l) ^ ", character " ^ string_of_int r))
   in
   let is_digit chr = (Char.code('0') <= Char.code chr) &&
                      (Char.code('9') >= Char.code chr)
@@ -42,17 +30,17 @@ let rec lexer input pos act_ident =
   in
   try
     match String.get input pos with
-      '\n' -> let ident = String.length (parse_f ((=) ' ') input (pos + 1)) in
+      '\n' -> let indent = String.length (parse_f ((=) ' ') input (pos + 1)) in
       begin
-        match ident with
+        match indent with
           len when len = act_ident ->
-          lexer input (pos + 1 + ident) len
+          lexer input (pos + 1 + indent) len
         | len when len < act_ident -> [], pos + len + 1
         | len when len > act_ident ->
-          let block, fpos1 = lexer input (pos + ident + 1) len   in
+          let block, fpos1 = lexer input (pos + indent + 1) len   in
           let toks, fpos2  = lexer input (fpos1) act_ident in
           BLOCK(block) :: toks, fpos2
-        | _ -> unexpected_char 0 0 ' '
+        | _ -> unexpected_char 0 'f' (* Won't happen *)
       end
     | ' '
     | '\t' -> lexer input (pos + 1) act_ident
@@ -86,5 +74,5 @@ let rec lexer input pos act_ident =
         end
       in
       slex len tok
-    | c -> unexpected_char 0 0 c
+    | c -> unexpected_char pos c
   with Invalid_argument _ -> [], pos

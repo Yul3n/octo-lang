@@ -1,4 +1,3 @@
-open Lexer
 open Syntax
 
 let last l =
@@ -21,16 +20,24 @@ let rec snd_map f l =
 
 
 (*
- * Printing and error reporting errors
+ * Printing and error reporting functions
  *)
 
-let string_of_token token =
+let rec string_of_token token =
   match token with
-    PLUS  -> "+"
-  | MINUS -> "-"
-  | EQUAL -> "="
-  | TIMES -> "*"
-  | _ -> raise (Syntax_error "Not implemented")
+    PLUS      -> "+"
+  | MINUS     -> "-"
+  | EQUAL     -> "="
+  | TIMES     -> "*"
+  | DIVIDE    -> "/"
+  | ARROW     -> "->"
+  | IDENT v   -> v
+  | WHERE     -> "where"
+  | BACKSLASH -> "\\"
+  | LPARENT   -> "("
+  | RPARENT   -> ")"
+  | INT n     -> string_of_int n
+  | BLOCK b   -> List.fold_left (^) "" (List.map string_of_token b)
 
 let to_greek c =
       Printf.sprintf "\206%c" (Char.chr @@ Char.code c - Char.code 'A' + 145)
@@ -58,3 +65,11 @@ let print_context ctx =
     print_scheme sch
   in
   List.iter (fun x -> print_ctx_elem x; print_newline()) ctx
+
+let rec get_pos input l r pos mpos =
+      match pos with
+        n when n > mpos -> l, r
+      | _ ->
+        match String.get input pos with
+          '\n' -> get_pos input (l + 1) 0 (pos + 1) mpos
+        | _    -> get_pos input l (r + 1) (pos + 1) mpos
