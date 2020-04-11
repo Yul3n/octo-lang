@@ -69,11 +69,11 @@ let rec closure_to_c clo nlam env =
     Printf.sprintf "%s" v, "", "", nlam, env
   | Closure (_, body) ->
     let n = Printf.sprintf "l%d" nlam in
-    let cbody, nf, c, nnlam, v = closure_to_c body (nlam + 1) "tenv" in
+    let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
      %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
     (Printf.sprintf "%s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
-    nnlam, v
+    nnlam, env
 
 let rec decls_to_c decls funs body nlam =
   match decls with
@@ -93,19 +93,16 @@ let rec decls_to_c decls funs body nlam =
     body ^
     "}\n"
   | hd :: tl ->
-    begin
-      match hd with
-        Decl (v, b) when v = "main"->
-        let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-            nlam "tenv"
-        in
-        decls_to_c tl (funs ^ nf) (body ^ b ^ "\n        return(" ^ nbody ^ ").n.value;\n") nlam
-      | Decl (v, b) ->
-        let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-            nlam "tenv"
-        in
-        let f =
-          Printf.sprintf "Value %s;\n" v
-        in
-        decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "%s = %s;\n" v fn))  nlam
-    end
+    match hd with
+      Decl (v, b) when v = "main"->
+      let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
+          nlam "tenv"
+      in
+      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nreturn(" ^
+                                 nbody ^ ").n.value;\n") nlam
+    | Decl (v, b) ->
+      let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
+          nlam "tenv"
+      in
+      let f = Printf.sprintf "Value %s;\n" v in
+      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "%s = %s;\n" v fn))  nlam
