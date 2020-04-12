@@ -7,42 +7,38 @@
 (defconst octo-highlights
   '(("where" . font-lock-keyword-face)
     ("--.*\n" . font-lock-comment-face)
-    ("\n\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)=" . (2 font-lock-variable-name-face))
-    ("\n\\([a-zA-Z]*\\).*=" . (1 font-lock-function-name-face))))
+    (" \\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)=" . (2 font-lock-variable-name-face))
+    ("\\([a-zA-Z]*\\).*=" . (1 font-lock-function-name-face))))
 
 (defun indent-line ()
-  "Indent current line as WPDL code."
+  "Indent current line as octo code."
   (interactive)
-  (let ((cur-indent 0))
+  (let ((cur-indent 0) begin)
+    (setq begin (point))
     (beginning-of-line)
-    (if (looking-at "\\([a-zA-Z]*\\).*=")
-        (indent-line-to 0)
+    (if (looking-at "\\(\n\n[a-zA-Z]*\\).*=") ; If the line is a function declaration
+        (indent-line-to 0)                ; to 0.
       (progn
         (forward-line -1)
-        (beginning-of-line)
-        (if (looking-at "\\([a-zA-Z]*\\).*=")
+
+        (if (and (looking-at "\\([a-zA-Z]*\\).*=") (not (looking-at "[ ]+")))
             (progn
               (forward-line 1)
-              (indent-line-to 2)
-              )
+              (indent-line-to 2))
           (let (b e)
             (setq b (point))
             (skip-chars-forward " ")
             (setq e (point))
-            (if (looking-at "[ ]*where\n")
-                (progn
+            (if (looking-at ".*where\n") ; Add a level of indentation after the
+                (progn                     ; keyword where.
                    (forward-line 1)
                    (indent-line-to (+ (- e b) 2)))
               (progn
                 (forward-line 1)
-                (indent-line-to (- e b) ))
-              )
-            )
-          )
-        )
-      )
-    )
-  )
+                (indent-line-to (- e b) )))))))
+    (if (> begin (point))
+        (goto-char begin))
+    ))
 (define-derived-mode octo-mode fundamental-mode "octo"
   "major mode for editing octo language code."
   (setq comment-add "-- "
