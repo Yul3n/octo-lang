@@ -14,12 +14,24 @@ let compile f =
       [] -> context
     | Decl(v, body) :: tl ->
       let s, t, _ = Types.infer body context 0 in
-      let n_ctx      = (Types.subst_context s context) @ [v, Types.gen context t] in
+      let n_ctx  =
+      match v with
+          "main" ->
+          (* The main function should be of type int -> int *)
+          let s2 = Types.unify t (TFun(TInt, TInt)) in
+          (Types.subst_context (Types.compose_subst s s2) context) @
+          [v, Forall([], (TFun(TInt, TInt)))]
+        | _ ->
+          (Types.subst_context s context) @ [v, Types.gen context t]
+      in
       def_ctx tl n_ctx
   in
   let s    = read_from_file f    in
   let t, _ = Lexer.lexer s 0 0   in
+  let t, _ = List.split t        in
   let f    = Parser.parse_tops t in
   let ctx  = def_ctx f []        in
   Utils.print_context ctx;
-  Closure.decls_to_c f "" "" 0
+  let oc = open_out "out.c"      in
+  Printf.fprintf oc "%s\n" (Closure.decls_to_c f "" "" 0);
+  close_out oc

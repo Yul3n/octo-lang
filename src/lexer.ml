@@ -26,7 +26,7 @@ let rec lexer input pos act_ident =
   in
   let slex l t =
     let toks, fpos = lexer input (pos + l) act_ident in
-    t :: toks, fpos
+    (t, pos) :: toks, fpos
   in
   try
     match String.get input pos with
@@ -39,7 +39,7 @@ let rec lexer input pos act_ident =
         | len when len > act_ident ->
           let block, fpos1 = lexer input (pos + indent + 1) len   in
           let toks, fpos2  = lexer input (fpos1) act_ident in
-          BLOCK(block) :: toks, fpos2
+          (BLOCK(block), pos) :: toks, fpos2
         | _ -> unexpected_char 0 'f' (* Won't happen *)
       end
     | ' '
@@ -49,6 +49,7 @@ let rec lexer input pos act_ident =
     | '*'  -> slex 1 TIMES
     | '/'  -> slex 1 DIVIDE
     | '\\' -> slex 1 BACKSLASH
+    | '_'  -> slex 1 UNDER
     | '('  -> slex 1 LPARENT
     | ')'  -> slex 1 RPARENT
     | '-'  ->

@@ -9,7 +9,8 @@ type token
   | DIVIDE
   | ARROW
   | EQUAL
-  | BLOCK of token list
+  | UNDER
+  | BLOCK of (token * int) list
   | IDENT of string
   | INT   of int
 

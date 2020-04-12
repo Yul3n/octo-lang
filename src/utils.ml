@@ -36,8 +36,10 @@ let rec string_of_token token =
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"
+  | UNDER     -> "_"
   | INT n     -> string_of_int n
-  | BLOCK b   -> List.fold_left (^) "" (List.map string_of_token b)
+  | BLOCK b   -> let b, _ = List.split b in
+    List.fold_left (^) "" (List.map string_of_token b)
 
 let to_greek c =
       Printf.sprintf "\206%c" (Char.chr @@ Char.code c - Char.code 'A' + 145)

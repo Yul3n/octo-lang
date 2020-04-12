@@ -1,9 +1,9 @@
 -- Booleans
 
-true x y =
+true x _ =
   x
 
-false x y =
+false _ y =
   y
 
 not x =
@@ -20,3 +20,6 @@ xor x y =
  
 if c t f =
   c t f
+
+main =
+  if false 1 4

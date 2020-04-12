@@ -16,6 +16,9 @@ let rec parse_args tokens =
   | IDENT v :: tl ->
     let vars, tok = (parse_args tl) in
     v :: vars, tok
+  | UNDER :: tl   ->
+    let vars, tok = (parse_args tl) in
+    "" :: vars, tok
   | _             -> [], tokens
 
 let rec wrap_lam vals expr =
@@ -104,9 +107,10 @@ let rec parse_expr tokens exprs =
     let expr, ntl = parse_rparent tl [] in
     exprs @ [expr], ntl
   | WHERE :: BLOCK(bl) :: tl          ->
+    let b, _ = List.split bl      in
     let lst  = Utils.last exprs   in
     let fsts = Utils.firsts exprs in
-    fsts @ [fst (parse_equ bl lst)], tl
+    fsts @ [fst (parse_equ b lst)], tl
   | WHERE :: tl ->
     let lst   = Utils.last exprs   in
     let w, tl = parse_equ tl lst   in
@@ -129,6 +133,7 @@ let rec parse_tops tokens =
       let vars, tl = parse_args tl in
       match tl with
         EQUAL :: BLOCK b :: tl ->
+        let b, _ = List.split b in
         let e = parse_all b [] in
         Decl (v, wrap_lam (List.rev vars ) e) :: parse_tops tl
       | _                      -> parse_error "Expected a function declaration"
