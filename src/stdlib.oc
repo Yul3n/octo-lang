@@ -17,7 +17,6 @@ or x y =
 
 xor x y =
   x (not y) y
- 
+
 if c t f =
   c t f
-  -- zd

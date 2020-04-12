@@ -9,5 +9,5 @@
 ** TODO Boolean Type
 ** TODO Fixed point combinator
 * Tooling
-** TODO GNU/Emacs syntax highlighting mode
+** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs
