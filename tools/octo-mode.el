@@ -10,10 +10,15 @@
     ("\n\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)=" . (2 font-lock-variable-name-face))
     ("\n\\([a-zA-Z]*\\).*=" . (1 font-lock-function-name-face))))
 
-
 (define-derived-mode octo-mode fundamental-mode "octo"
   "major mode for editing octo language code."
-  (setq font-lock-defaults '(octo-highlights)))
+  (setq comment-add "-- "
+        comment-style "-- "
+        comment-styles "-- "
+        comment-start "-- "
+        comment-end ""
+        comment-auto-fill-only-comments t
+        font-lock-defaults '(octo-highlights)))
 
 (provide 'octo-mode)
 ;;; octo-mode ends here

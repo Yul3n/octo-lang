@@ -63,7 +63,7 @@ let print_scheme (Forall(v, t)) =
 
 let print_context ctx =
   let print_ctx_elem (name, sch) =
-    Printf.printf "//%s: " name;
+    Printf.printf "%s: " name;
     print_scheme sch
   in
   List.iter (fun x -> print_ctx_elem x; print_newline()) ctx

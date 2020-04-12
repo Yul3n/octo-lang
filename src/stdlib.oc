@@ -20,6 +20,4 @@ xor x y =
  
 if c t f =
   c t f
-
-main =
-  if false 1 4
+  -- zd
