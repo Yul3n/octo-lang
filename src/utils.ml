@@ -18,6 +18,12 @@ let rec snd_map f l =
     []               -> []
   | (fst, snd) :: tl -> (fst, f snd) :: snd_map f tl
 
+let rec assoc_all l key =
+  match l with
+    []                        -> []
+  | (k, v) :: tl when k = key -> v :: assoc_all tl key
+  | _ :: tl                   -> assoc_all tl key
+
 
 (*
  * Printing and error reporting functions
@@ -31,13 +37,15 @@ let rec string_of_token token =
   | TIMES     -> "*"
   | DIVIDE    -> "/"
   | ARROW     -> "->"
+  | PIPE      -> "|"
+  | TYPE      -> "type"
   | IDENT v   -> v
   | WHERE     -> "where"
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"
   | UNDER     -> "_"
-  | INT n     -> string_of_int n
+  | NUM n     -> string_of_int n
   | BLOCK b   -> let b, _ = List.split b in
     List.fold_left (^) "" (List.map string_of_token b)
 
@@ -45,10 +53,10 @@ let to_greek c =
       Printf.sprintf "\206%c" (Char.chr @@ Char.code c - Char.code 'A' + 145)
 
 let rec string_of_type t =
-    match t with
-      TInt        -> "int"
-    | TVar v      -> to_greek (Char.chr (Char.code 'a' + v))
-    | TFun (f, t) -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
+  match t with
+    TVar v      -> to_greek (Char.chr (Char.code 'a' + v))
+  | TFun (f, t) -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
+  | TOth v      -> v
 
 let print_scheme (Forall(v, t)) =
   begin

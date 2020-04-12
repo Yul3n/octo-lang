@@ -7,7 +7,7 @@ exception Type_error of string
 (* Return the list of all free type variables in the type t. *)
 let rec ftv t =
   match t with
-    TInt        -> []
+    TOth  _     -> []
   | TVar v      -> [v]
   | TFun (l, r) -> (ftv l) @ (ftv r)
 
@@ -28,7 +28,7 @@ let rec app_subst subst ty =
       | _ :: tl                          -> findvar tl
     in
     findvar subst
-  | TInt                -> TInt
+  | TOth v              -> TOth v
   | TFun (ltype, rtype) -> TFun ((app_subst subst ltype), (app_subst subst rtype))
 
 (* Apply a substitution to a scheme by ignoring bound variables. *)
@@ -84,7 +84,7 @@ let rec unify t1 t2 =
     | _                                -> [var, t]
   in
   match t1, t2 with
-    TInt, TInt                   -> []
+    TOth "int", TOth "int"                   -> []
   | TFun (l1, r1), TFun (l2, r2) ->
     let sub1 = unify l1 l2 in
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
@@ -101,7 +101,7 @@ let rec infer expr context nvar =
     let tmp_ctx      = (var, (Forall ([], var_t))) :: context in
     let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)      in
     sub, TFun ((app_subst sub var_t), body_t), nvar
-  | Num _                   -> [], TInt, nvar
+  | Num _                   -> [], TOth "int", nvar
   | Var var                 ->
     begin
       match List.assoc_opt var context with
@@ -118,9 +118,9 @@ let rec infer expr context nvar =
     fsub, (app_subst sub3 res_t), nvar
   | Binop (lval, _, rval)   ->
     let ls1, lt, nvar = infer lval context nvar in
-    let ls2           = unify lt TInt           in
+    let ls2           = unify lt (TOth "int")   in
     let ls3           = compose_subst ls2 ls1   in
     let rs1, rt, nvar = infer rval (subst_context ls3 context) nvar in
-    let rs2           = unify rt TInt           in
-    compose_subst rs2 (compose_subst rs1 ls3), TInt, nvar
+    let rs2           = unify rt (TOth "int")   in
+    compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar
   | _ -> raise (Type_error "shouldn't append!")

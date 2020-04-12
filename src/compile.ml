@@ -18,9 +18,9 @@ let compile f =
       match v with
           "main" ->
           (* The main function should be of type int -> int *)
-          let s2 = Types.unify t (TFun(TInt, TInt)) in
+          let s2 = Types.unify t (TFun(TOth "int", TOth "int")) in
           (Types.subst_context (Types.compose_subst s s2) context) @
-          [v, Forall([], (TFun(TInt, TInt)))]
+          [v, Forall([], (TFun(TOth "int", TOth "int")))]
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in

@@ -27,6 +27,18 @@ let rec wrap_lam vals expr =
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
 let rec parse_expr tokens exprs =
+  let rec parse_type tokens t =
+    let b, tl =
+      match tokens with
+        IDENT v :: tl -> (v, t), tl
+      | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
+      | []            -> parse_error "Empty type declaration."
+    in
+    match tl with
+      PIPE :: tl -> let n, tl = (parse_type tl t) in
+      b :: n, tl
+    | _ -> [b], tl
+  in
   let rec parse_equ tokens body =
     match tokens with
       IDENT v :: tl ->
@@ -36,11 +48,11 @@ let rec parse_expr tokens exprs =
           EQUAL :: tl ->
           let e, tl  = parse_expr tl [] in
           parse_equ tl (App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)))
-        | tok :: _ -> parse_error ("Unexpected token :" ^ (Utils.string_of_token tok))
+        | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
     end
     | []            -> body, []
-    | tok :: _      -> parse_error ("Unexpected token :" ^ (Utils.string_of_token tok))
+    | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   let rec parse_mul tokens lval =
     let nval, ntl =
@@ -85,7 +97,7 @@ let rec parse_expr tokens exprs =
       | []          -> parse_error ("Lambda function without body")
     end
   | IDENT var :: tl -> exprs @ [Var var], tl
-  | INT num :: tl   -> exprs @ [Num num], tl
+  | NUM num :: tl   -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
     let lst = Utils.last exprs           in
     let expr, ntl = parse_add tokens lst in
@@ -106,7 +118,7 @@ let rec parse_expr tokens exprs =
     in
     let expr, ntl = parse_rparent tl [] in
     exprs @ [expr], ntl
-  | WHERE :: BLOCK(bl) :: tl          ->
+  | WHERE :: BLOCK(bl) :: tl ->
     let b, _ = List.split bl      in
     let lst  = Utils.last exprs   in
     let fsts = Utils.firsts exprs in
@@ -116,6 +128,14 @@ let rec parse_expr tokens exprs =
     let w, tl = parse_equ tl lst   in
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
+  | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl ->
+    let b, _     = List.split bl in
+    let types, t = parse_type b (TOth v) in
+    begin
+      match t with
+        [] -> exprs @ [TDef types], tl
+      | _  -> parse_error "Invalid type declaration."
+    end
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
 
 let rec parse_all tokens exprs =

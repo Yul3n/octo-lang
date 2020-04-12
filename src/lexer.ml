@@ -52,6 +52,7 @@ let rec lexer input pos act_ident =
     | '_'  -> slex 1 UNDER
     | '('  -> slex 1 LPARENT
     | ')'  -> slex 1 RPARENT
+    | '|'  -> slex 1 PIPE
     | '-'  ->
       begin
         match String.get input (pos + 1) with
@@ -63,16 +64,15 @@ let rec lexer input pos act_ident =
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
       let len = String.length num          in
-      slex len (INT (int_of_string num))
+      slex len (NUM (int_of_string num))
     | a when is_alpha a ->
       let ide = parse_f is_ident input pos in
       let len = String.length ide          in
       let tok =
-        begin
           match ide with
             "where" -> WHERE
+          | "type"  -> TYPE
           | _       -> IDENT ide
-        end
       in
       slex len tok
     | c -> unexpected_char pos c
