@@ -117,7 +117,11 @@ let rec parse_expr tokens exprs =
     let w, tl = parse_equ tl lst   in
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
+  | CASE :: IDENT v :: OF :: BLOCK b ->
+    let rec parse_case tokens =
+      match tokens with
 
+    in
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
 
 let rec parse_all tokens exprs =

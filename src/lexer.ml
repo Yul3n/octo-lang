@@ -6,7 +6,7 @@ let rec lexer input pos act_ident =
   let unexpected_char pos chr =
     let l, r = Utils.get_pos input 1 0 0 pos in
     raise (Syntax_error ("Unexpected character: '" ^ (String.make 1 chr) ^ "', line " ^
-                         (string_of_int l) ^ ", character " ^ string_of_int r))
+                         (string_of_int l) ^ ", character " ^ string_of_int (r - 1)))
   in
   let is_digit chr = (Char.code('0') <= Char.code chr) &&
                      (Char.code('9') >= Char.code chr)
@@ -72,6 +72,8 @@ let rec lexer input pos act_ident =
           match ide with
             "where" -> WHERE
           | "type"  -> TYPE
+          | "case"  -> CASE
+          | "of"    -> OF
           | v       ->
             if (Char.code (String.get v 0) >= Char.code('a'))
             then IDENT ide

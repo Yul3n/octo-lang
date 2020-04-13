@@ -123,4 +123,20 @@ let rec infer expr context nvar =
     let rs1, rt, nvar = infer rval (subst_context ls3 context) nvar in
     let rs2           = unify rt (TOth "int")   in
     compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar
+  | Case (cases)            ->
+    let rec unify_lst lst nvar t ctx subst =
+      match lst with
+        []       -> t, nvar, subst
+      | hd :: tl ->
+        let tmpctx       = subst_context subst ctx in
+        let s1, tt, nvar = infer hd tmpctx nvar    in
+        let s2           = unify tt t              in
+        let sf           = compose_subst s1 s2     in
+        unify_lst tl nvar t ctx (compose_subst subst sf)
+    in
+    let patterns, exprs = List.split cases in
+    let pt, nvar, s1    = unify_lst patterns (nvar + 1) (TVar nvar) context [] in
+    let tmp_ctx         = subst_context s1 context in
+    let et, nvar, s2    = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] in
+    compose_subst s2 s1, TFun (pt, et), nvar
   | _ -> raise (Type_error "shouldn't append!")

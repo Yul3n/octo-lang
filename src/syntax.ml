@@ -1,5 +1,7 @@
 type token
   = WHERE
+  | CASE
+  | OF
   | BACKSLASH
   | PIPE
   | TYPE
@@ -35,6 +37,7 @@ type expr
   | Binop  of expr * op * expr
   | Num    of int
   | IndVar of int
+  | Case   of (expr * expr) list
 
 type scheme
   = Forall of int list * expr_t

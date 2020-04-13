@@ -36,6 +36,8 @@ let rec string_of_token token =
   | MINDE v
   | IDENT v   -> v
   | WHERE     -> "where"
+  | CASE      -> "case"
+  | OF        -> "of"
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"
