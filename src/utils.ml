@@ -18,12 +18,6 @@ let rec snd_map f l =
     []               -> []
   | (fst, snd) :: tl -> (fst, f snd) :: snd_map f tl
 
-let rec assoc_all l key =
-  match l with
-    []                        -> []
-  | (k, v) :: tl when k = key -> v :: assoc_all tl key
-  | _ :: tl                   -> assoc_all tl key
-
 
 (*
  * Printing and error reporting functions

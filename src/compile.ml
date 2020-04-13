@@ -9,9 +9,9 @@ let read_from_file f =
   Bytes.unsafe_to_string s
 
 let compile f =
-  let rec def_ctx decls context =
+  let rec def_ctx decls context types nd =
     match decls with
-      [] -> context
+      [] -> context, types, nd
     | Decl(v, body) :: tl ->
       let s, t, _ = Types.infer body context 0 in
       let n_ctx  =
@@ -24,18 +24,36 @@ let compile f =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx
+      def_ctx tl n_ctx types nd
     | TDef t :: tl ->
-      def_ctx tl (context @ t)
+      let v =
+        match snd (List.hd t) with
+          Forall ([], (TOth v)) -> v
+        | _ -> raise (Invalid_argument "Shouldn't happend")
+      in
+      let n, _ = List.split t in
+      let s    = "  enum {" ^
+                 (List.fold_left (fun x y -> x ^ ", _" ^ y)
+                    "DUMB" (List.map String.uppercase_ascii n)) ^
+                 "} " ^ v ^ ";" in
+      let fn =
+        Printf.sprintf
+          "Value make_%s(int val){
+          Value n;
+          n.%s = val;
+          return (n);
+}" v v
+      in
+      def_ctx tl (context @ t) (types ^ s) (nd ^ fn)
   in
-  let s    = read_from_file f    in
-  let t, _ = Lexer.lexer s 0 0   in
-  let t, _ = List.split t        in
-  let f    = Parser.parse_tops t in
-  let ctx  = def_ctx f []        in
-  Utils.print_context ctx;
+  let s       = read_from_file f    in
+  let t, _    = Lexer.lexer s 0 0   in
+  let t, _    = List.split t        in
+  let f       = Parser.parse_tops t in
+  let c, t, n = def_ctx f [] "" ""  in
+  Utils.print_context c;
   let oc = open_out "out.c"      in
-  Printf.fprintf oc "%s\n" (Closure.decls_to_c f "" "" 0);
+  Printf.fprintf oc "%s\n" (Closure.decls_to_c f "" "" 0 c);
   close_out oc;
   let oc = open_out "core.h"     in
-  Printf.fprintf oc "%s\n" (Core.core_pre ^ Core.core_seq)
+  Printf.fprintf oc "%s\n" (Core.core_pre ^ t ^ Core.core_seq ^ n)

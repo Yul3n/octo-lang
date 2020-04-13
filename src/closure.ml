@@ -51,7 +51,7 @@ let rec to_closure expr =
   | Lambda(_, b)    -> Closure (free expr 1, to_closure b)
   | App (l, r)      -> ClosApp (to_closure l, to_closure r)
 
-let rec closure_to_c clo nlam env =
+let rec closure_to_c clo nlam env ctx =
   match clo with
     CloNum n         -> Printf.sprintf "make_int(%d)" n, "", "", nlam, env
   | CloVar n         ->
@@ -61,22 +61,29 @@ let rec closure_to_c clo nlam env =
       | n -> Printf.sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
   | ClosApp (f, arg) ->
-    let s1, nf, p1, nlam, nv = closure_to_c f nlam env in
+    let s1, nf, p1, nlam, nv = closure_to_c f nlam env ctx in
     let n = Printf.sprintf "l%d" nlam in
-    let s2, na, p2, nlam, v  = closure_to_c arg nlam (n ^ ".clo.env") in
+    let s2, na, p2, nlam, v  = closure_to_c arg nlam (n ^ ".clo.env") ctx in
     n, nf ^ na, p1 ^ (Printf.sprintf "%s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2)
                 ^ p2 , nlam + 1, v
   | CloGVar v        ->
-    Printf.sprintf "%s" v, "", "", nlam, env
+    begin
+      match Char.code (String.get v 1) with
+        c when c >= (Char.code 'a') -> v
+      | _ ->
+        match List.assoc (String.sub v 1 ((String.length v) - 1)) ctx with
+          Forall ([], TOth v2) -> "make_" ^ v2 ^ "(" ^ (String.uppercase_ascii v) ^ ")"
+        | _                   -> raise (Invalid_argument "shouldn't happened")
+    end, "", "", nlam, env
   | Closure (_, body) ->
     let n = Printf.sprintf "l%d" nlam in
-    let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" in
+    let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
      %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
     (Printf.sprintf "%s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
 
-let rec decls_to_c decls funs body nlam =
+let rec decls_to_c decls funs body nlam ctx =
   match decls with
     [] ->
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
@@ -97,15 +104,15 @@ let rec decls_to_c decls funs body nlam =
     match hd with
       Decl (v, b) when v = "main"->
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-          nlam "tenv"
+          nlam "tenv" ctx
       in
       decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nreturn(" ^
-                                 nbody ^ ").clo.lam(NULL, n, 0).n.value;\n") nlam
+                                 nbody ^ ").clo.lam(NULL, n, 0).n.value;\n") nlam ctx
     | Decl (v, b) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-          nlam "tenv"
+          nlam "tenv" ctx
       in
       let f = Printf.sprintf "Value _%s;\n" v in
-      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn))  nlam
+      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn)) nlam ctx
     | _           ->
-      decls_to_c tl funs body nlam
+      decls_to_c tl funs body nlam ctx
