@@ -34,10 +34,10 @@ type expr
   | Binop  of expr * op * expr
   | Num    of int
   | IndVar of int
-  | TDef   of (string * expr_t) list
 
 type fun_decl
   = Decl of string * expr
+  | TDef   of (string * expr_t) list
 
 type scheme
   = Forall of int list * expr_t

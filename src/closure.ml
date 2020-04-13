@@ -1,8 +1,9 @@
 open Syntax
 
-let pr = "Value *tenv = malloc((len + 1) * sizeof(Value));
-     memcpy (tenv + 1, env, len * sizeof(Value));
-     *tenv = n;\n"
+let pr = "
+        Value *tenv = malloc((len + 1) * sizeof(Value));
+        memcpy (tenv + 1, env, len * sizeof(Value));
+        *tenv = n;\n"
 
 type closure
   = CloVar  of int
@@ -106,3 +107,5 @@ let rec decls_to_c decls funs body nlam =
       in
       let f = Printf.sprintf "Value _%s;\n" v in
       decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn))  nlam
+    | _           ->
+      decls_to_c tl funs body nlam
