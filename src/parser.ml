@@ -129,7 +129,7 @@ let rec parse_expr tokens exprs =
       match pr with
        (* Check if the pattern is a variable that should be bound.*)
         Var v2 when Char.code (String.get v2 0) >= Char.code 'a' ->
-        pr, (App(Lambda (v2, reduce e), Var v)), tl
+        Var v, (App(Lambda (v2, reduce e), Var v)), tl
       | pr ->
         pr, reduce e, tl
     in

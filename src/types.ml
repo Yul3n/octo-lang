@@ -77,20 +77,20 @@ let gen env t =
 let rec unify t1 t2 =
   let bind var t =
     match var with
-      v when TVar v = t                -> []
+      v when TVar v = t -> []
     | v when List.mem v (ftv t) = true ->
       raise (Type_error ("Occurs check failed: infinite datatype, can't unify : " ^
                (string_of_type t1) ^ " and " ^ (string_of_type t2)))
     | _                                -> [var, t]
   in
   match t1, t2 with
-    TOth "int", TOth "int"                   -> []
+    TOth _, TOth _ -> []
   | TFun (l1, r1), TFun (l2, r2) ->
     let sub1 = unify l1 l2 in
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
     compose_subst sub1 sub2
-  | t, TVar v | TVar v, t        -> bind v t
-  | t1, t2                       ->
+  | t, TVar v | TVar v, t -> bind v t
+  | t1, t2 ->
     raise (Type_error ("Can't unify types: " ^ (string_of_type t1) ^ " and "
                        ^ (string_of_type t2)))
 
@@ -131,13 +131,13 @@ let rec infer expr context nvar =
         let tmpctx       = subst_context subst ctx in
         let s1, tt, nvar = infer hd tmpctx nvar    in
         let s2           = unify tt t              in
-        let sf           = compose_subst s1 s2     in
-        unify_lst tl nvar t ctx (compose_subst subst sf)
+        let sf           = compose_subst s2 s1     in
+        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf)
     in
     let patterns, exprs = List.split cases in
     let pt, nvar, s1    = unify_lst patterns (nvar + 1) (TVar nvar) context [] in
     let tmp_ctx         = subst_context s1 context in
     let et, nvar, s2    = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] in
     let sf              = compose_subst s2 s1 in
-    sf, TFun (app_subst sf pt, app_subst sf et), nvar
+    sf, TFun (app_subst s1 pt, app_subst s2 et), nvar
   | _ -> raise (Type_error "shouldn't append!")
