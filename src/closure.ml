@@ -11,6 +11,7 @@ type closure
   | Closure of int list * closure
   | ClosApp of closure * closure
   | CloGVar of string
+  | CloCase of (closure * closure) list
 
 exception Error of string
 
@@ -23,6 +24,8 @@ let rec free e s =
   | IndVar n when n >= s -> [n]
   | IndVar _             -> []
   | Lambda(_, body)      -> free body (s + 1)
+  | Case c               -> let _, exps = List.split c in
+    List.fold_left (@) [] (List.map (fun x -> free x s) exps)
 
 let rec deB e (v, n) =
   match e with
@@ -30,9 +33,10 @@ let rec deB e (v, n) =
   | Var _ as v         -> v
   | Lambda (x, body)   -> Lambda ("", deB (deB body (v, n + 1)) (x, 1))
   | App (l, r)         -> App (deB l (v, n), deB r (v, n))
+  | Num _ as n         -> n
   | IndVar _ as n      -> n
   | Binop(l, o, r)     -> Binop (deB l (v, n), o, deB r (v, n))
-  | Num _ as n         -> n
+  | Case c             -> Case (Utils.snd_map (fun x -> deB x (v, n)) c)
 
 let rec to_closure expr =
   match expr with
@@ -50,6 +54,7 @@ let rec to_closure expr =
     ClosApp (ClosApp (CloGVar f, to_closure l), to_closure r)
   | Lambda(_, b)    -> Closure (free expr 1, to_closure b)
   | App (l, r)      -> ClosApp (to_closure l, to_closure r)
+  | _ -> raise Not_found
 
 let rec closure_to_c clo nlam env ctx =
   match clo with
@@ -82,6 +87,7 @@ let rec closure_to_c clo nlam env ctx =
      %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
     (Printf.sprintf "%s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
+  | _ -> raise Not_found
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with

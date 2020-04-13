@@ -117,11 +117,30 @@ let rec parse_expr tokens exprs =
     let w, tl = parse_equ tl lst   in
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
-  | CASE :: IDENT v :: OF :: BLOCK b ->
-    let rec parse_case tokens =
-      match tokens with
-
+  | CASE :: IDENT v :: OF :: BLOCK bl :: tl ->
+    let parse_case tokens =
+      let p, tl = parse_expr tokens [] in
+      let e, tl =
+      match tl with
+          ARROW :: tl -> parse_expr tl []
+        | _ -> parse_error "Invalid pattern matching"
+      in
+      let pr = reduce p in
+      match pr with
+       (* Check if the pattern is a variable that should be bound.*)
+        Var v2 when Char.code (String.get v2 0) >= Char.code 'a' ->
+        pr, (App(Lambda (v2, reduce e), Var v)), tl
+      | pr ->
+        pr, reduce e, tl
     in
+    let rec parse_cases tokens =
+      match tokens with
+        [] -> []
+      | l  -> let p, e, tl = parse_case l in
+        (p, e) :: parse_cases tl
+    in
+    let b, _ = List.split bl in
+    exprs @ [App(Case(parse_cases b), Var v)], tl
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
 
 let rec parse_all tokens exprs =

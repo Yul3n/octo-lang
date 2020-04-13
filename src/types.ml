@@ -138,5 +138,6 @@ let rec infer expr context nvar =
     let pt, nvar, s1    = unify_lst patterns (nvar + 1) (TVar nvar) context [] in
     let tmp_ctx         = subst_context s1 context in
     let et, nvar, s2    = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] in
-    compose_subst s2 s1, TFun (pt, et), nvar
+    let sf              = compose_subst s2 s1 in
+    sf, TFun (app_subst sf pt, app_subst sf et), nvar
   | _ -> raise (Type_error "shouldn't append!")
