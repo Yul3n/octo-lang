@@ -84,6 +84,7 @@ let rec parse_expr tokens exprs =
       | tok :: _    -> parse_error ("Unexpected token :" ^ (Utils.string_of_token tok))
       | []          -> parse_error ("Lambda function without body")
     end
+  | MINDE var :: tl
   | IDENT var :: tl -> exprs @ [Var var], tl
   | NUM num :: tl   -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
@@ -143,7 +144,7 @@ let rec parse_tops tokens =
     let rec parse_type tokens t =
       let b, tl =
         match tokens with
-          IDENT v :: tl -> (v, t), tl
+          MINDE v :: tl -> (v, t), tl
         | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []            -> parse_error "Empty type declaration."
       in
@@ -153,7 +154,7 @@ let rec parse_tops tokens =
       | _ -> [b], tl
     in
     let b, _     = List.split bl in
-    let types, t = parse_type b (TOth v) in
+    let types, t = parse_type b (Forall([], (TOth v))) in
     begin
       match t with
         [] -> TDef types :: parse_tops tl

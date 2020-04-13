@@ -39,6 +39,7 @@ let rec string_of_token token =
   | ARROW     -> "->"
   | PIPE      -> "|"
   | TYPE      -> "type"
+  | MINDE v
   | IDENT v   -> v
   | WHERE     -> "where"
   | BACKSLASH -> "\\"

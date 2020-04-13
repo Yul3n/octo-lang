@@ -14,6 +14,7 @@ type token
   | UNDER
   | BLOCK of (token * int) list
   | IDENT of string
+  | MINDE of string
   | NUM   of int
 
 type op
@@ -35,9 +36,9 @@ type expr
   | Num    of int
   | IndVar of int
 
-type fun_decl
-  = Decl of string * expr
-  | TDef   of (string * expr_t) list
-
 type scheme
   = Forall of int list * expr_t
+
+type fun_decl
+  = Decl of string * expr
+  | TDef of (string * scheme) list

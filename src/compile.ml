@@ -25,6 +25,8 @@ let compile f =
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
       def_ctx tl n_ctx
+    | TDef t :: tl ->
+      def_ctx tl (context @ t)
   in
   let s    = read_from_file f    in
   let t, _ = Lexer.lexer s 0 0   in

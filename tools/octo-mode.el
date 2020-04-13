@@ -5,7 +5,7 @@
 ;;; Code:
 
 (defconst octo-highlights
-  '(("where\\|type\\|int"                . font-lock-keyword-face)
+  '(("where\\|type\\|int\\|case\\|of"    . font-lock-keyword-face)
     ("--.*\n"                            . font-lock-comment-face)
     ("\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)=" . (2 font-lock-variable-name-face))
     ("\\([a-zA-Z]*\\).*="                . (1 font-lock-function-name-face))))
@@ -37,8 +37,8 @@
                  (setq b (point)) ; Get the indentation level of the previous line.
                  (skip-chars-forward " ")
                  (setq e (point))
-                 (if (looking-at ".*where\n") ; Add a level of indentation after the
-                     (progn                   ; keyword where.
+                 (if (looking-at ".*where\n\\|.*case.*of\n")
+                     (progn
                        (forward-line 1)
                        (setq curindent (+ (- e b) 2)))
                    (progn

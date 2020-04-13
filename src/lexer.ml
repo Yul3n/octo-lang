@@ -72,7 +72,10 @@ let rec lexer input pos act_ident =
           match ide with
             "where" -> WHERE
           | "type"  -> TYPE
-          | _       -> IDENT ide
+          | v       ->
+            if (Char.code (String.get v 0) >= Char.code('a'))
+            then IDENT ide
+            else MINDE ide
       in
       slex len tok
     | c -> unexpected_char pos c
