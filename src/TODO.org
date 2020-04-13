@@ -5,6 +5,7 @@
 ** TODO Custom datatypes
 ** TODO Pattern matching
 ** TODO Lists
+** TODO Fix memory leaks in the C code
 * Standard library
 ** TODO Boolean Type
 ** TODO Fixed point combinator

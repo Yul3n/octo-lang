@@ -36,4 +36,6 @@ let compile f =
   Utils.print_context ctx;
   let oc = open_out "out.c"      in
   Printf.fprintf oc "%s\n" (Closure.decls_to_c f "" "" 0);
-  close_out oc
+  close_out oc;
+  let oc = open_out "core.h"     in
+  Printf.fprintf oc "%s\n" (Core.core_pre ^ Core.core_seq)
