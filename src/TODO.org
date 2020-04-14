@@ -2,13 +2,16 @@
 
 * Compiler
 ** TODO Better errors
-** TODO Custom datatypes
-** TODO Pattern matching
+** DONE Custom datatypes (basic)
+** DONE Pattern matching
 ** TODO Lists
 ** TODO Fix memory leaks in the C code
+** TODO More syntaxic sugar
+** TODO Floats
 * Standard library
-** TODO Boolean Type
+** DONE Boolean Type
 ** TODO Fixed point combinator
+** TODO Mathematic operations
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs

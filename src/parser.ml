@@ -72,7 +72,8 @@ let rec parse_expr tokens exprs =
       parse_mul ntl nval
     | _                        -> nval, ntl
   in
-  match tokens with
+  let e, tl =
+    match tokens with
     [] -> exprs, []
   | BACKSLASH :: tl ->
     let vars, tl = parse_args tl in
@@ -142,6 +143,14 @@ let rec parse_expr tokens exprs =
     let b, _ = List.split bl in
     exprs @ [App(Case(parse_cases b), Var v)], tl
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
+  in
+  match tl with
+    PLUS   :: _
+  | MINUS  :: _
+  | TIMES  :: _
+  | DIVIDE :: _
+  | WHERE  :: _ -> parse_expr tl e
+  | _           -> e, tl
 
 let rec parse_all tokens exprs =
   match tokens with

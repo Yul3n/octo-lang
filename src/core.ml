@@ -83,6 +83,36 @@ dif (Value *env, Value n, int len)
   return (make_closure(lambda_dif, tenv, len + 1));
 }
 
+Value
+lambda_div(Value *env, Value n)
+{
+  return make_int((*env)._int / n._int);
+}
+
+Value
+dv (Value *env, Value n, int len)
+{
+  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_div, tenv, len + 1));
+}
+
+Value
+lambda_tim(Value *env, Value n)
+{
+  return make_int(((*env)._int) * (n._int));
+}
+
+Value
+tim (Value *env, Value n, int len)
+{
+  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_tim, tenv, len + 1));
+}
+
 #endif // __CORE_H_
 
 "

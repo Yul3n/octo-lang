@@ -148,7 +148,8 @@ let rec decls_to_c decls funs body nlam ctx =
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
-    "#include \"core.h\"\n#include <stdlib.h>\nValue suml;\nValue difl;\n" ^ s ^
+    "#include \"core.h\"\n#include <stdlib.h>\nValue suml;\nValue difl;
+Value divl;\nValue timl;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         Value *tenv = malloc(sizeof(Value));
@@ -156,6 +157,8 @@ let rec decls_to_c decls funs body nlam ctx =
         *tenv = n;
         int len = 0;
         difl = make_closure(dif, NULL, 0);
+        divl = make_closure(dv, NULL, 0);
+        timl = make_closure(tim, NULL, 0);
         suml = make_closure(sum, NULL, 0);\n" ^
     body ^
     "}\n"
