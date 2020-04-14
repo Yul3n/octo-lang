@@ -24,7 +24,7 @@ let compile f =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx types nd n (texpr @ [e])
+      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)])
     | TDef t :: tl ->
       let v =
         match snd (List.hd t) with
@@ -35,7 +35,7 @@ let compile f =
       let s    = "  enum {" ^
                  (List.fold_left (fun x y -> x ^ ", _" ^ y)
                     "DUMB" (List.map String.uppercase_ascii n)) ^
-                 "} " ^ v ^ ";" in
+                 "} _" ^ v ^ ";" in
       let fn =
         Printf.sprintf
           "Value make_%s(int val){
@@ -53,7 +53,7 @@ let compile f =
   let c, t, n, e = def_ctx f [] "" "" 0 [] in
   Utils.print_context c;
   let oc = open_out "out.c"      in
-  Printf.fprintf oc "%s\n" (Closure.decls_to_c f "" "" 0 c);
+  Printf.fprintf oc "%s\n" (Closure.decls_to_c e "" "" 0 c);
   close_out oc;
   let oc = open_out "core.h"     in
   Printf.fprintf oc "%s\n" (Core.core_pre ^ t ^ Core.core_seq ^ n)

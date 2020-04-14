@@ -25,7 +25,7 @@ struct Closure {
 
 union Value {
   enum   Tag t;
-  struct Int n;
+  int     _int;
 "
 
 let core_seq = "
@@ -49,8 +49,7 @@ Value
 make_int(int n)
 {
   Value v;
-  v.n.t = INT;
-  v.n.value = n;
+  v._int = n;
   return v;
 }
 

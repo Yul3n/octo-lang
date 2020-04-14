@@ -36,7 +36,6 @@ type expr
   | App    of expr * expr
   | Binop  of expr * op * expr
   | Num    of int
-  | IndVar of int
   | Case   of (expr * expr) list
 
 type scheme
@@ -54,3 +53,6 @@ type typed_expr
   | TyNum    of int * expr_t
   | TyBinop  of typed_expr * op * typed_expr * expr_t
   | TyCase   of (typed_expr * typed_expr) list * expr_t
+
+type typed_decl
+  = TyDecl of string * typed_expr * expr_t

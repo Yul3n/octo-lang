@@ -145,4 +145,3 @@ let rec infer expr context nvar =
     let sf              = compose_subst s2 s1 in
     let t               = TFun (app_subst s1 pt, app_subst s2 et) in
     sf, t, nvar, TyCase(List.combine p e, t)
-  | _ -> raise (Type_error "shouldn't append!")
