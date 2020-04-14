@@ -144,7 +144,7 @@ let rec parse_expr tokens exprs =
     exprs @ [App(Case(parse_cases b), Var v)], tl
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
-    parse_expr b exprs
+    exprs @ [parse_all b []], tl
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
   in
   match tl with
@@ -155,7 +155,7 @@ let rec parse_expr tokens exprs =
   | WHERE  :: _ -> parse_expr tl e
   | _           -> e, tl
 
-let rec parse_all tokens exprs =
+and parse_all tokens exprs =
   match tokens with
     [] -> reduce exprs
   | tk ->
@@ -166,13 +166,30 @@ let rec parse_tops tokens =
   match tokens with
     []            -> []
   | IDENT v :: tl ->
+    let rec parse_fcase tokens v =
+      match tokens with
+        [] -> []
+      | IDENT f :: tl when f = v ->
+        (* Parse tokens until an "=" is matched. *)
+        let rec parse_equ t t' =
+          match t with
+            EQUAL :: tl -> let e, tl = parse_expr tl [] in
+            let l, ntl = parse_equ tl [] in
+            (t', reduce e) :: l, ntl
+          | hd :: tl    -> parse_equ tl (t' @ [hd])
+          | []          -> [], []
+        in
+        let e, tl = parse_equ tl []  in
+        let rec ccase e =
+        in, tl
+    in
     begin
       let vars, tl = parse_args tl in
       match tl with
         EQUAL :: BLOCK b :: tl ->
         let b, _ = List.split b in
         let e = parse_all b [] in
-        Decl (v, wrap_lam (List.rev vars ) e) :: parse_tops tl
+        Decl (v, wrap_lam (List.rev vars) e) :: parse_tops tl
       | _                      -> parse_error "Expected a function declaration"
     end
   | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl ->
