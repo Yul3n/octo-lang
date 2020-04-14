@@ -109,7 +109,8 @@ let rec closure_to_c clo nlam env ctx =
           "\ndefault : {\n" ^ n ^ "=" ^ nbody ^ ";\nbreak;}", nlam, "", ""
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "case l%d%s" nlam (type_to_c t)) ^ ":{\n" ^ n ^ " = " ^ nbody ^ "\n;break;}", nlam + 1, nf2, p4 ^ (Printf.sprintf "Value l%d = %s;\n" nlam np )
+          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s = %s;}\n"
+             np (type_to_c t) (type_to_c t) n nbody), nlam + 1, nf2, p4
         in
         p3, nf ^ nf2, p2 ^ p4, nlam, tl
     in
@@ -121,7 +122,7 @@ let rec closure_to_c clo nlam env ctx =
         cases_to_c (n ^ n2) (nf ^ nf2) (p ^ p2) nlam tl
     in
     let b, nf, p, nlam, _ = cases_to_c "" "" "" nlam c in
-    n, nf, p ^ Printf.sprintf "Value %s;\nswitch ((*(tenv))%s) {%s}" n (type_to_c t) b, nlam, env
+    n, nf, p ^ Printf.sprintf "%s" b, nlam, env
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with
