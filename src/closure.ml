@@ -96,7 +96,21 @@ let rec closure_to_c clo nlam env ctx =
       match t with
         TOth v -> "._" ^ v
       | _      -> raise (Error "invalid pattern matching")
-    let case_to_c
+    in
+    let rec case_to_c p =
+      match p with
+        []           -> ""
+      | (f, s) :: tl ->
+        let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env ctx in
+        let p3 =
+          match f with
+          CloGVar v when (Char.code (String.get v 0) >= Char.code 'a') ->
+          "default : " ^ ^ "break;"
+        | _ ->
+        in;
+
+    in
+  
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with
