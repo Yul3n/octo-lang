@@ -148,7 +148,7 @@ let rec decls_to_c decls funs body nlam ctx =
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
-    "#include \"core.h\"\n#include <stdlib.h>\nValue suml;\nValue difl;
+    "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
 Value divl;\nValue timl;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
@@ -168,8 +168,8 @@ Value divl;\nValue timl;\n" ^ s ^
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv" ctx
       in
-      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nreturn(" ^
-                                 nbody ^ ").clo.lam(NULL, n, 0)._int;\n") nlam ctx
+      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%d\\n\"," ^
+                                 nbody ^ ".clo.lam(NULL, n, 0)._int);\n return 0;") nlam ctx
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv" ctx

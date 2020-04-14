@@ -45,7 +45,7 @@
                      (forward-line 1) ; Set the indentation according to the last line
                      (setq curindent (- e b))))))))))
       (indent-line-to curindent)
-      (if (/= (point) begin)
+      (if (/= curindent actindent)
           (goto-char (- (+ curindent begin) actindent)))
       (skip-chars-forward " ")))
 
@@ -59,8 +59,7 @@
         comment-auto-fill-only-comments t
         font-lock-defaults '(octo-highlights)) ; Activate syntax highlighting
   (set (make-local-variable 'indent-line-function) 'indent-line)
-  (setq display-line-numbers t)
-  )
+  (setq display-line-numbers t))
 
 (add-to-list 'auto-mode-alist
              '("\\.oc\\'" . octo-mode)) ; Open the mode on each ".oc" file

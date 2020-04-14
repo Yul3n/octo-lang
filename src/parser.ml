@@ -142,6 +142,9 @@ let rec parse_expr tokens exprs =
     in
     let b, _ = List.split bl in
     exprs @ [App(Case(parse_cases b), Var v)], tl
+  | BLOCK bl :: tl ->
+    let b, _ = List.split bl in
+    parse_expr b exprs
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
   in
   match tl with
