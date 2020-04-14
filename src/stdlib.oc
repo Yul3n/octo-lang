@@ -1,22 +1,25 @@
 -- Booleans
 
-true x _ =
+type bool =
+  True | False
+
+iszero n =
+  case n of
+    0 -> True
+    n -> False
+
+if x y z =
+  case x of
+    True -> y
+    False -> z
+
+-- Combinators
+
+id x =
   x
 
-false _ y =
-  y
+cons x _ =
+  x
 
-not x =
-  x false true
-
-and x y =
-  x y false
-
-or x y =
-  x true y
-
-xor x y =
-  x (not y) y
-
-if c t f =
-  c t f
+main n =
+  id n

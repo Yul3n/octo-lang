@@ -9,7 +9,7 @@ type closure
   = CloVar  of int * expr_t
   | CloNum  of int * expr_t
   | Closure of int list * closure * expr_t
-  | ClosApp of closure * closure * expr_t
+  | CloApp of closure * closure * expr_t
   | CloGVar of string * expr_t
   | CloCase of (closure * closure) list * expr_t
 
@@ -51,10 +51,10 @@ let rec to_closure expr =
       | Times  -> "timl"
       | Divide -> "divl"
     in
-    ClosApp (ClosApp (CloGVar (f, (TFun (TFun (TOth "int", TOth "int"), TOth "int"))),
+    CloApp (CloApp (CloGVar (f, (TFun (TFun (TOth "int", TOth "int"), TOth "int"))),
                       to_closure l, (TFun (TOth "int", TOth "int"))), to_closure r, t)
   | TyLambda(_, b, t)   -> Closure (free expr 1, to_closure b, t)
-  | TyApp (l, r, t)     -> ClosApp (to_closure l, to_closure r, t)
+  | TyApp (l, r, t)     -> CloApp (to_closure l, to_closure r, t)
   | TyCase (c, t)       -> let p, e = List.split c in
     let cp = List.map to_closure p in
     let ce = List.map to_closure e in
@@ -69,12 +69,22 @@ let rec closure_to_c clo nlam env ctx =
         1 -> "n"
       | n -> Printf.sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
-  | ClosApp (f, arg, _) ->
+  | CloApp (f, arg, t) ->
     let s1, nf, p1, nlam, nv = closure_to_c f nlam env ctx in
     let n = Printf.sprintf "l%d" nlam in
-    let s2, na, p2, nlam, v  = closure_to_c arg nlam (n ^ ".clo.env") ctx in
-    n, nf ^ na, p1 ^ (Printf.sprintf "%s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2)
-                ^ p2 , nlam + 1, v
+    let s2, na, p2, nlam, v =
+      match t with
+        TFun (_, _) -> closure_to_c arg (nlam + 1)  (n ^ ".clo.env") ctx
+      | _ -> closure_to_c arg (nlam + 1) env ctx
+    in
+    begin
+    match f with
+      CloGVar _ ->
+      n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "%s = %s.clo.lam(tenv, %s, len + 1);\n" n s1 s2) ,
+    nlam, v
+    | _ -> n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "%s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2) ,
+    nlam, v
+           end
   | CloGVar (v, _) ->
     begin
       match Char.code (String.get v 1) with
@@ -105,11 +115,11 @@ let rec closure_to_c clo nlam env ctx =
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env ctx in
         let p3, nlam, nf2, p4 =
           match f with
-          CloGVar (v, _) when (Char.code (String.get v 0) >= Char.code 'a') ->
-          "\ndefault : {\n" ^ n ^ "=" ^ nbody ^ ";\nbreak;}", nlam, "", ""
+          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
+          Printf.sprintf "else{\n%s = %s;\n}" n nbody, nlam, "", ""
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s = %s;}\n"
+          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s = %s;\n}\n"
              np (type_to_c t) (type_to_c t) n nbody), nlam + 1, nf2, p4
         in
         p3, nf ^ nf2, p2 ^ p4, nlam, tl
