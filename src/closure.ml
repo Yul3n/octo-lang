@@ -36,7 +36,7 @@ let rec deB e (v, n) =
   | TyNum _ as n              -> n
   | TyIndVar _ as n           -> n
   | TyBinop(l, o, r, t)       -> TyBinop (deB l (v, n), o, deB r (v, n), t)
-  | TyCase (c, t)             -> TyCase (Utils.snd_map (fun x -> deB x (v, n)) c, t)
+  | TyCase (c, t)             -> TyCase (Utils.snd_map (fun x -> deB x (v, n + 1)) c, t)
 
 let rec to_closure expr =
   match expr with
@@ -122,7 +122,15 @@ let rec closure_to_c clo nlam env ctx =
         cases_to_c (n ^ n2) (nf ^ nf2) (p ^ p2) nlam tl
     in
     let b, nf, p, nlam, _ = cases_to_c "" "" "" nlam c in
-    n, nf, p ^ Printf.sprintf "%s" b, nlam, env
+    let f =
+      Printf.sprintf
+        "Value __lam%d(Value *env, Value n, int len) {
+        %s
+        %s
+        return %s;
+}" nlam pr b n
+    in
+    Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, p, nlam + 1, env
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with
