@@ -94,23 +94,34 @@ let rec closure_to_c clo nlam env ctx =
   | CloCase (c, t) ->
     let type_to_c t =
       match t with
-        TOth v -> "._" ^ v
+        TFun(TOth v, _) -> "._" ^ v
       | _      -> raise (Error "invalid pattern matching")
     in
-    let rec case_to_c p =
+    let n = Printf.sprintf "l%d" nlam in
+    let case_to_c p nlam =
       match p with
-        []           -> ""
+        []           -> "", "", "", nlam, []
       | (f, s) :: tl ->
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env ctx in
-        let p3 =
+        let p3, nlam, nf2, p4 =
           match f with
-          CloGVar v when (Char.code (String.get v 0) >= Char.code 'a') ->
-          "default : " ^ ^ "break;"
+          CloGVar (v, _) when (Char.code (String.get v 0) >= Char.code 'a') ->
+          "\ndefault : {\n" ^ n ^ "=" ^ nbody ^ ";\nbreak;}", nlam, "", ""
         | _ ->
-        in;
-
+          let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
+          (Printf.sprintf "case l%d%s" nlam (type_to_c t)) ^ ":{\n" ^ n ^ " = " ^ nbody ^ "\n;break;}", nlam + 1, nf2, p4 ^ (Printf.sprintf "Value l%d = %s;\n" nlam np )
+        in
+        p3, nf ^ nf2, p2 ^ p4, nlam, tl
     in
-  
+    let rec cases_to_c n nf p nlam l =
+      match l with
+        [] -> n, nf, p, nlam, env
+      | l  ->
+        let n2, nf2, p2, nlam, tl = case_to_c l nlam in
+        cases_to_c (n ^ n2) (nf ^ nf2) (p ^ p2) nlam tl
+    in
+    let b, nf, p, nlam, _ = cases_to_c "" "" "" nlam c in
+    n, nf, p ^ Printf.sprintf "Value %s;\nswitch ((*(tenv))%s) {%s}" n (type_to_c t) b, nlam, env
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with
@@ -136,7 +147,7 @@ let rec decls_to_c decls funs body nlam ctx =
           nlam "tenv" ctx
       in
       decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nreturn(" ^
-                                 nbody ^ ").clo.lam(NULL, n, 0).n.value;\n") nlam ctx
+                                 nbody ^ ").clo.lam(NULL, n, 0)._int;\n") nlam ctx
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv" ctx

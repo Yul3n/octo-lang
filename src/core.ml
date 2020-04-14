@@ -56,7 +56,7 @@ make_int(int n)
 Value
 lambda_sum(Value *env, Value n)
 {
-  return make_int((*env).n.value + n.n.value);
+  return make_int((*env)._int + n._int);
 }
 
 Value
@@ -71,7 +71,7 @@ sum (Value *env, Value n, int len)
 Value
 lambda_dif(Value *env, Value n)
 {
-  return make_int((*env).n.value - n.n.value);
+  return make_int((*env)._int - n._int);
 }
 
 Value

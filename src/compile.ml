@@ -40,7 +40,7 @@ let compile f =
         Printf.sprintf
           "Value make_%s(int val){
           Value n;
-          n.%s = val;
+          n._%s = val;
           return (n);
 }" v v
       in
