@@ -97,47 +97,52 @@ let rec unify t1 t2 =
 let rec infer expr context nvar =
   match expr with
     Lambda (var, body)       ->
-    let var_t        = TVar nvar                              in
-    let tmp_ctx      = (var, (Forall ([], var_t))) :: context in
-    let sub, body_t,nvar = infer body tmp_ctx (nvar + 1)      in
-    sub, TFun ((app_subst sub var_t), body_t), nvar
-  | Num _                   -> [], TOth "int", nvar
+    let var_t                = TVar nvar                              in
+    let tmp_ctx              = (var, (Forall ([], var_t))) :: context in
+    let sub, body_t, nvar, b = infer body tmp_ctx (nvar + 1)          in
+    let t                    = TFun ((app_subst sub var_t), body_t)   in
+    sub, t, nvar, TyLambda (var, b, t)
+  | Num n                   -> [], TOth "int", nvar, TyNum (n, TOth "int")
   | Var var                 ->
     begin
       match List.assoc_opt var context with
         None     -> raise (Type_error ("Use of an unbound variable:" ^ var))
       | Some sch -> let Forall(l, _) = sch in
-        [], (inst sch nvar), (nvar + List.length l)
+        let t = (inst sch nvar) in
+        [], t, (nvar + List.length l), TyVar (var, t)
     end
   | App (fn, arg)           ->
-    let res_t             = TVar nvar in
-    let sub1, fun_t, nvar = infer fn context (nvar + 1) in
-    let sub2, arg_t, nvar = infer arg (subst_context sub1 context) nvar in
-    let sub3              = unify (app_subst sub2 fun_t) (TFun (arg_t, res_t)) in
-    let fsub              = compose_subst sub3 (compose_subst sub2 sub1) in
-    fsub, (app_subst sub3 res_t), nvar
-  | Binop (lval, _, rval)   ->
-    let ls1, lt, nvar = infer lval context nvar in
-    let ls2           = unify lt (TOth "int")   in
-    let ls3           = compose_subst ls2 ls1   in
-    let rs1, rt, nvar = infer rval (subst_context ls3 context) nvar in
-    let rs2           = unify rt (TOth "int")   in
-    compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar
+    let res_t                = TVar nvar in
+    let sub1, fun_t, nvar, l = infer fn context (nvar + 1) in
+    let sub2, arg_t, nvar, r = infer arg (subst_context sub1 context) nvar in
+    let sub3                 = unify (app_subst sub2 fun_t) (TFun (arg_t, res_t)) in
+    let fsub                 = compose_subst sub3 (compose_subst sub2 sub1) in
+    let t                    = (app_subst sub3 res_t) in
+    fsub, t, nvar, TyApp (l, r, t)
+  | Binop (lval, o, rval)   ->
+    let ls1, lt, nvar, l = infer lval context nvar in
+    let ls2              = unify lt (TOth "int")   in
+    let ls3              = compose_subst ls2 ls1   in
+    let rs1, rt, nvar, r = infer rval (subst_context ls3 context) nvar in
+    let rs2              = unify rt (TOth "int")   in
+    compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar,
+    TyBinop(l, o, r, TOth "int")
   | Case (cases)            ->
-    let rec unify_lst lst nvar t ctx subst =
+    let rec unify_lst lst nvar t ctx subst exprs =
       match lst with
-        []       -> t, nvar, subst
+        []       -> t, nvar, subst, exprs
       | hd :: tl ->
-        let tmpctx       = subst_context subst ctx in
-        let s1, tt, nvar = infer hd tmpctx nvar    in
-        let s2           = unify tt t              in
-        let sf           = compose_subst s2 s1     in
-        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf)
+        let tmpctx          = subst_context subst ctx in
+        let s1, tt, nvar, e = infer hd tmpctx nvar    in
+        let s2              = unify tt t              in
+        let sf              = compose_subst s2 s1     in
+        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf) (exprs @ [e])
     in
     let patterns, exprs = List.split cases in
-    let pt, nvar, s1    = unify_lst patterns (nvar + 1) (TVar nvar) context [] in
+    let pt, nvar, s1, p = unify_lst patterns (nvar + 1) (TVar nvar) context [] [] in
     let tmp_ctx         = subst_context s1 context in
-    let et, nvar, s2    = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] in
+    let et, nvar, s2, e = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] [] in
     let sf              = compose_subst s2 s1 in
-    sf, TFun (app_subst s1 pt, app_subst s2 et), nvar
+    let t               = TFun (app_subst s1 pt, app_subst s2 et) in
+    sf, t, nvar, TyCase(List.combine p e, t)
   | _ -> raise (Type_error "shouldn't append!")

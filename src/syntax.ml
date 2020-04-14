@@ -45,3 +45,12 @@ type scheme
 type fun_decl
   = Decl of string * expr
   | TDef of (string * scheme) list
+
+type typed_expr
+  = TyLambda of string * typed_expr * expr_t
+  | TyVar    of string * expr_t
+  | TyApp    of typed_expr * typed_expr * expr_t
+  | TyIndVar of int * expr_t
+  | TyNum    of int * expr_t
+  | TyBinop  of typed_expr * op * typed_expr * expr_t
+  | TyCase   of (typed_expr * typed_expr) list * expr_t
