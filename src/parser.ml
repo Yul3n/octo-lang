@@ -168,7 +168,9 @@ let rec parse_tops tokens =
   | IDENT v :: tl ->
     begin
       match tl with
-      IDENT _ :: _ ->
+        IDENT _ :: _
+      | EQUAL :: _
+      | UNDER :: _ ->
         begin
           let vars, tl = parse_args tl in
           match tl with

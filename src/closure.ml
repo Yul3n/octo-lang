@@ -98,7 +98,7 @@ let rec closure_to_c clo nlam env ctx =
     let n = Printf.sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
+     %s" nlam pr) ^ c ^ "free(tenv);\nreturn " ^ cbody ^";}\n",
     (Printf.sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
