@@ -13,7 +13,8 @@ let compile f =
     match decls with
       [] -> context, types, nd, texpr
     | Decl(v, body) :: tl ->
-      let s, t, n, e = Types.infer body context nlam in
+      let tmp_ctx    = context @ [v, Forall([], TVar 0)] in
+      let s, t, n, e = Types.infer body tmp_ctx 1        in
       let n_ctx  =
       match v with
           "main" ->

@@ -5,6 +5,8 @@ let pr = "
         memcpy (tenv + 1, env, len * sizeof(Value));
         *tenv = n;\n"
 
+exception Error of string
+
 type closure
   = CloVar  of int * expr_t
   | CloNum  of int * expr_t
@@ -12,8 +14,6 @@ type closure
   | CloApp of closure * closure * expr_t
   | CloGVar of string * expr_t
   | CloCase of (closure * closure) list * expr_t
-
-exception Error of string
 
 let rec free e s =
   match e with
@@ -116,13 +116,13 @@ let rec closure_to_c clo nlam env ctx =
         let p3, nlam, nf2, p4 =
           match f with
           CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-          Printf.sprintf "else{\n%s = %s;\n}" n nbody, nlam, "", ""
+          Printf.sprintf "else{\n%s\n%s = %s;\n}" p2 n nbody, nlam, "", ""
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s = %s;\n}\n"
-             np (type_to_c t) (type_to_c t) n nbody), nlam + 1, nf2, p4
+          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s\n%s = %s;\n}\n"
+             np (type_to_c t) (type_to_c t) p2 n nbody), nlam + 1, nf2, p4
         in
-        p3, nf ^ nf2, p2 ^ p4, nlam, tl
+        p3, nf ^ nf2, p4, nlam, tl
     in
     let rec cases_to_c n nf p nlam l =
       match l with
@@ -175,4 +175,4 @@ Value divl;\nValue timl;\n" ^ s ^
           nlam "tenv" ctx
       in
       let f = Printf.sprintf "Value _%s;\n" v in
-      decls_to_c tl (funs ^ nf ^ f) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn)) nlam ctx
+      decls_to_c tl (funs ^ f ^ nf ) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn)) nlam ctx
