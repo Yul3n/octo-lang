@@ -29,11 +29,14 @@ type op
   | Minus
   | Times
   | Divide
+  | Cons
+  | Union
 
 type expr_t
-  = TVar of int
-  | TFun of expr_t * expr_t
-  | TOth of string
+  = TVar  of int
+  | TFun  of expr_t * expr_t
+  | TOth  of string
+  | TList of expr_t
 
 type expr
   = Var    of string
@@ -42,6 +45,7 @@ type expr
   | Binop  of expr * op * expr
   | Num    of int
   | Case   of (expr * expr) list
+  | List   of expr list
 
 type scheme
   = Forall of int list * expr_t
@@ -58,6 +62,7 @@ type typed_expr
   | TyNum    of int * expr_t
   | TyBinop  of typed_expr * op * typed_expr * expr_t
   | TyCase   of (typed_expr * typed_expr) list * expr_t
+  | TyList   of typed_expr list * expr_t
 
 type typed_decl
   = TyDecl of string * typed_expr * expr_t

@@ -11,9 +11,10 @@ type closure
   = CloVar  of int * expr_t
   | CloNum  of int * expr_t
   | Closure of int list * closure * expr_t
-  | CloApp of closure * closure * expr_t
+  | CloApp  of closure * closure * expr_t
   | CloGVar of string * expr_t
   | CloCase of (closure * closure) list * expr_t
+  | CloList of closure list * expr_t
 
 let rec free e s =
   match e with
@@ -26,6 +27,7 @@ let rec free e s =
   | TyLambda(_, body, _) -> free body (s + 1)
   | TyCase (c, _) -> let _, exps = List.split c in
     List.fold_left (@) [] (List.map (fun x -> free x s) exps)
+  | TyList (l, _) -> List.fold_left (@) [] (List.map (fun x -> free x s) l)
 
 let rec deB e (v, n) =
   match e with
@@ -37,6 +39,8 @@ let rec deB e (v, n) =
   | TyIndVar _ as n           -> n
   | TyBinop(l, o, r, t)       -> TyBinop (deB l (v, n), o, deB r (v, n), t)
   | TyCase (c, t)             -> TyCase (Utils.snd_map (fun x -> deB x (v, n + 1)) c, t)
+  | TyList (l, t)             -> let nl = List.map (fun x -> deB x (v, n)) l in
+    TyList (nl, t)
 
 let rec to_closure expr =
   match expr with
@@ -50,6 +54,8 @@ let rec to_closure expr =
       | Minus  -> "difl"
       | Times  -> "timl"
       | Divide -> "divl"
+      | Cons   -> "conl"
+      | Union  -> "unil"
     in
     CloApp (CloApp (CloGVar (f, (TFun (TFun (TOth "int", TOth "int"), TOth "int"))),
                       to_closure l, (TFun (TOth "int", TOth "int"))), to_closure r, t)
@@ -59,6 +65,7 @@ let rec to_closure expr =
     let cp = List.map to_closure p in
     let ce = List.map to_closure e in
     CloCase (List.combine cp ce, t)
+  | TyList (l, t)       -> CloList (List.map to_closure l, t)
 
 let rec closure_to_c clo nlam env ctx =
   match clo with
@@ -142,6 +149,7 @@ let rec closure_to_c clo nlam env ctx =
 }" nlam pr b
     in
     Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, p, nlam + 1, env
+  | _ -> raise Not_found
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with

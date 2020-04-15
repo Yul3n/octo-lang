@@ -26,7 +26,7 @@ let rec wrap_lam vals expr =
     []       -> expr
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
-let rec parse_expr tokens exprs =
+let rec parse_expr tokens exprs is_math =
   let rec parse_equ tokens body =
     match tokens with
       IDENT v :: tl ->
@@ -34,7 +34,7 @@ let rec parse_expr tokens exprs =
         let vars, tl = parse_args tl in
         match tl with
           EQUAL :: tl ->
-          let e, tl  = parse_expr tl [] in
+          let e, tl  = parse_expr tl [] false in
           parse_equ tl (App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)))
         | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
@@ -45,10 +45,10 @@ let rec parse_expr tokens exprs =
   let rec parse_mul tokens lval =
     let nval, ntl =
       match tokens with
-        TIMES :: tl  -> let rval, tl = parse_expr tl [] in
-        Binop (lval, Times, (reduce rval)), tl
-      | DIVIDE :: tl -> let rval, tl = parse_expr tl [] in
-        Binop (lval, Divide, reduce(rval)), tl
+        TIMES :: tl  -> let rval, tl = parse_expr tl [] false in
+        Binop (lval, Times, reduce rval), tl
+      | DIVIDE :: tl -> let rval, tl = parse_expr tl [] true in
+        Binop (lval, Divide, reduce rval), tl
       | tl           -> lval, tl
     in
     match ntl with
@@ -59,11 +59,11 @@ let rec parse_expr tokens exprs =
   let parse_add tokens lval =
     let nval, ntl =
       match tokens with
-        PLUS :: tl  -> let mul_val, tl = parse_expr tl []   in
+        PLUS :: tl  -> let mul_val, tl = parse_expr tl [] true in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
         Binop (lval, Plus, rval), ntl
-      | MINUS :: tl -> let mul_val, tl = parse_expr tl []   in
-        let rval, ntl   = parse_mul tl (reduce mul_val)     in
+      | MINUS :: tl -> let mul_val, tl = parse_expr tl [] true in
+        let rval, ntl   = parse_mul tl (reduce mul_val) in
         Binop (lval, Minus, rval), ntl
       | tl           -> lval, tl
     in
@@ -80,7 +80,7 @@ let rec parse_expr tokens exprs =
     begin
       match tl with
         ARROW :: tl ->
-        let body, tl = parse_expr tl [] in
+        let body, tl = parse_expr tl [] false in
         exprs @ [wrap_lam (List.rev vars) (reduce body)], tl
       | tok :: _    -> parse_error ("Unexpected token :" ^ (Utils.string_of_token tok))
       | []          -> parse_error ("Lambda function without body")
@@ -103,7 +103,7 @@ let rec parse_expr tokens exprs =
         RPARENT :: tl -> reduce exprs, tl
       | []            -> parse_error "Opened parenthesis without a closing one."
       | tl            ->
-        let nexpr, ntl = parse_expr tl exprs in
+        let nexpr, ntl = parse_expr tl exprs false in
         parse_rparent ntl nexpr
     in
     let expr, ntl = parse_rparent tl [] in
@@ -120,10 +120,10 @@ let rec parse_expr tokens exprs =
     fsts @ [w], tl
   | CASE :: IDENT v :: OF :: BLOCK bl :: tl ->
     let parse_case tokens =
-      let p, tl = parse_expr tokens [] in
+      let p, tl = parse_expr tokens [] false in
       let e, tl =
       match tl with
-          ARROW :: tl -> parse_expr tl []
+          ARROW :: tl -> parse_expr tl [] false
         | _ -> parse_error "Invalid pattern matching"
       in
       let pr = reduce p in
@@ -145,21 +145,50 @@ let rec parse_expr tokens exprs =
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
     exprs @ [parse_all b []], tl
+  | RBRACKET :: tl ->
+    let rec parse_list tokens =
+      match tokens with
+        []             -> parse_error "Invalid list declaration"
+      | RBRACKET :: tl -> [], tl
+      | COMMA :: tl
+      | LBRACKET :: tl ->
+        let rec parse_elem tokens exprs =
+          match tokens with
+            []            -> parse_error "Invalid list declaration"
+          | COMMA :: _
+          | RBRACKET :: _ -> reduce exprs, tokens
+          | _             -> let e, t = parse_expr tokens exprs false in
+            parse_elem t e
+        in
+        let e, tl = parse_elem tl [] in
+        let l, tl = parse_list tl    in
+        e :: l, tl
+      | t :: _         -> parse_error ("Unexpected token: " ^ Utils.string_of_token t)
+    in
+    let l, tl = parse_list tl in
+    exprs @ [List l], tl
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
   in
-  match tl with
-    PLUS   :: _
-  | MINUS  :: _
-  | TIMES  :: _
-  | DIVIDE :: _
-  | WHERE  :: _ -> parse_expr tl e
-  | _           -> e, tl
+  match is_math with
+    false ->
+    begin
+      match tl with
+        PLUS   :: _
+      | MINUS  :: _
+      | TIMES  :: _
+      | DIVIDE :: _
+      | CONS   :: _
+      | AT     :: _
+      | WHERE  :: _ -> parse_expr tl e false
+      | _           -> e, tl
+    end
+  | true ->e, tl
 
 and parse_all tokens exprs =
   match tokens with
     [] -> reduce exprs
   | tk ->
-    let nexpr, ntl = parse_expr tk exprs in
+    let nexpr, ntl = parse_expr tk exprs false in
     parse_all ntl nexpr
 
 let rec parse_tops tokens =
@@ -190,13 +219,13 @@ let rec parse_tops tokens =
                 IDENT v :: _ -> v
               | _            -> v2
             in
-            let p, tl    = parse_expr tl [] in
-            let vars, tl = parse_args tl    in
+            let p, tl    = parse_expr tl [] false in
+            let vars, tl = parse_args tl          in
             begin
               match tl with
                 EQUAL :: tl ->
-                let e, t      = parse_expr tl []   in
-                let l, tl, v2 = parse_cf t v v2    in
+                let e, t      = parse_expr tl [] false in
+                let l, tl, v2 = parse_cf t v v2        in
                 (reduce p, wrap_lam (List.rev vars) (reduce e)) :: l, tl, v2
               | _ -> parse_error "Invalid function declaration"
             end

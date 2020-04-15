@@ -3,13 +3,13 @@ open Utils
 
 exception Type_error of string
 
-
 (* Return the list of all free type variables in the type t. *)
 let rec ftv t =
   match t with
     TOth  _     -> []
   | TVar v      -> [v]
   | TFun (l, r) -> (ftv l) @ (ftv r)
+  | TList (t)   -> ftv t
 
 let ftv_sch (Forall(v, t)) =
   List.filter (fun x -> List.exists ((<>) x) v) (ftv t)
@@ -20,7 +20,7 @@ let ftv_env env =
 (* Apply the substitution subst to the type ty and return it. *)
 let rec app_subst subst ty =
   match ty with
-    TVar var            ->
+    TVar var      ->
     let rec findvar subst =
       match subst with
         []                               -> TVar var
@@ -28,8 +28,9 @@ let rec app_subst subst ty =
       | _ :: tl                          -> findvar tl
     in
     findvar subst
-  | TOth v              -> TOth v
-  | TFun (ltype, rtype) -> TFun ((app_subst subst ltype), (app_subst subst rtype))
+  | TOth v        -> TOth v
+  | TFun (lt, rt) -> TFun ((app_subst subst lt), (app_subst subst rt))
+  | TList t       -> TList (app_subst subst t)
 
 (* Apply a substitution to a scheme by ignoring bound variables. *)
 let subst_scheme subst (Forall(vars, ty)) =
@@ -94,7 +95,18 @@ let rec unify t1 t2 =
     raise (Type_error ("Can't unify types: " ^ (string_of_type t1) ^ " and "
                        ^ (string_of_type t2)))
 
-let rec infer expr context nvar =
+let rec unify_lst lst nvar t ctx subst exprs =
+      match lst with
+        []       -> t, nvar, subst, exprs
+      | hd :: tl ->
+        let tmpctx          = subst_context subst ctx in
+        let s1, tt, nvar, e = infer hd tmpctx nvar    in
+        let s2              = unify tt t              in
+        let sf              = compose_subst s2 s1     in
+        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf) (exprs @ [e])
+   
+
+and infer expr context nvar =
   match expr with
     Lambda (var, body)       ->
     let var_t                = TVar nvar                              in
@@ -127,17 +139,7 @@ let rec infer expr context nvar =
     let rs2              = unify rt (TOth "int")   in
     compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar,
     TyBinop(l, o, r, TOth "int")
-  | Case (cases)            ->
-    let rec unify_lst lst nvar t ctx subst exprs =
-      match lst with
-        []       -> t, nvar, subst, exprs
-      | hd :: tl ->
-        let tmpctx          = subst_context subst ctx in
-        let s1, tt, nvar, e = infer hd tmpctx nvar    in
-        let s2              = unify tt t              in
-        let sf              = compose_subst s2 s1     in
-        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf) (exprs @ [e])
-    in
+  | Case cases              ->
     let patterns, exprs = List.split cases in
     let pt, nvar, s1, p = unify_lst patterns (nvar + 1) (TVar nvar) context [] [] in
     let tmp_ctx         = subst_context s1 context in
@@ -145,3 +147,6 @@ let rec infer expr context nvar =
     let sf              = compose_subst s2 s1 in
     let t               = TFun (app_subst s1 pt, app_subst s2 et) in
     sf, t, nvar, TyCase(List.combine p e, t)
+  | List l                  ->
+    let t, nvar, s, e = unify_lst l (nvar + 1) (TVar nvar) context [] [] in
+    s, t, nvar, TyList(e, t)

@@ -19,9 +19,7 @@ let rec snd_map f l =
   | (fst, snd) :: tl -> (fst, f snd) :: snd_map f tl
 
 
-(*
- * Printing and error reporting functions
- *)
+(* Printing and error reporting functions *)
 
 let rec string_of_token token =
   match token with
@@ -59,6 +57,7 @@ let rec string_of_type t =
     TVar v      -> to_greek (Char.chr (Char.code 'a' + v))
   | TFun (f, t) -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
   | TOth v      -> v
+  | TList t     -> "(" ^ string_of_type t ^ "list)"
 
 let print_scheme (Forall(v, t)) =
   begin
