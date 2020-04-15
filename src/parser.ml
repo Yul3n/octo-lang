@@ -72,6 +72,21 @@ let rec parse_expr tokens exprs is_math =
       parse_mul ntl nval
     | _                        -> nval, ntl
   in
+  let rec parse_cons tokens =
+    let e, tl = parse_expr tokens [] true in
+    let l, tl = parse_add tl (reduce e)   in
+    match tl with
+      CONS :: tl -> let r, tl = parse_cons tl in
+      Binop(l, Cons, r), tl
+    | tl         -> l, tl
+  in
+  let rec parse_union tokens =
+    let l, tl = parse_cons tokens in
+    match tl with
+      AT :: tl -> let r, tl = parse_union tl in
+      Binop(l, Union, r), tl
+    | tl         -> l, tl
+  in
   let e, tl =
     match tokens with
     [] -> exprs, []
@@ -87,7 +102,11 @@ let rec parse_expr tokens exprs is_math =
     end
   | MINDE var :: tl
   | IDENT var :: tl -> exprs @ [Var var], tl
-  | NUM num :: tl   -> exprs @ [Num num], tl
+  | CONS :: tl -> let r, tl = parse_cons tl in
+    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Cons, r)], tl
+  | AT :: tl -> let r, tl = parse_union tl in
+    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Union, r)], tl
+  | NUM num :: tl -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
     let lst = Utils.last exprs           in
     let expr, ntl = parse_add tokens lst in
@@ -145,10 +164,11 @@ let rec parse_expr tokens exprs is_math =
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
     exprs @ [parse_all b []], tl
-  | RBRACKET :: tl ->
+  | LBRACKET :: tl ->
     let rec parse_list tokens =
       match tokens with
         []             -> parse_error "Invalid list declaration"
+      | LBRACKET :: RBRACKET :: tl -> [], tl
       | RBRACKET :: tl -> [], tl
       | COMMA :: tl
       | LBRACKET :: tl ->
@@ -163,9 +183,9 @@ let rec parse_expr tokens exprs is_math =
         let e, tl = parse_elem tl [] in
         let l, tl = parse_list tl    in
         e :: l, tl
-      | t :: _         -> parse_error ("Unexpected token: " ^ Utils.string_of_token t)
+      | t :: _ -> parse_error ("Unexpected token: " ^ Utils.string_of_token t)
     in
-    let l, tl = parse_list tl in
+    let l, tl = parse_list tokens in
     exprs @ [List l], tl
   | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
   in
