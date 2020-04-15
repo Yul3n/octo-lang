@@ -1,0 +1,8 @@
+type bool =
+  True | False
+
+if True x _  = x
+if False _ x = x
+
+main n =
+  if False n 0
