@@ -4,41 +4,37 @@ let core_pre ="
 
 #include <string.h>
 #include <stdlib.h>
-struct Int ;
+struct List
 struct Closure ;
 union Value ;
 
-enum Tag { INT, CLOSURE } ;
-
 typedef union Value (*Lambda)()  ;
 
-struct Int {
-  enum Tag t ;
-  int value ;
-} ;
-
 struct Closure {
-  enum Tag t;
   Lambda lam;
   union Value *env;
 };
 
+struct List {
+  union Value *list;
+  int length;
+}
+
 union Value {
-  enum   Tag t;
   int     _int;
 "
 
 let core_seq = "
   struct Closure clo;
+  struct List list;
 };
 
-typedef union Value Value ;
+typedef union Value Value;
 
 Value
 make_closure(Lambda lam, Value *env, int env_len)
 {
   Value v;
-  v.clo.t = CLOSURE;
   v.clo.lam = lam;
   v.clo.env = malloc(env_len * sizeof(Value));
   memcpy(v.clo.env, env, env_len * sizeof(Value));
