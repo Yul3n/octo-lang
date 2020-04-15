@@ -1,0 +1,5 @@
+cons x _ =
+  x
+
+main n =
+  cons 1 n
