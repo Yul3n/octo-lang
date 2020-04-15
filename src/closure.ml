@@ -80,9 +80,9 @@ let rec closure_to_c clo nlam env ctx =
     begin
     match f with
       CloGVar _ ->
-      n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "%s = %s.clo.lam(tenv, %s, len + 1);\n" n s1 s2) ,
+      n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "Value %s = %s.clo.lam(tenv, %s, len + 1);\n" n s1 s2) ,
     nlam, v
-    | _ -> n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "%s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2) ,
+    | _ -> n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2) ,
     nlam, v
            end
   | CloGVar (v, _) ->
@@ -99,7 +99,7 @@ let rec closure_to_c clo nlam env ctx =
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
      %s" nlam pr) ^ c ^ "return " ^ cbody ^";}\n",
-    (Printf.sprintf "%s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
+    (Printf.sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
     let type_to_c t =
@@ -107,7 +107,6 @@ let rec closure_to_c clo nlam env ctx =
         TFun(TOth v, _) -> "._" ^ v
       | _      -> raise (Error "invalid pattern matching")
     in
-    let n = Printf.sprintf "l%d" nlam in
     let case_to_c p nlam =
       match p with
         []           -> "", "", "", nlam, []
@@ -116,11 +115,11 @@ let rec closure_to_c clo nlam env ctx =
         let p3, nlam, nf2, p4 =
           match f with
           CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-          Printf.sprintf "else{\n%s\n%s = %s;\n}" p2 n nbody, nlam, "", ""
+          Printf.sprintf "else{\n%s\nreturn %s;\n}" p2 nbody, nlam, "", ""
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s\n%s = %s;\n}\n"
-             np (type_to_c t) (type_to_c t) p2 n nbody), nlam + 1, nf2, p4
+          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s\nreturn %s;\n}\n"
+             np (type_to_c t) (type_to_c t) p2 nbody), nlam + 1, nf2, p4
         in
         p3, nf ^ nf2, p4, nlam, tl
     in
@@ -137,8 +136,7 @@ let rec closure_to_c clo nlam env ctx =
         "Value __lam%d(Value *env, Value n, int len) {
         %s
         %s
-        return %s;
-}" nlam pr b n
+}" nlam pr b
     in
     Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, p, nlam + 1, env
 
