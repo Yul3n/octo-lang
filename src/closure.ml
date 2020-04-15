@@ -31,7 +31,7 @@ let rec deB e (v, n) =
   match e with
     TyVar (v2, t) when v = v2 -> TyIndVar (n, t)
   | TyVar _ as v              -> v
-  | TyLambda (x, body, t)     -> TyLambda ("", deB (deB body (v, n + 1)) (x, 1), t)
+  | TyLambda (x, body, t)     -> TyLambda ("", deB (deB body (x, 1)) (v, n + 1) , t)
   | TyApp (l, r, t)           -> TyApp (deB l (v, n), deB r (v, n), t)
   | TyNum _ as n              -> n
   | TyIndVar _ as n           -> n
@@ -65,6 +65,7 @@ let rec closure_to_c clo nlam env ctx =
     CloNum (n, _) -> Printf.sprintf "make_int(%d)" n, "", "", nlam, env
   | CloVar (n, _) ->
     begin
+      (* If the index is not one, the variable is in the closure's context. *)
       match n with
         1 -> "n"
       | n -> Printf.sprintf "(*(env + %d))" (n - 2)
@@ -78,13 +79,15 @@ let rec closure_to_c clo nlam env ctx =
       | _ -> closure_to_c arg (nlam + 1) env ctx
     in
     begin
-    match f with
-      CloGVar _ ->
-      n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "Value %s = %s.clo.lam(tenv, %s, len + 1);\n" n s1 s2) ,
-    nlam, v
-    | _ -> n, nf ^ na, p1 ^  p2 ^ (Printf.sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n" n s1 nv s2) ,
-    nlam, v
-           end
+      match f with
+        CloGVar _ ->
+        n, nf ^ na, p1 ^  p2 ^
+                    (Printf.sprintf "Value %s = %s.clo.lam(tenv, %s, len + 1);\n"
+                       n s1 s2), nlam, v
+      | _ -> n, nf ^ na, p1 ^  p2 ^
+                         (Printf.sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n"
+                            n s1 nv s2), nlam, v
+    end
   | CloGVar (v, _) ->
     begin
       match Char.code (String.get v 1) with
@@ -98,7 +101,7 @@ let rec closure_to_c clo nlam env ctx =
     let n = Printf.sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in
     n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s" nlam pr) ^ c ^ "free(tenv);\nreturn " ^ cbody ^";}\n",
+     %s%sfree(tenv);\nreturn(%s);\n}" nlam pr c cbody),
     (Printf.sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
@@ -159,7 +162,7 @@ Value divl;\nValue timl;\n" ^ s ^
         timl = make_closure(tim, NULL, 0);
         suml = make_closure(sum, NULL, 0);\n" ^
     body ^
-    "}\n"
+    "\n}\n"
   | hd :: tl ->
     match hd with
       TyDecl (v, b, _) when v = "main"->

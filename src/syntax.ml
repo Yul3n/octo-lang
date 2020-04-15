@@ -14,6 +14,11 @@ type token
   | ARROW
   | EQUAL
   | UNDER
+  | CONS
+  | COMMA
+  | LBRACKET
+  | RBRACKET
+  | AT
   | BLOCK of (token * int) list
   | IDENT of string
   | MINDE of string

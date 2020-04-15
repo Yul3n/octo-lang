@@ -53,6 +53,16 @@ let rec lexer input pos act_ident =
     | '('  -> slex 1 LPARENT
     | ')'  -> slex 1 RPARENT
     | '|'  -> slex 1 PIPE
+    | '@'  -> slex 1 AT
+    | '['  -> slex 1 LBRACKET
+    | ']'  -> slex 1 RBRACKET
+    | ','  -> slex 1 COMMA
+    | ':'  ->
+      begin
+        match String.get input (pos + 1) with
+          ':' -> slex 2 CONS
+        | _   -> unexpected_char pos ':'
+      end
     | '-'  ->
       begin
         match String.get input (pos + 1) with

@@ -41,6 +41,11 @@ let rec string_of_token token =
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"
+  | LBRACKET  -> "["
+  | RBRACKET  -> "]"
+  | AT        -> "@"
+  | COMMA     -> ","
+  | CONS      -> "::"
   | UNDER     -> "_"
   | NUM n     -> string_of_int n
   | BLOCK b   -> let b, _ = List.split b in
