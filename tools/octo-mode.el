@@ -17,7 +17,7 @@
     (setq begin (point))
     (if (= 1 (line-number-at-pos)) ; The first line is never indented
         (setq curindent 0)
-      (progn
+      (save-excursion
         (beginning-of-line)
         (setq b1 (point)) ; Get the indentation level of this line.
         (skip-chars-forward " ")
@@ -29,7 +29,7 @@
            (progn
              (forward-line -1)
              ; Indent the line if the line before is a function declaration
-             (if (and (looking-at "\\([a-zA-Z]*\\).*=") (not (looking-at "[ ]+")))
+             (if (and (looking-at "\\([a-zA-Z]*\\).*=$") (not (looking-at "[ ]+")))
                  (progn
                    (forward-line 1)
                    (setq curindent 2))
@@ -37,16 +37,16 @@
                  (setq b (point)) ; Get the indentation level of the previous line.
                  (skip-chars-forward " ")
                  (setq e (point))
-                 (if (looking-at ".*where\n\\|.*case.*of\n")
+                 (if (looking-at ".*where*$\\|.*case*of$")
                      (progn
                        (forward-line 1)
                        (setq curindent (+ (- e b) 2)))
                    (progn
                      (forward-line 1) ; Set the indentation according to the last line
                      (setq curindent (- e b))))))))))
-      (indent-line-to curindent)
-      (if (/= curindent actindent)
-          (goto-char (- (+ curindent begin) actindent)))
+      (when (/= curindent actindent)
+        (indent-line-to curindent)
+        (goto-char (- (+ curindent begin) actindent)))
       (skip-chars-forward " ")))
 
 (define-derived-mode octo-mode fundamental-mode "octo"
