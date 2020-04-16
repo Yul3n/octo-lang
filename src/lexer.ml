@@ -56,6 +56,7 @@ let rec lexer input pos act_ident =
     | '@'  -> slex 1 AT
     | '['  -> slex 1 LBRACKET
     | ']'  -> slex 1 RBRACKET
+    | '!'  -> slex 1 EXCLAM
     | ','  -> slex 1 COMMA
     | ':'  ->
       begin

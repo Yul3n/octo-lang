@@ -45,6 +45,7 @@ let rec string_of_token token =
   | COMMA     -> ","
   | CONS      -> "::"
   | UNDER     -> "_"
+  | EXCLAM    -> "!"
   | NUM n     -> string_of_int n
   | BLOCK b   -> let b, _ = List.split b in
     List.fold_left (^) "" (List.map string_of_token b)

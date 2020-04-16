@@ -4,11 +4,12 @@ let core_pre ="
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 struct List;
-struct Closure ;
-union Value ;
+struct Closure;
+union Value;
 
-typedef union Value (*Lambda)()  ;
+typedef union Value (*Lambda)();
 
 struct Closure {
   Lambda lam;
@@ -145,6 +146,7 @@ lambda_union(Value *env, Value n)
   v.list.list = malloc ((n.list.length + ((*(env)).list.length)) * sizeof(Value));
   memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
   memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length);
+  v.list.length = (*(env)).list.length + n.list.length;
   return v;
 }
 
@@ -155,6 +157,24 @@ octo_union (Value *env, Value n, int len)
     memcpy (tenv + 1, env, len);
     *tenv = n;
     return (make_closure(lambda_union, tenv, len + 1));
+}
+
+Value
+lambda_index (Value *env, Value n)
+{
+  if ((n._int >= ((*(env)).list.length)) || (n._int < 0)){
+    puts (\"Error: invalid array index.\");
+    exit (1);
+  } else return *((*(env)).list.list + n._int);
+}
+
+Value
+ind (Value *env, Value n, int len)
+{
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_index, tenv, len + 1));
 }
 
 #endif // __CORE_H_

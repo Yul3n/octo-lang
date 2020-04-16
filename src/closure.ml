@@ -56,6 +56,7 @@ let rec to_closure expr =
       | Divide -> "divl"
       | Cons   -> "conl"
       | Union  -> "unil"
+      | Elem   -> "indl"
     in
     CloApp (CloApp (CloGVar (f, (TFun (TFun (TOth "int", TOth "int"), TOth "int"))),
                       to_closure l, (TFun (TOth "int", TOth "int"))), to_closure r, t)
@@ -149,7 +150,21 @@ let rec closure_to_c clo nlam env ctx =
 }" nlam pr b
     in
     Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, p, nlam + 1, env
-  | _ -> raise Not_found
+  | CloList (clo, _) ->
+    let lp = Printf.sprintf "l%d" nlam in
+    let rec l_to_c nlam pos =
+      function
+        []       ->  "", "", nlam
+      | hd :: tl -> let b, f, p, nlam, _ = closure_to_c hd nlam env ctx in
+        let nf, np, nlam = l_to_c nlam (pos + 1) tl in
+        let pl = Printf.sprintf "*(%s + %d) = %s;\n" lp pos b in
+        f ^ nf, p ^ np ^ pl, nlam
+    in
+    let f, p, nlam = l_to_c nlam 0 clo in
+    (Printf.sprintf "make_list(%s, %d)" lp (List.length clo)), f,
+    (Printf.sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
+       (List.length clo)) ^ p, nlam + 1, env
+
 
 let rec decls_to_c decls funs body nlam ctx =
   match decls with
@@ -158,7 +173,7 @@ let rec decls_to_c decls funs body nlam ctx =
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
     "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
-Value divl;\nValue timl;\nValue conl;\nValue unil;\n" ^ s ^
+Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         Value *tenv = malloc(sizeof(Value));
@@ -170,7 +185,8 @@ Value divl;\nValue timl;\nValue conl;\nValue unil;\n" ^ s ^
         timl = make_closure(tim, NULL, 0);
         suml = make_closure(sum, NULL, 0);
         unil = make_closure(octo_union, NULL, 0);
-        conl = make_closure(cons, NULL, 0);\n" ^
+        conl = make_closure(cons, NULL, 0);
+        indl = make_closure(ind, NULL, 0);\n" ^
     body ^
     "\n}\n"
   | hd :: tl ->

@@ -164,6 +164,9 @@ let rec parse_expr tokens exprs is_math =
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
     exprs @ [parse_all b []], tl
+  | EXCLAM :: tl ->
+    let l, tl = parse_expr tl [] false in
+    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Elem, reduce l)], tl
   | LBRACKET :: _ ->
     let rec parse_list tokens =
       match tokens with
@@ -199,10 +202,14 @@ let rec parse_expr tokens exprs is_math =
       | DIVIDE :: _
       | CONS   :: _
       | AT     :: _
+      | EXCLAM :: _
       | WHERE  :: _ -> parse_expr tl e false
       | _           -> e, tl
     end
-  | true ->e, tl
+  | true ->
+    match tl with
+      EXCLAM :: _ -> parse_expr tl e false
+    | _           -> e, tl
 
 and parse_all tokens exprs =
   match tokens with

@@ -19,6 +19,7 @@ type token
   | LBRACKET
   | RBRACKET
   | AT
+  | EXCLAM
   | BLOCK of (token * int) list
   | IDENT of string
   | MINDE of string
@@ -31,6 +32,7 @@ type op
   | Divide
   | Cons
   | Union
+  | Elem
 
 type expr_t
   = TVar  of int

@@ -167,7 +167,20 @@ and infer expr context nvar =
       | _ -> raise (Type_error ("Cons opperator called with invalid type, expected :" ^
                    string_of_type (TList lt) ^ ", got:" ^ string_of_type rt))
     in
-    chain_compose [s3; s2; s1], app_subst s3 rt, nvar + 1, TyBinop (l, Union, r, app_subst s3 rt)
+    chain_compose [s3; s2; s1], app_subst s3 rt, nvar + 1,
+    TyBinop (l, Union, r, app_subst s3 rt)
+  | Binop(l, Elem, r) ->
+    let s1, lt, nvar, l = infer l context nvar in
+    let tmp_ctx = subst_context s1 context     in
+    let s2, rt, nvar, r = infer r tmp_ctx nvar in
+    let s3, t =
+      match lt with
+        TList t -> unify rt (TOth "int"), t
+      | _ -> raise (Type_error ("Index opperator called with invalid type, expected : type list" ^
+                                ", got:" ^ string_of_type lt))
+    in
+    chain_compose [s3; s2; s1], app_subst s3 t, nvar + 1,
+    TyBinop (l, Elem, r, app_subst s3 rt)
   | Case cases ->
     let patterns, exprs = List.split cases in
     let pt, nvar, s1, p = unify_lst patterns (nvar + 1) (TVar nvar) context [] [] in
