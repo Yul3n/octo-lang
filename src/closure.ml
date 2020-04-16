@@ -158,7 +158,7 @@ let rec decls_to_c decls funs body nlam ctx =
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
     "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
-Value divl;\nValue timl;\n" ^ s ^
+Value divl;\nValue timl;\nValue conl;\nValue unil;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         Value *tenv = malloc(sizeof(Value));
@@ -168,7 +168,9 @@ Value divl;\nValue timl;\n" ^ s ^
         difl = make_closure(dif, NULL, 0);
         divl = make_closure(dv, NULL, 0);
         timl = make_closure(tim, NULL, 0);
-        suml = make_closure(sum, NULL, 0);\n" ^
+        suml = make_closure(sum, NULL, 0);
+        unil = make_closure(octo_union, NULL, 0);
+        conl = make_closure(cons, NULL, 0);\n" ^
     body ^
     "\n}\n"
   | hd :: tl ->

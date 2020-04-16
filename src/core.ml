@@ -4,7 +4,7 @@ let core_pre ="
 
 #include <string.h>
 #include <stdlib.h>
-struct List
+struct List;
 struct Closure ;
 union Value ;
 
@@ -139,7 +139,14 @@ cons (Value *env, Value n, int len)
 }
 
 Value
-lambda_union()
+lambda_union(Value *env, Value n)
+{
+  Value v;
+  v.list.list = malloc ((n.list.length + ((*(env)).list.length)) * sizeof(Value));
+  memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
+  memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length);
+  return v;
+}
 
 Value
 octo_union (Value *env, Value n, int len)
@@ -151,4 +158,6 @@ octo_union (Value *env, Value n, int len)
 }
 
 #endif // __CORE_H_
+
+
 "
