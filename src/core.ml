@@ -179,6 +179,28 @@ ind (Value *env, Value n, int len)
     return (make_closure(lambda_index, tenv, len + 1));
 }
 
+Value
+head (Value *env, Value n, int len)
+{
+  if (n.list.length == 0) {
+    puts(\"Using head on an empty list.\");
+    exit (1);
+  }
+  return(*(n.list.list));
+}
+
+Value
+tail (Value *env, Value n, int len)
+{
+  if (n.list.length == 0) {
+    puts(\"Using tail on an empty list.\");
+    exit (1);
+  }
+  Value v;
+  return(*(n.list.list));
+}
+
+
 #endif // __CORE_H_
 
 "

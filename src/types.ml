@@ -113,7 +113,11 @@ let initial_ctx =
    (* Forall a, the type of union is a list -> a list -> a list *)
    "unil", Forall([0], TFun(TList(TVar 0), TFun(TList (TVar 0), TList (TVar 0))));
    (* Forall a, the type of the indexing operator is a list -> int -> a *)
-   "indl", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)))]
+   "indl", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)));
+   (* Forall a, the type of head is a list -> a *)
+   "head", Forall([0], TFun(TList(TVar 0), TVar 0));
+   (* Forall a, the type of tail is a list -> a list *)
+   "tail", Forall([0], TFun(TList(TVar 0), TList(TVar 0)))]
 
 let rec unify_lst lst nvar t ctx subst exprs =
       match lst with

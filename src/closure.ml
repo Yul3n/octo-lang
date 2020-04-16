@@ -16,6 +16,9 @@ type closure
   | CloCase of (closure * closure) list * expr_t
   | CloList of closure list * expr_t
 
+let builtin_funs =
+  ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"; "head"; "tail"]
+
 let rec free e s =
   match e with
     TyVar _
@@ -44,7 +47,7 @@ let rec to_closure expr =
   match expr with
     TyNum (n, t)         -> CloNum (n, t)
   | TyVar (n, t) when
-      (List.mem n ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"])
+      (List.mem n builtin_funs)
                          -> CloGVar (n, t)
   | TyVar (n, t)         -> CloGVar ("_" ^ n, t)
   | TyIndVar(n, t)       -> CloVar (n, t)
@@ -164,8 +167,17 @@ let rec decls_to_c decls funs body nlam ctx =
 Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
+        if (argc == 1){
+            puts(\"Error: the program has to be called with an argument.\");
+            exit(1);
+        }
+        int num;
+        if (sscanf(argv[1], \"%d\", &num) != 1) {
+            puts(\"Error: the input should be a number.\");
+            exit (1);
+        }
         Value *tenv = malloc(sizeof(Value));
-        Value n = make_int(atoi(argv[1]));
+        Value n = make_int(num);
         *tenv = n;
         int len = 0;
         difl = make_closure(dif, NULL, 0);
