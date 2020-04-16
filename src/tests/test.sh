@@ -27,7 +27,7 @@ test4() {
 
 # Run the tests
 # The couples of argument represent the argument and the expected output
-
+#             I O I O I O I O
 test4 "id"    0 0 1 1 2 2 3 3
 test4 "cons1" 0 0 1 1 2 2 3 3
 test4 "cons2" 0 1 1 1 2 1 3 1
@@ -40,6 +40,7 @@ test4 "list1" 0 0 1 1 2 2 3 3
 test4 "list2" 0 0 1 1 2 2 3 3
 test4 "list3" 0 0 1 1 2 2 3 3
 test4 "list4" 0 0 1 0 2 0 3 0
+test4 "list5" 0 0 1 1 2 2 3 3
 
 echo "✓ All tests passed"
 

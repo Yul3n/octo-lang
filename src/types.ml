@@ -101,6 +101,20 @@ let rec unify t1 t2 =
     raise (Type_error ("Can't unify types: " ^ (string_of_type t1) ^ " and "
                        ^ (string_of_type t2)))
 
+let initial_ctx =
+  (* Mathematical operators are of type : int -> int -> int *)
+  let op_sch = Forall([], TFun(TOth "int", TFun(TOth "int", TOth "int"))) in
+  ["suml", op_sch;
+   "difl", op_sch;
+   "timl", op_sch;
+   "divl", op_sch;
+   (* Forall a, the type of cons is a -> a list -> a list *)
+   "conl", Forall([0], TFun(TVar 0, TFun(TList (TVar 0), TList (TVar 0))));
+   (* Forall a, the type of union is a list -> a list -> a list *)
+   "unil", Forall([0], TFun(TList(TVar 0), TFun(TList (TVar 0), TList (TVar 0))));
+   (* Forall a, the type of the indexing operator is a list -> int -> a *)
+   "indl", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)))]
+
 let rec unify_lst lst nvar t ctx subst exprs =
       match lst with
         []       -> t, nvar, subst, exprs
@@ -110,7 +124,6 @@ let rec unify_lst lst nvar t ctx subst exprs =
         let s2              = unify tt t              in
         let sf              = compose_subst s2 s1     in
         unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf) (exprs @ [e])
-   
 
 and infer expr context nvar =
   match expr with
@@ -137,50 +150,6 @@ and infer expr context nvar =
     let fs                 = compose_subst s3 (compose_subst s2 s1) in
     let t                  = (app_subst s3 res_t) in
     fs, t, nvar, TyApp (l, r, t)
-  | Binop (l, (Plus as o), r)
-  | Binop (l, (Minus as o), r)
-  | Binop (l, (Times as o), r)
-  | Binop (l, (Divide as o), r) ->
-    let ls1, lt, nvar, l = infer l context nvar in
-    let ls2              = unify lt (TOth "int")   in
-    let ls3              = compose_subst ls2 ls1   in
-    let rs1, rt, nvar, r = infer r (subst_context ls3 context) nvar in
-    let rs2              = unify rt (TOth "int")   in
-    compose_subst rs2 (compose_subst rs1 ls3), TOth "int", nvar,
-    TyBinop(l, o, r, TOth "int")
-  | Binop (l, Union, r) ->
-    let s1, lt, nvar, l = infer l context nvar in
-    let tmp_ctx = subst_context s1 context     in
-    let s2, rt, nvar, r = infer r tmp_ctx nvar in
-    let s3 = unify lt (TList (TVar nvar))      in
-    let lt = app_subst s3 lt                   in
-    let s4 = unify lt rt                       in
-    let fs = chain_compose [s4; s3; s2; s1]    in
-    fs, rt, nvar + 1, TyBinop (l, Union, r, rt)
-  | Binop (l, Cons, r) ->
-    let s1, lt, nvar, l = infer l context nvar in
-    let tmp_ctx = subst_context s1 context     in
-    let s2, rt, nvar, r = infer r tmp_ctx nvar in
-    let s3 =
-      match rt with
-        TList t -> unify t lt
-      | _ -> raise (Type_error ("Cons opperator called with invalid type, expected :" ^
-                   string_of_type (TList lt) ^ ", got:" ^ string_of_type rt))
-    in
-    chain_compose [s3; s2; s1], app_subst s3 rt, nvar + 1,
-    TyBinop (l, Cons, r, app_subst s3 rt)
-  | Binop(l, Elem, r) ->
-    let s1, lt, nvar, l = infer l context nvar in
-    let tmp_ctx = subst_context s1 context     in
-    let s2, rt, nvar, r = infer r tmp_ctx nvar in
-    let s3, t =
-      match lt with
-        TList t -> unify rt (TOth "int"), t
-      | _ -> raise (Type_error ("Index opperator called with invalid type, expected : type list" ^
-                                ", got:" ^ string_of_type lt))
-    in
-    chain_compose [s3; s2; s1], app_subst s3 t, nvar + 1,
-    TyBinop (l, Elem, r, app_subst s3 rt)
   | Case cases ->
     let patterns, exprs = List.split cases in
     let pt, nvar, s1, p = unify_lst patterns (nvar + 1) (TVar nvar) context [] [] in

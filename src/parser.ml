@@ -27,6 +27,9 @@ let rec wrap_lam vals expr =
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
 let rec parse_expr tokens exprs is_math =
+  let binop l op r =
+    App(App(Var op, l), r)
+  in
   let rec parse_equ tokens body =
     match tokens with
       IDENT v :: tl ->
@@ -46,9 +49,9 @@ let rec parse_expr tokens exprs is_math =
     let nval, ntl =
       match tokens with
         TIMES :: tl  -> let rval, tl = parse_expr tl [] false in
-        Binop (lval, Times, reduce rval), tl
+        binop lval "timl" (reduce rval), tl
       | DIVIDE :: tl -> let rval, tl = parse_expr tl [] true in
-        Binop (lval, Divide, reduce rval), tl
+        binop lval "divl" (reduce rval), tl
       | tl           -> lval, tl
     in
     match ntl with
@@ -61,10 +64,10 @@ let rec parse_expr tokens exprs is_math =
       match tokens with
         PLUS :: tl  -> let mul_val, tl = parse_expr tl [] true in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
-        Binop (lval, Plus, rval), ntl
+        binop lval "suml" rval, ntl
       | MINUS :: tl -> let mul_val, tl = parse_expr tl [] true in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
-        Binop (lval, Minus, rval), ntl
+        binop lval "difl" rval, ntl
       | tl           -> lval, tl
     in
     match ntl with
@@ -77,14 +80,14 @@ let rec parse_expr tokens exprs is_math =
     let l, tl = parse_add tl (reduce e)   in
     match tl with
       CONS :: tl -> let r, tl = parse_cons tl in
-      Binop(l, Cons, r), tl
+      binop l "conl" r, tl
     | tl         -> l, tl
   in
   let rec parse_union tokens =
     let l, tl = parse_cons tokens in
     match tl with
       AT :: tl -> let r, tl = parse_union tl in
-      Binop(l, Union, r), tl
+      binop l "unil" r, tl
     | tl         -> l, tl
   in
   let e, tl =
@@ -103,9 +106,9 @@ let rec parse_expr tokens exprs is_math =
   | MINDE var :: tl
   | IDENT var :: tl -> exprs @ [Var var], tl
   | CONS :: tl -> let r, tl = parse_cons tl in
-    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Cons, r)], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "conl" r], tl
   | AT :: tl -> let r, tl = parse_union tl in
-    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Union, r)], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "unil" r], tl
   | NUM num :: tl -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
     let lst = Utils.last exprs           in
@@ -166,7 +169,7 @@ let rec parse_expr tokens exprs is_math =
     exprs @ [parse_all b []], tl
   | EXCLAM :: tl ->
     let l, tl = parse_expr tl [] false in
-    (Utils.firsts exprs) @ [Binop(Utils.last exprs, Elem, reduce l)], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "indl" (reduce l)], tl
   | LBRACKET :: _ ->
     let rec parse_list tokens =
       match tokens with

@@ -51,7 +51,7 @@ let compile f =
   let t, _       = Lexer.lexer s 0 0       in
   let t, _       = List.split t            in
   let f          = Parser.parse_tops t     in
-  let c, t, n, e = def_ctx f [] "" "" 0 [] in
+  let c, t, n, e = def_ctx f Types.initial_ctx "" "" 0 [] in
   Utils.print_context c;
   let oc = open_out "out.c"      in
   Printf.fprintf oc "%s\n" (Closure.decls_to_c e "" "" 0 c);

@@ -20,8 +20,7 @@ let rec free e s =
   match e with
     TyVar _
   | TyNum _ -> []
-  | TyApp(l, r, _)
-  | TyBinop(l, _, r, _) -> free l s @ free r s
+  | TyApp(l, r, _) -> free l s @ free r s
   | TyIndVar (n, _) when n >= s -> [n]
   | TyIndVar _ -> []
   | TyLambda(_, body, _) -> free body (s + 1)
@@ -37,7 +36,6 @@ let rec deB e (v, n) =
   | TyApp (l, r, t)           -> TyApp (deB l (v, n), deB r (v, n), t)
   | TyNum _ as n              -> n
   | TyIndVar _ as n           -> n
-  | TyBinop(l, o, r, t)       -> TyBinop (deB l (v, n), o, deB r (v, n), t)
   | TyCase (c, t)             -> TyCase (Utils.snd_map (fun x -> deB x (v, n + 1)) c, t)
   | TyList (l, t)             -> let nl = List.map (fun x -> deB x (v, n)) l in
     TyList (nl, t)
@@ -45,21 +43,11 @@ let rec deB e (v, n) =
 let rec to_closure expr =
   match expr with
     TyNum (n, t)         -> CloNum (n, t)
+  | TyVar (n, t) when
+      (List.mem n ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"])
+                         -> CloGVar (n, t)
   | TyVar (n, t)         -> CloGVar ("_" ^ n, t)
   | TyIndVar(n, t)       -> CloVar (n, t)
-  | TyBinop (l, o, r, t) ->
-    let f =
-      match o with
-        Plus   -> "suml"
-      | Minus  -> "difl"
-      | Times  -> "timl"
-      | Divide -> "divl"
-      | Cons   -> "conl"
-      | Union  -> "unil"
-      | Elem   -> "indl"
-    in
-    CloApp (CloApp (CloGVar (f, (TFun (TFun (TOth "int", TOth "int"), TOth "int"))),
-                      to_closure l, (TFun (TOth "int", TOth "int"))), to_closure r, t)
   | TyLambda(_, b, t)   -> Closure (free expr 1, to_closure b, t)
   | TyApp (l, r, t)     -> CloApp (to_closure l, to_closure r, t)
   | TyCase (c, t)       -> let p, e = List.split c in

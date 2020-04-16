@@ -44,7 +44,6 @@ type expr
   = Var    of string
   | Lambda of string * expr
   | App    of expr * expr
-  | Binop  of expr * op * expr
   | Num    of int
   | Case   of (expr * expr) list
   | List   of expr list
@@ -62,7 +61,6 @@ type typed_expr
   | TyApp    of typed_expr * typed_expr * expr_t
   | TyIndVar of int * expr_t
   | TyNum    of int * expr_t
-  | TyBinop  of typed_expr * op * typed_expr * expr_t
   | TyCase   of (typed_expr * typed_expr) list * expr_t
   | TyList   of typed_expr list * expr_t
 
