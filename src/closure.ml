@@ -164,7 +164,7 @@ let rec decls_to_c decls funs body nlam ctx =
     let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
     "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
-Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\n" ^ s ^
+Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tail;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){
@@ -186,7 +186,9 @@ Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\n" ^ s ^
         suml = make_closure(sum, NULL, 0);
         unil = make_closure(octo_union, NULL, 0);
         conl = make_closure(cons, NULL, 0);
-        indl = make_closure(ind, NULL, 0);\n" ^
+        indl = make_closure(ind, NULL, 0);
+        tail = make_closure(octo_tail, NULL, 0);
+        head = make_closure(octo_head, NULL, 0);\n" ^
     body ^
     "\n}\n"
   | hd :: tl ->

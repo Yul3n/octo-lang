@@ -180,7 +180,7 @@ ind (Value *env, Value n, int len)
 }
 
 Value
-head (Value *env, Value n, int len)
+octo_head (Value *env, Value n, int len)
 {
   if (n.list.length == 0) {
     puts(\"Using head on an empty list.\");
@@ -190,14 +190,13 @@ head (Value *env, Value n, int len)
 }
 
 Value
-tail (Value *env, Value n, int len)
+octo_tail (Value *env, Value n, int len)
 {
   if (n.list.length == 0) {
     puts(\"Using tail on an empty list.\");
     exit (1);
   }
-  Value v;
-  return(*(n.list.list));
+  return(make_list(n.list.list + 1, n.list.length - 1));
 }
 
 
