@@ -164,7 +164,7 @@ let rec parse_expr tokens exprs is_math =
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
     exprs @ [parse_all b []], tl
-  | LBRACKET :: tl ->
+  | LBRACKET :: _ ->
     let rec parse_list tokens =
       match tokens with
         []             -> parse_error "Invalid list declaration"

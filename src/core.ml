@@ -18,7 +18,7 @@ struct Closure {
 struct List {
   union Value *list;
   int length;
-}
+};
 
 union Value {
   int     _int;
@@ -42,6 +42,16 @@ make_closure(Lambda lam, Value *env, int env_len)
 }
 
 Value
+make_list(Value *l, int length)
+{
+  Value v;
+  v.list.list = malloc(length * sizeof(Value));
+  memcpy(v.list.list, l, length * sizeof(Value));
+  v.list.length = length;
+  return v;
+}
+
+Value
 make_int(int n)
 {
   Value v;
@@ -50,7 +60,7 @@ make_int(int n)
 }
 
 Value
-lambda_sum(Value *env, Value n)
+lambda_sum (Value *env, Value n)
 {
   return make_int((*env)._int + n._int);
 }
@@ -58,14 +68,14 @@ lambda_sum(Value *env, Value n)
 Value
 sum (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  Value *tenv = malloc((len + 1) * sizeof(Value));
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_sum, tenv, len + 1));
 }
 
 Value
-lambda_dif(Value *env, Value n)
+lambda_dif (Value *env, Value n)
 {
   return make_int((*env)._int - n._int);
 }
@@ -73,42 +83,72 @@ lambda_dif(Value *env, Value n)
 Value
 dif (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
+  Value *tenv = malloc((len + 1) * sizeof(Value));
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_dif, tenv, len + 1));
 }
 
 Value
-lambda_div(Value *env, Value n)
+lambda_div (Value *env, Value n)
 {
-  return make_int((*env)._int / n._int);
+    return make_int((*env)._int / n._int);
 }
 
 Value
 dv (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
-  memcpy (tenv + 1, env, len);
-  *tenv = n;
-  return (make_closure(lambda_div, tenv, len + 1));
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_div, tenv, len + 1));
 }
 
 Value
-lambda_tim(Value *env, Value n)
+lambda_tim (Value *env, Value n)
 {
-  return make_int(((*env)._int) * (n._int));
+    return make_int(((*env)._int) * (n._int));
 }
 
 Value
 tim (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((sizeof(env) + 1) * sizeof(Value));
-  memcpy (tenv + 1, env, len);
-  *tenv = n;
-  return (make_closure(lambda_tim, tenv, len + 1));
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_tim, tenv, len + 1));
+}
+
+Value
+lambda_cons(Value *env, Value n)
+{
+    Value v;
+    v.list.list = malloc((n.list.length + 1) * sizeof(Value));
+    memcpy(v.list.list, env, sizeof(Value));
+    memcpy(v.list.list + 1, n.list.list, n.list.length);
+    return v;
+}
+
+Value
+cons (Value *env, Value n, int len)
+{
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_cons, tenv, len + 1));
+}
+
+Value
+lambda_union()
+
+Value
+octo_union (Value *env, Value n, int len)
+{
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_union, tenv, len + 1));
 }
 
 #endif // __CORE_H_
-
 "
