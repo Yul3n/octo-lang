@@ -168,7 +168,7 @@ and infer expr context nvar =
                    string_of_type (TList lt) ^ ", got:" ^ string_of_type rt))
     in
     chain_compose [s3; s2; s1], app_subst s3 rt, nvar + 1,
-    TyBinop (l, Union, r, app_subst s3 rt)
+    TyBinop (l, Cons, r, app_subst s3 rt)
   | Binop(l, Elem, r) ->
     let s1, lt, nvar, l = infer l context nvar in
     let tmp_ctx = subst_context s1 context     in

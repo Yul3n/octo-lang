@@ -127,6 +127,7 @@ lambda_cons(Value *env, Value n)
     v.list.list = malloc((n.list.length + 1) * sizeof(Value));
     memcpy(v.list.list, env, sizeof(Value));
     memcpy(v.list.list + 1, n.list.list, n.list.length);
+    v.list.length = n.list.length + 1;
     return v;
 }
 
@@ -163,7 +164,8 @@ Value
 lambda_index (Value *env, Value n)
 {
   if ((n._int >= ((*(env)).list.length)) || (n._int < 0)){
-    puts (\"Error: invalid array index.\");
+    printf (\"Error: invalid array index. Size of the array %d, index: %d.\\n\",
+    n._int, ((*(env)).list.length));
     exit (1);
   } else return *((*(env)).list.list + n._int);
 }
