@@ -2,7 +2,7 @@ open Syntax
 open Lexer
 
 let parse_error str =
-  raise (Syntax_error ("Parser error:  " ^ str))
+  raise (Syntax_error ("Parser error: " ^ str))
 
 let rec reduce exprs =
     match exprs with
@@ -268,7 +268,25 @@ let rec parse_tops tokens =
     let rec parse_type tokens t =
       let b, tl =
         match tokens with
-          MINDE v :: tl -> (v, t), tl
+          MINDE v :: tl ->
+          begin
+            match tl with
+              []
+            | PIPE :: _ -> (v, Forall([], t)), tl
+            | _ ->
+              let rec parse_multype tokens t =
+                match tokens with
+                  IDENT v :: ([])
+                | IDENT v :: PIPE :: _ -> (TFun (TOth v, t)), List.tl tokens
+                | IDENT v :: tl -> let t, tl = parse_multype tl t in
+                  TFun(TOth v, t), tl
+                | tok :: _ -> parse_error
+                                ("Unexpected token: " ^ (Utils.string_of_token tok))
+                | [] -> parse_error "Empty type declaration."
+              in
+              let t2, tl = parse_multype tl t in
+              (v, Forall([], t2)), tl
+          end
         | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []            -> parse_error "Empty type declaration."
       in
@@ -278,7 +296,7 @@ let rec parse_tops tokens =
       | _ -> [b], tl
     in
     let b, _     = List.split bl in
-    let types, t = parse_type b (Forall([], (TOth v))) in
+    let types, t = parse_type b (TOth v) in
     begin
       match t with
         [] -> TDef types :: parse_tops tl

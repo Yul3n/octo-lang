@@ -181,5 +181,4 @@ ind (Value *env, Value n, int len)
 
 #endif // __CORE_H_
 
-
 "

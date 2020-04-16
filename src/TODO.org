@@ -4,14 +4,17 @@
 ** TODO Better errors
 ** DONE Custom datatypes (basic)
 ** DONE Pattern matching
-** TODO Lists
+** DONE Lists
 ** DONE Fix memory leaks in the C code
 ** DONE More syntaxic sugar
 ** TODO Floats
+** TODO Pattern matching on list
+** TODO More advanced datatypes
+** TODO OpenCL lists functions
 * Standard library
 ** DONE Boolean Type
 ** TODO Fixed point combinator
-*** TODO Mathematic operations
+** TODO Mathematic operations
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs
