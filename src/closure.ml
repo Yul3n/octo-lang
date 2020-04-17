@@ -27,8 +27,9 @@ let rec free e s =
   | TyIndVar (n, _) when n >= s -> [n]
   | TyIndVar _ -> []
   | TyLambda(_, body, _) -> free body (s + 1)
-  | TyCase (c, _) -> let _, exps = List.split c in
-    List.fold_left (@) [] (List.map (fun x -> free x s) exps)
+  | TyCase (c, _) -> let ps, es = List.split c in
+    let freelst = fun y -> List.fold_left (@) [] (List.map (fun x -> free x s) y) in
+    (freelst ps) @ freelst es
   | TyList (l, _) -> List.fold_left (@) [] (List.map (fun x -> free x s) l)
 
 let rec deB e (v, n) =
@@ -39,7 +40,10 @@ let rec deB e (v, n) =
   | TyApp (l, r, t)           -> TyApp (deB l (v, n), deB r (v, n), t)
   | TyNum _ as n              -> n
   | TyIndVar _ as n           -> n
-  | TyCase (c, t)             -> TyCase (Utils.snd_map (fun x -> deB x (v, n + 1)) c, t)
+  | TyCase (c, t)             -> let p, e = List.split c in
+    let m = fun y -> (List.map (fun x -> deB x (v, n + 1)) y) in
+    let cc = List.combine (m p) (m e) in
+    TyCase (cc, t)
   | TyList (l, t)             -> let nl = List.map (fun x -> deB x (v, n)) l in
     TyList (nl, t)
 
@@ -106,9 +110,12 @@ let rec closure_to_c clo nlam env ctx =
   | CloCase (c, t) ->
     let equ_to_c t l r =
       match t with
-        TFun(TOth v, _)    -> Printf.sprintf "(%s._%s) == (%s._%s)" l v r v
-      | TFun(TList (_), _) -> Printf.sprintf "(intern_list_eq(%s, %s))._int" l r
-      | _                  -> raise (Error "invalid pattern matching")
+        TFun(TOth v, _)         -> Printf.sprintf "(%s._%s) == (%s._%s)"
+                                     l v r v
+      | TFun(TList _, _) -> Printf.sprintf
+                                     "(intern_list_eq(%s, %s, %s))._int" l r
+                                     (String.uppercase_ascii "int")
+      | _                       -> raise (Error "invalid pattern matching")
     in
     let case_to_c p nlam =
       match p with

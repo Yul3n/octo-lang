@@ -1,13 +1,11 @@
-let core_pre ="
-#ifndef __CORE_H_
-#define __CORE_H_
-
+let core = fun x -> Printf.fprintf x "
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 struct List;
 struct Closure;
 union Value;
+enum Type;
 
 typedef union Value (*Lambda)();
 
@@ -16,18 +14,22 @@ struct Closure {
   union Value *env;
 };
 
+enum Type {
+  INT,
+  LIST
+};
+
 struct List {
+  enum Type t;
   union Value *list;
   int length;
 };
 
 union Value {
   long     _int;
-"
-
-let core_seq = "
   struct Closure clo;
   struct List list;
+  %s
 };
 
 typedef union Value Value;
@@ -164,7 +166,7 @@ Value
 lambda_index (Value *env, Value n)
 {
   if ((n._int >= ((*(env)).list.length)) || (n._int < 0)){
-    printf (\"Error: invalid array index. Size of the array %li, index: %d.\\n\",
+    printf (\"Error: invalid array index. Size of the array %%li, index: %%d.\\n\",
     n._int, ((*(env)).list.length));
     exit (1);
   } else return *((*(env)).list.list + n._int);
@@ -200,17 +202,20 @@ octo_tail (Value *env, Value n, int len)
 }
 
 Value
-intern_list_eq (Value l1, Value l2)
+intern_list_eq (Value l1, Value l2, enum Type t)
 {
   if ((l2.list.length) != (l1.list.length)) return (make_int(0));
-  for (int i = 0; i < l2.list.length; i ++)
-  {
-    if ((*(l1.list.list + i))._int != (*(l2.list.list + i))._int)
-      return (make_int(0));
+  switch (t) {
+  case INT :
+    for (int i = 0; i < l2.list.length; i ++)
+      if ((*(l1.list.list + i))._int != (*(l2.list.list + i))._int)
+        return (make_int(0));
+    break;
+  case LIST :
+  break;
+
   }
   return make_int(1);
 }
-
-#endif // __CORE_H_
-
+%s
 "

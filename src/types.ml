@@ -134,8 +134,8 @@ and infer expr context nvar =
     Lambda (var, body) ->
     let var_t                = TVar nvar                              in
     let tmp_ctx              = (var, (Forall ([], var_t))) :: context in
-    let s, body_t, nvar, b = infer body tmp_ctx (nvar + 1)          in
-    let t                    = TFun ((app_subst s var_t), body_t)   in
+    let s, body_t, nvar, b   = infer body tmp_ctx (nvar + 1)          in
+    let t                    = TFun ((app_subst s var_t), body_t)     in
     s, t, nvar, TyLambda (var, b, t)
   | Num n -> [], TOth "int", nvar, TyNum (n, TOth "int")
   | Var var ->

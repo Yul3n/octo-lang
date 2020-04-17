@@ -141,7 +141,9 @@ let rec parse_expr tokens exprs is_math =
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
   | CASE :: tl ->
-    let e, tl = parse_expr tl [] false in
+    let v = "aaa@@@" in
+    let e = Var v in
+    let te, tl = parse_expr tl [] false in
     begin
       match tl with
         OF :: BLOCK bl :: tl ->
@@ -162,7 +164,7 @@ let rec parse_expr tokens exprs is_math =
               ARROW :: tl -> parse_expr tl [] false
             | _ -> parse_error "Invalid pattern matching"
           in
-          let p, b = parse_pattern (reduce e) (reduce p) (reduce e2) in
+          let p, b = parse_pattern e (reduce p) (reduce e2) in
           p, b, tl
         in
         let rec parse_cases tokens =
@@ -172,7 +174,7 @@ let rec parse_expr tokens exprs is_math =
             (p, e) :: parse_cases tl
         in
         let b, _ = List.split bl in
-        exprs @ [App(Case(parse_cases b), reduce e)], tl
+        exprs @ [App(Lambda (v, App(Case(parse_cases b), e)), reduce te)], tl
       | _ -> parse_error "Invalid pattern matching"
     end
   | BLOCK bl :: tl ->
@@ -204,7 +206,7 @@ let rec parse_expr tokens exprs is_math =
     in
     let l, tl = parse_list tokens in
     exprs @ [List l], tl
-  | tok :: _ -> parse_error ( "unexpected token: " ^ (Utils.string_of_token tok))
+  | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   match is_math with
     false ->
