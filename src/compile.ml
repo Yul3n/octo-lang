@@ -9,7 +9,7 @@ let read_from_file f =
   Bytes.unsafe_to_string s
 
 let compile f =
-  let rec def_ctx decls context types nd nlam texpr =
+  let rec def_ctx decls context types nd nlam texpr tc =
     match decls with
       [] -> context, types, nd, texpr
     | Decl(v, body) :: tl ->
@@ -25,7 +25,7 @@ let compile f =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)])
+      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)]) tc
     | TDef t :: tl ->
       let v =
         match snd (List.hd t) with
@@ -45,13 +45,15 @@ let compile f =
           return (n);
 }" v v
       in
-      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam texpr
+      let ntc =
+      in
+      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam texpr tc
   in
-  let s          = read_from_file f        in
-  let t, _       = Lexer.lexer s 0 0       in
-  let t, _       = List.split t            in
-  let f          = Parser.parse_tops t     in
-  let c, t, n, e = def_ctx f Types.initial_ctx "" "" 0 [] in
+  let s          = read_from_file f    in
+  let t, _       = Lexer.lexer s 0 0   in
+  let t, _       = List.split t        in
+  let f          = Parser.parse_tops t in
+  let c, t, n, e = def_ctx f Types.initial_ctx "" "" 0 [] "" in
   Utils.print_context c;
   let oc = open_out "out.c"      in
   Printf.fprintf oc "%s\n" (Closure.decls_to_c e "" "" 0 c);
