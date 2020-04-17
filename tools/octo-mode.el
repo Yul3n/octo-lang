@@ -31,19 +31,23 @@
              ; Indent the line if the line before is a function declaration
              (if (and (looking-at "\\([a-zA-Z]*\\).*=$") (not (looking-at "[ ]+")))
                  (progn
-                   (forward-line 1)
                    (setq curindent 2))
                (let (b e)
                  (setq b (point)) ; Get the indentation level of the previous line.
                  (skip-chars-forward " ")
                  (setq e (point))
-                 (if (looking-at ".*where*$\\|.*case*of$")
+                 (if (looking-at ".*where[ ]*$\\|.*case.*of[ ]*$\\|.*->[ ]*$")
                      (progn
                        (forward-line 1)
                        (setq curindent (+ (- e b) 2)))
                    (progn
-                     (forward-line 1) ; Set the indentation according to the last line
-                     (setq curindent (- e b))))))))))
+                     (if (looking-at "[^\\]*->.*") ; Set the indentation according to the last line
+                         (progn
+                           (forward-line 1)
+                           (if (looking-at "[^\\]*->.*")
+                               (setq curindent (- e b))
+                             (setq curindent (- (- e b) 2))))
+                       (setq curindent (- e b)))))))))))
       (when (/= curindent actindent)
         (indent-line-to curindent)
         (goto-char (- (+ curindent begin) actindent)))

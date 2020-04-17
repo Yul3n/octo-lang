@@ -22,7 +22,7 @@ struct List {
 };
 
 union Value {
-  int     _int;
+  long     _int;
 "
 
 let core_seq = "
@@ -53,7 +53,7 @@ make_list(Value *l, int length)
 }
 
 Value
-make_int(int n)
+make_int(long n)
 {
   Value v;
   v._int = n;
@@ -164,7 +164,7 @@ Value
 lambda_index (Value *env, Value n)
 {
   if ((n._int >= ((*(env)).list.length)) || (n._int < 0)){
-    printf (\"Error: invalid array index. Size of the array %d, index: %d.\\n\",
+    printf (\"Error: invalid array index. Size of the array %li, index: %d.\\n\",
     n._int, ((*(env)).list.length));
     exit (1);
   } else return *((*(env)).list.list + n._int);

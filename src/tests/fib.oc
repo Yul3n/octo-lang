@@ -4,4 +4,3 @@ fib n = (fib (n - 1)) + (fib (n - 2))
 
 main n =
   fib n
-  where n = 8

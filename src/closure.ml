@@ -197,7 +197,7 @@ Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tai
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv" ctx
       in
-      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%d\\n\"," ^
+      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%li\\n\"," ^
                                  nbody ^ ".clo.lam(NULL, n, 0)._int);\n return 0;") nlam ctx
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
