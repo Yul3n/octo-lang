@@ -23,5 +23,8 @@ id x =
 cons x _ =
   x
 
-main n =
-  fact 3
+compose f g x =
+  f (g x)
+
+flip f g x =
+  g (f x)

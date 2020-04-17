@@ -1,0 +1,4 @@
+main n =
+  case [] of
+    hd :: tl -> 0
+    [] -> n

@@ -212,6 +212,10 @@ intern_list_eq (Value l1, Value l2, enum Type t)
         return (make_int(0));
     break;
   case LIST :
+    for (int i = 0; i < l2.list.length; i ++)
+      if (!(intern_list_eq ((*(l1.list.list + i)), (*(l2.list.list + i)), l2.list.t))._int)
+        return (make_int(0));
+    break;
   break;
     %s
   }

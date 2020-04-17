@@ -110,28 +110,39 @@ let rec closure_to_c clo nlam env ctx =
   | CloCase (c, t) ->
     let equ_to_c t l r =
       match t with
-        TFun(TOth v, _)         -> Printf.sprintf "(%s._%s) == (%s._%s)"
-                                     l v r v
+        TFun(TOth v, _)  -> Printf.sprintf "(%s._%s) == (%s._%s)" l v r v
       | TFun(TList _, _) -> Printf.sprintf
-                                     "(intern_list_eq(%s, %s, %s))._int" l r
-                                     (String.uppercase_ascii "int")
-      | _                       -> raise (Error "invalid pattern matching")
+                              "(intern_list_eq(%s, %s, %s))._int" l r
+                              (String.uppercase_ascii "int")
+      | _                -> raise (Error "invalid pattern matching")
     in
     let case_to_c p nlam =
       match p with
         []           -> "", "", "", nlam, []
       | (f, s) :: tl ->
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env ctx in
+        let prelude, postlude =
+            match t with
+              TFun(TList _, _) ->
+              let rec min_len e =
+                match e with
+                  (CloApp(CloApp(CloGVar ("conl", _), _, _), l, _)) -> 1 + min_len l
+                | _ -> 0
+              in
+              Printf.sprintf "if ((*(tenv)).list.length >= %d){" (min_len f), "}"
+            | _ -> "", ""
+          in
         let p3, nlam, nf2, p4 =
+
           match f with
-          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-          Printf.sprintf "else{\n%s\nreturn %s;\n}" p2 nbody, nlam, "", ""
-        | _ ->
-          let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
-             (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
+            CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
+            Printf.sprintf "else{\n%s\nreturn %s;\n}" p2 nbody, nlam, "", ""
+          | _ ->
+            let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
+            (Printf.sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
+               (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
-        p3, nf ^ nf2, p4, nlam, tl
+        prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
     in
     let rec cases_to_c n nf p nlam l =
       match l with

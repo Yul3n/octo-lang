@@ -1,4 +1,4 @@
 main n =
-  case [1, 1] of
+  case [1, n] of
     hd :: [2] -> 0
     hd :: tl -> 1

@@ -48,6 +48,8 @@ test4 "tail2" 0 0 1 1 2 2 3 3
 test4 "fib"   0 0 1 1 2 1 3 2
 test4 "case1" 0 1 1 2 2 0 3 7
 test4 "case2" 0 1 1 7 2 8 3 9
+test4 "casel" 0 1 1 1 2 0 3 1
+test4 "empty" 0 0 1 1 2 2 3 3
 
 echo "✓ All tests passed"
 
