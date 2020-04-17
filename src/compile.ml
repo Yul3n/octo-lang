@@ -9,9 +9,9 @@ let read_from_file f =
   Bytes.unsafe_to_string s
 
 let compile f =
-  let rec def_ctx decls context types nd nlam texpr tc =
+  let rec def_ctx decls context types nd nlam texpr tc ist =
     match decls with
-      [] -> context, types, nd, texpr
+      [] -> context, types, nd, texpr, tc, ist
     | Decl(v, body) :: tl ->
       let tmp_ctx    = context @ [v, Forall([], TVar 0)] in
       let s, t, n, e = Types.infer body tmp_ctx 1        in
@@ -25,12 +25,17 @@ let compile f =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)]) tc
+      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)]) tc ist
     | TDef t :: tl ->
+      let rec get_t_n t =
+        match t with
+          TOth v     -> v
+        | TFun(_, t) -> get_t_n t
+        | _          -> raise (Invalid_argument "Shouldn't happend")
+      in
       let v =
         match snd (List.hd t) with
-          Forall ([], (TOth v)) -> v
-        | _ -> raise (Invalid_argument "Shouldn't happend")
+          Forall (_, t) -> get_t_n t
       in
       let n, _ = List.split t in
       let s    = "  enum {" ^
@@ -45,18 +50,25 @@ let compile f =
           return (n);
 }" v v
       in
-      let ntc =
+      let ntc = ",\n  " ^ (String.uppercase_ascii v) in
+      let nin = Printf.sprintf
+          "case %s :
+    for (int i = 0; i < l2.list.length; i ++)
+      if ((*(l1.list.list + i))._%s != (*(l2.list.list + i))._%s)
+        return (make_int(0));
+    break;"
+          (String.uppercase_ascii v) v v
       in
-      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam texpr tc
+      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam texpr (tc ^ ntc) (ist ^ nin)
   in
-  let s          = read_from_file f    in
-  let t, _       = Lexer.lexer s 0 0   in
-  let t, _       = List.split t        in
-  let f          = Parser.parse_tops t in
-  let c, t, n, e = def_ctx f Types.initial_ctx "" "" 0 [] "" in
+  let s                 = read_from_file f    in
+  let t, _              = Lexer.lexer s 0 0   in
+  let t, _              = List.split t        in
+  let f                 = Parser.parse_tops t in
+  let c, t, n, e, lt, i = def_ctx f Types.initial_ctx "" "" 0 [] "" "" in
   Utils.print_context c;
   let oc = open_out "out.c"      in
   Printf.fprintf oc "%s\n" (Closure.decls_to_c e "" "" 0 c);
   close_out oc;
   let oc = open_out "core.h"     in
-  Core.core oc t n
+  Core.core oc lt t i n

@@ -16,7 +16,7 @@ struct Closure {
 
 enum Type {
   INT,
-  LIST
+  LIST%s
 };
 
 struct List {
@@ -213,7 +213,7 @@ intern_list_eq (Value l1, Value l2, enum Type t)
     break;
   case LIST :
   break;
-
+    %s
   }
   return make_int(1);
 }
