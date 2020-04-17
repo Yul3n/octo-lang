@@ -104,10 +104,11 @@ let rec closure_to_c clo nlam env ctx =
     (Printf.sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
-    let type_to_c t =
+    let equ_to_c t l r =
       match t with
-        TFun(TOth v, _) -> "._" ^ v
-      | _      -> raise (Error "invalid pattern matching")
+        TFun(TOth v, _)    -> Printf.sprintf "(%s._%s) == (%s._%s)" l v r v
+      | TFun(TList (_), _) -> Printf.sprintf "(intern_list_eq(%s, %s))._int" l r
+      | _                  -> raise (Error "invalid pattern matching")
     in
     let case_to_c p nlam =
       match p with
@@ -120,8 +121,8 @@ let rec closure_to_c clo nlam env ctx =
           Printf.sprintf "else{\n%s\nreturn %s;\n}" p2 nbody, nlam, "", ""
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-          (Printf.sprintf "if ((%s%s) == ((*tenv)%s)) {\n%s\nreturn %s;\n}\n"
-             np (type_to_c t) (type_to_c t) p2 nbody), nlam + 1, nf2, p4
+          (Printf.sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
+             (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
         p3, nf ^ nf2, p4, nlam, tl
     in
@@ -138,9 +139,10 @@ let rec closure_to_c clo nlam env ctx =
         "Value __lam%d(Value *env, Value n, int len) {
         %s
         %s
-}" nlam pr b
+        %s
+}" nlam pr p b
     in
-    Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, p, nlam + 1, env
+    Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, "", nlam + 1, env
   | CloList (clo, _) ->
     let lp = Printf.sprintf "l%d" nlam in
     let rec l_to_c nlam pos =

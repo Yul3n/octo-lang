@@ -140,30 +140,41 @@ let rec parse_expr tokens exprs is_math =
     let w, tl = parse_equ tl lst   in
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
-  | CASE :: IDENT v :: OF :: BLOCK bl :: tl ->
-    let parse_case tokens =
-      let p, tl = parse_expr tokens [] false in
-      let e, tl =
+  | CASE :: tl ->
+    let e, tl = parse_expr tl [] false in
+    begin
       match tl with
-          ARROW :: tl -> parse_expr tl [] false
-        | _ -> parse_error "Invalid pattern matching"
-      in
-      let pr = reduce p in
-      match pr with
-       (* Check if the pattern is a variable that should be bound.*)
-        Var v2 when Char.code (String.get v2 0) >= Char.code 'a' ->
-        Var v, (App(Lambda (v2, reduce e), Var v)), tl
-      | pr ->
-        pr, reduce e, tl
-    in
-    let rec parse_cases tokens =
-      match tokens with
-        [] -> []
-      | l  -> let p, e, tl = parse_case l in
-        (p, e) :: parse_cases tl
-    in
-    let b, _ = List.split bl in
-    exprs @ [App(Case(parse_cases b), Var v)], tl
+        OF :: BLOCK bl :: tl ->
+        let parse_case tokens =
+          let rec parse_pattern env e body =
+            match e with
+              Var v2 when Char.code (String.get v2 0) >= Char.code 'a' ->
+              env, (App(Lambda (v2, body), env))
+            | App(App(Var "conl", l), r) ->
+              let l2, b2 = parse_pattern (App(Var "head", env)) l body in
+              let r2, b3 = parse_pattern (App(Var "tail", env)) r b2   in
+              App(App(Var "conl", l2), r2), b3
+            | _ -> e, body
+          in
+          let p, tl = parse_expr tokens [] false in
+          let e2, tl =
+            match tl with
+              ARROW :: tl -> parse_expr tl [] false
+            | _ -> parse_error "Invalid pattern matching"
+          in
+          let p, b = parse_pattern (reduce e) (reduce p) (reduce e2) in
+          p, b, tl
+        in
+        let rec parse_cases tokens =
+          match tokens with
+            [] -> []
+          | l  -> let p, e, tl = parse_case l in
+            (p, e) :: parse_cases tl
+        in
+        let b, _ = List.split bl in
+        exprs @ [App(Case(parse_cases b), reduce e)], tl
+      | _ -> parse_error "Invalid pattern matching"
+    end
   | BLOCK bl :: tl ->
     let b, _ = List.split bl in
     exprs @ [parse_all b []], tl

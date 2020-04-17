@@ -199,6 +199,17 @@ octo_tail (Value *env, Value n, int len)
   return(make_list(n.list.list + 1, n.list.length - 1));
 }
 
+Value
+intern_list_eq (Value l1, Value l2)
+{
+  if ((l2.list.length) != (l1.list.length)) return (make_int(0));
+  for (int i = 0; i < l2.list.length; i ++)
+  {
+    if ((*(l1.list.list + i))._int != (*(l2.list.list + i))._int)
+      return (make_int(0));
+  }
+  return make_int(1);
+}
 
 #endif // __CORE_H_
 
