@@ -49,9 +49,10 @@ make_list(Value *l, int length, enum Type t)
 {
   Value v;
   v.list.t = t;
-  v.list.list = malloc(length * sizeof(Value));
-  memcpy(v.list.list, l, length * sizeof(Value));
   v.list.length = length;
+  if (length)
+    v.list.list = malloc(length * sizeof(Value));
+  memcpy(v.list.list, l, length * sizeof(Value));
   return v;
 }
 
@@ -129,7 +130,7 @@ lambda_cons(Value *env, Value n)
     Value v;
     v.list.list = malloc((n.list.length + 1) * sizeof(Value));
     memcpy(v.list.list, env, sizeof(Value));
-    memcpy(v.list.list + 1, n.list.list, n.list.length);
+    memcpy(v.list.list + 1, n.list.list, n.list.length * sizeof(Value));
     v.list.length = n.list.length + 1;
     return v;
 }
@@ -138,7 +139,7 @@ Value
 cons (Value *env, Value n, int len)
 {
     Value *tenv = malloc((len + 1) * sizeof(Value));
-    memcpy (tenv + 1, env, len);
+    memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_cons, tenv, len + 1));
 }
@@ -149,7 +150,7 @@ lambda_union(Value *env, Value n)
   Value v;
   v.list.list = malloc ((n.list.length + ((*(env)).list.length)) * sizeof(Value));
   memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
-  memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length);
+  memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length * sizeof(Value));
   v.list.length = (*(env)).list.length + n.list.length;
   return v;
 }
@@ -158,7 +159,7 @@ Value
 octo_union (Value *env, Value n, int len)
 {
     Value *tenv = malloc((len + 1) * sizeof(Value));
-    memcpy (tenv + 1, env, len);
+    memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_union, tenv, len + 1));
 }
@@ -177,7 +178,7 @@ Value
 ind (Value *env, Value n, int len)
 {
     Value *tenv = malloc((len + 1) * sizeof(Value));
-    memcpy (tenv + 1, env, len);
+    memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_index, tenv, len + 1));
 }
@@ -219,7 +220,6 @@ intern_list_eq (Value l1, Value l2, enum Type t)
       if (!(intern_list_eq ((*(l1.list.list + i)), (*(l2.list.list + i)), l2.list.t))._int)
         return (make_int(0));
     break;
-  break;
     %s
   }
   return make_int(1);

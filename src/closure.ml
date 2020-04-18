@@ -1,7 +1,7 @@
 open Syntax
 
-let pr = "
-        Value *tenv = malloc((len + 1) * sizeof(Value));
+let pr =
+"   Value *tenv = malloc((len + 1) * sizeof(Value));
         memcpy (tenv + 1, env, len * sizeof(Value));
         *tenv = n;\n"
 
@@ -74,22 +74,17 @@ let rec closure_to_c clo nlam env ctx =
       | n -> Printf.sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
   | CloApp (f, arg, t) ->
-    let s1, nf, p1, nlam, nv = closure_to_c f nlam env ctx in
+    let s1, nf, p1, nlam, _ = closure_to_c f nlam env ctx in
     let n = Printf.sprintf "l%d" nlam in
     let s2, na, p2, nlam, v =
       match t with
-        TFun (_, _) -> closure_to_c arg (nlam + 1)  (n ^ ".clo.env") ctx
-      | _ -> closure_to_c arg (nlam + 1) env ctx
+        TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env") ctx
+      | _ ->closure_to_c arg (nlam + 1) ("tenv") ctx
     in
     begin
-      match f with
-        CloGVar _ ->
-        n, nf ^ na, p1 ^  p2 ^
-                    (Printf.sprintf "Value %s = %s.clo.lam(tenv, %s, len + 1);\n"
-                       n s1 s2), nlam, v
-      | _ -> n, nf ^ na, p1 ^  p2 ^
-                         (Printf.sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n"
-                            n s1 nv s2), nlam, v
+       n, nf ^ na, p1 ^  p2 ^
+                         (Printf.sprintf "Value %s = %s.clo.lam(%s.clo.env, %s, len + 1);\n"
+                            n s1 s1 s2), nlam, v
     end
   | CloGVar (v, _) ->
     begin
@@ -98,7 +93,7 @@ let rec closure_to_c clo nlam env ctx =
       | _ ->
         match List.assoc (String.sub v 1 ((String.length v) - 1)) ctx with
           Forall ([], TOth v2) -> "make_" ^ v2 ^ "(" ^ (String.uppercase_ascii v) ^ ")"
-        | _                   -> raise (Invalid_argument "shouldn't happened")
+        | _                    -> raise (Invalid_argument "shouldn't happened")
     end, "", "", nlam, env
   | Closure (_, body, _) ->
     let n = Printf.sprintf "l%d" nlam in
