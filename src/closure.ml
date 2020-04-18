@@ -133,13 +133,12 @@ let rec closure_to_c clo nlam env ctx =
             | _ -> "", ""
           in
         let p3, nlam, nf2, p4 =
-
           match f with
             CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-            Printf.sprintf "else{\n%s\nreturn %s;\n}" p2 nbody, nlam, "", ""
+            Printf.sprintf "else{\n%s\nfree(tenv);\nreturn %s;\n}" p2 nbody, nlam, "", ""
           | _ ->
             let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-            (Printf.sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
+            (Printf.sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
                (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
@@ -164,9 +163,10 @@ let rec closure_to_c clo nlam env ctx =
   | CloList (clo, t) ->
     let v =
       match t with
-        TOth v  -> String.uppercase_ascii v
-      | TList _ -> "LIST"
-      | _ -> raise (Error "Invalid list.")
+        TList (TOth v)  -> String.uppercase_ascii v
+      | TList (TList _) -> "LIST"
+      | TList (TVar _)  -> "INT"
+      | _ -> raise (Error ("Invalid list of type :" ^ (Utils.string_of_type t)))
     in
     let lp = Printf.sprintf "l%d" nlam in
     let rec l_to_c nlam pos =

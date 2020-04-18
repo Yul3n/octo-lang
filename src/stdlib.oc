@@ -1,20 +1,5 @@
 -- Booleans
 
-type bool =
-  True | False
-
-iszero 0 = True
-iszero n = False
-
-fact 0 = 1
-fact n = n * (fact (n - 1))
-
-if True x _  = x
-if False _ x = x
-
-ifz x y z =
-  if (iszero x) y z
-
 map f l =
   case l of
     [] -> []
@@ -25,11 +10,5 @@ map f l =
 id x =
   x
 
-cons x _ =
-  x
-
-compose f g x =
-  f (g x)
-
-flip f g x =
-  g (f x)
+main n =
+  (map id [0, 1, 2]) ! 0

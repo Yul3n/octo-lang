@@ -199,6 +199,8 @@ octo_tail (Value *env, Value n, int len)
     puts(\"Using tail on an empty list.\");
     exit (1);
   }
+  if (n.list.length == 1)
+    return (make_list(NULL, 0, INT));
   return(make_list(n.list.list + 1, n.list.length - 1, n.list.t));
 }
 
