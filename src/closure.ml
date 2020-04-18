@@ -161,7 +161,13 @@ let rec closure_to_c clo nlam env ctx =
 }" nlam pr p b
     in
     Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, "", nlam + 1, env
-  | CloList (clo, _) ->
+  | CloList (clo, t) ->
+    let v =
+      match t with
+        TOth v  -> String.uppercase_ascii v
+      | TList _ -> "LIST"
+      | _ -> raise (Error "Invalid list.")
+    in
     let lp = Printf.sprintf "l%d" nlam in
     let rec l_to_c nlam pos =
       function
@@ -172,7 +178,7 @@ let rec closure_to_c clo nlam env ctx =
         f ^ nf, p ^ np ^ pl, nlam
     in
     let f, p, nlam = l_to_c nlam 0 clo in
-    (Printf.sprintf "make_list(%s, %d)" lp (List.length clo)), f,
+    (Printf.sprintf "make_list(%s, %d, %s)" lp (List.length clo)) v, f,
     (Printf.sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
        (List.length clo)) ^ p, nlam + 1, env
 

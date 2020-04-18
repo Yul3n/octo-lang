@@ -45,9 +45,10 @@ make_closure(Lambda lam, Value *env, int env_len)
 }
 
 Value
-make_list(Value *l, int length)
+make_list(Value *l, int length, enum Type t)
 {
   Value v;
+  v.list.t = t;
   v.list.list = malloc(length * sizeof(Value));
   memcpy(v.list.list, l, length * sizeof(Value));
   v.list.length = length;
@@ -198,7 +199,7 @@ octo_tail (Value *env, Value n, int len)
     puts(\"Using tail on an empty list.\");
     exit (1);
   }
-  return(make_list(n.list.list + 1, n.list.length - 1));
+  return(make_list(n.list.list + 1, n.list.length - 1, n.list.t));
 }
 
 Value

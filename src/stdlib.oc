@@ -15,6 +15,11 @@ if False _ x = x
 ifz x y z =
   if (iszero x) y z
 
+map f l =
+  case l of
+    [] -> []
+    hd :: tl -> (f hd) :: (map f tl)
+
 -- Combinators
 
 id x =
