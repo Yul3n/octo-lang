@@ -231,7 +231,6 @@ let rec parse_expr tokens exprs is_math =
       | CONS   :: _
       | AT     :: _
       | EXCLAM :: _
-      | COMMA  :: _
       | WHERE  :: _ -> parse_expr tl e false
       | _           -> e, tl
     end

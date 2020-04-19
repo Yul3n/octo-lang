@@ -90,16 +90,7 @@ let rec closure_to_c clo nlam env ctx =
                          (Printf.sprintf "Value %s = %s.clo.lam(%s.clo.env, %s, len + 1);\n"
                             n s1 s1 s2), nlam, v
     end
-  | CloGVar (v, _) ->
-    begin
-      match Char.code (String.get v 1) with
-        c when c >= (Char.code 'a') -> v
-      | _ ->
-        let t  = List.assoc (String.sub v 1 ((String.length v) - 1)) ctx in
-        let Forall (_, t) = t in
-        let v2 = Utils.get_t_n t in
-        "make_" ^ v2 ^ "(" ^ (String.uppercase_ascii v) ^ ")"
-    end, "", "", nlam, env
+  | CloGVar (v, _) -> v, "", "", nlam, env
   | Closure (_, body, _) ->
     let n = Printf.sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in

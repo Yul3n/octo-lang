@@ -4,14 +4,14 @@ let core = fun x -> Printf.fprintf x "
 #include <stdio.h>
 struct List;
 struct Closure;
-union Value;
+struct Value;
 enum Type;
 
-typedef union Value (*Lambda)();
+typedef struct Value (*Lambda)();
 
 struct Closure {
   Lambda lam;
-  union Value *env;
+  struct Value *env;
 };
 
 enum Type {
@@ -21,18 +21,27 @@ enum Type {
 
 struct List {
   enum Type t;
-  union Value *list;
+  struct Value *list;
   int length;
 };
 
-union Value {
-  long     _int;
-  struct Closure clo;
-  struct List list;
-  %s
+struct Pair {
+    struct Value *fst;
+    struct Value *snd;
 };
 
-typedef union Value Value;
+struct Value {
+  union {
+    long     _int;
+    struct Closure clo;
+    struct List list;
+    struct Pair pair;
+    %s
+  };
+  struct Value *cell;
+};
+
+typedef struct Value Value;
 
 Value
 make_closure(Lambda lam, Value *env, int env_len)
@@ -55,6 +64,18 @@ make_list(Value *l, int length, enum Type t)
   memcpy(v.list.list, l, length * sizeof(Value));
   return v;
 }
+
+Value
+make_pair(Value fst, Value snd)
+{
+  Value v;
+  v.pair.fst = malloc(sizeof(Value));
+  *(v.pair.fst) = fst;
+  v.pair.snd = malloc(sizeof(Value));
+  *(v.pair.snd) = snd;
+  return v;
+}
+
 
 Value
 make_int(long n)
