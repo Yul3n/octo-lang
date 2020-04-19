@@ -18,6 +18,11 @@ let rec snd_map f l =
     []               -> []
   | (fst, snd) :: tl -> (fst, f snd) :: snd_map f tl
 
+let rec get_t_n t =
+  match t with
+    TOth v     -> v
+  | TFun(_, t) -> get_t_n t
+  | _          -> raise (Invalid_argument "Shouldn't happend")
 
 (* Printing and error reporting functions *)
 

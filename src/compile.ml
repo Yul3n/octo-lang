@@ -27,15 +27,9 @@ let compile f =
       in
       def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)]) tc ist
     | TDef t :: tl ->
-      let rec get_t_n t =
-        match t with
-          TOth v     -> v
-        | TFun(_, t) -> get_t_n t
-        | _          -> raise (Invalid_argument "Shouldn't happend")
-      in
       let v =
         match snd (List.hd t) with
-          Forall (_, t) -> get_t_n t
+          Forall (_, t) -> Utils.get_t_n t
       in
       let n, _ = List.split t in
       let s    = "  enum {" ^

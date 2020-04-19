@@ -123,6 +123,7 @@ let initial_ctx =
    "tail", Forall([0], TFun(TList(TVar 0), TList(TVar 0)));
    (* Forall a and b, the type of fst is a * b -> a *)
    "fst", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 0));
+   (* Forall a and b, the type of snd is a * b -> b *)
    "snd", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 1))]
 
 let rec unify_lst lst nvar t ctx subst exprs =
@@ -171,3 +172,9 @@ and infer expr context nvar =
   | List l ->
     let t, nvar, s, e = unify_lst l (nvar + 1) (TVar nvar) context [] [] in
     s, TList t, nvar, TyList(e, TList t)
+  | Pair (l, r) ->
+    let s1, lt, nvar, l = infer l context nvar     in
+    let tmp_ctx         = subst_context s1 context in
+    let s2, rt, nvar, r = infer r tmp_ctx nvar     in
+    let t               = TPair(lt, rt)            in
+    compose_subst s2 s1, t, nvar, TyPair(l, r, t)

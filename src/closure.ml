@@ -15,6 +15,7 @@ type closure
   | CloGVar of string * expr_t
   | CloCase of (closure * closure) list * expr_t
   | CloList of closure list * expr_t
+  | CloPair of closure * closure * expr_t
 
 let builtin_funs =
   ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"; "head"; "tail"]
@@ -31,6 +32,7 @@ let rec free e s =
     let freelst = fun y -> List.fold_left (@) [] (List.map (fun x -> free x s) y) in
     (freelst ps) @ freelst es
   | TyList (l, _) -> List.fold_left (@) [] (List.map (fun x -> free x s) l)
+  | TyPair (l, r, _) -> free l s @ free r s
 
 let rec deB e (v, n) =
   match e with
@@ -46,22 +48,24 @@ let rec deB e (v, n) =
     TyCase (cc, t)
   | TyList (l, t)             -> let nl = List.map (fun x -> deB x (v, n)) l in
     TyList (nl, t)
+  | TyPair (l, r, t)           -> TyPair (deB l (v, n), deB r (v, n), t)
 
 let rec to_closure expr =
   match expr with
-    TyNum (n, t)         -> CloNum (n, t)
+    TyNum (n, t)       -> CloNum (n, t)
   | TyVar (n, t) when
       (List.mem n builtin_funs)
-                         -> CloGVar (n, t)
-  | TyVar (n, t)         -> CloGVar ("_" ^ n, t)
-  | TyIndVar(n, t)       -> CloVar (n, t)
-  | TyLambda(_, b, t)   -> Closure (free expr 1, to_closure b, t)
-  | TyApp (l, r, t)     -> CloApp (to_closure l, to_closure r, t)
-  | TyCase (c, t)       -> let p, e = List.split c in
+                       -> CloGVar (n, t)
+  | TyVar (n, t )      -> CloGVar ("_" ^ n, t)
+  | TyIndVar (n, t)    -> CloVar (n, t)
+  | TyLambda (_, b, t) -> Closure (free expr 1, to_closure b, t)
+  | TyApp (l, r, t)    -> CloApp (to_closure l, to_closure r, t)
+  | TyCase (c, t)      -> let p, e = List.split c in
     let cp = List.map to_closure p in
     let ce = List.map to_closure e in
     CloCase (List.combine cp ce, t)
-  | TyList (l, t)       -> CloList (List.map to_closure l, t)
+  | TyList (l, t)      -> CloList (List.map to_closure l, t)
+  | TyPair (l, r, t)   -> CloPair (to_closure l, to_closure r, t)
 
 let rec closure_to_c clo nlam env ctx =
   match clo with
@@ -79,7 +83,7 @@ let rec closure_to_c clo nlam env ctx =
     let s2, na, p2, nlam, v =
       match t with
         TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env") ctx
-      | _ ->closure_to_c arg (nlam + 1) ("tenv") ctx
+      | _           -> closure_to_c arg (nlam + 1) ("tenv") ctx
     in
     begin
        n, nf ^ na, p1 ^  p2 ^
@@ -91,9 +95,10 @@ let rec closure_to_c clo nlam env ctx =
       match Char.code (String.get v 1) with
         c when c >= (Char.code 'a') -> v
       | _ ->
-        match List.assoc (String.sub v 1 ((String.length v) - 1)) ctx with
-          Forall ([], TOth v2) -> "make_" ^ v2 ^ "(" ^ (String.uppercase_ascii v) ^ ")"
-        | _                    -> raise (Invalid_argument "shouldn't happened")
+        let t  = List.assoc (String.sub v 1 ((String.length v) - 1)) ctx in
+        let Forall (_, t) = t in
+        let v2 = Utils.get_t_n t in
+        "make_" ^ v2 ^ "(" ^ (String.uppercase_ascii v) ^ ")"
     end, "", "", nlam, env
   | Closure (_, body, _) ->
     let n = Printf.sprintf "l%d" nlam in
@@ -176,6 +181,7 @@ let rec closure_to_c clo nlam env ctx =
     (Printf.sprintf "make_list(%s, %d, %s)" lp (List.length clo)) v, f,
     (Printf.sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
        (List.length clo)) ^ p, nlam + 1, env
+  | _ -> raise Not_found
 
 
 let rec decls_to_c decls funs body nlam ctx =
