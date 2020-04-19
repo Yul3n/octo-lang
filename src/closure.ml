@@ -87,11 +87,14 @@ let rec closure_to_c clo nlam env  =
         TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env")
       | _           -> closure_to_c arg (nlam + 1) ("tenv")
     in
-    begin
-       n, nf ^ na, p1 ^  p2 ^
-                         (sprintf "Value %s = %s.clo.lam(%s.clo.env, %s, len + 1);\n"
-                            n s1 s1 s2), nlam, v
-    end
+    let nv =
+      match f with
+        CloGVar (_,_) -> "tenv"
+      | _             -> s1 ^ ".clo.env"
+    in
+    n, nf ^ na, p2 ^ p1 ^
+                (sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n"
+                   n s1 nv s2), nlam, v
   | CloGVar (v, _) -> v, "", "", nlam, env
   | Closure (_, body, _) ->
     let n = sprintf "l%d" nlam in
