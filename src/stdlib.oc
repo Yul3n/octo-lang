@@ -6,22 +6,43 @@ type bool =
 if True x _ = x
 if False _ y = y
 
+not True = False
+not False = True
+
+or True _ = True
+or False x =
+  case x of
+    True -> True
+    False -> False
+
+and False _ = False
+and True x =
+  case x of
+    True -> True
+    False -> False
+
+xor True x =
+  case x of
+    True -> False
+    False -> True
+
+xor False x =
+  case x of
+    True -> True
+    False -> False
+
 iszero 0 = True
 iszero n = False
 
 -- Combinators
 
-id x =
-  x
+id x = x
 
-cons x _ =
-  x
+cons x _ = x
 
-compose f g x =
-  f (g x)
+compose f g x = (f (g x))
 
-flip f g x =
-  g (f x)
+flip f g x = (g (f x))
 
 -- Lists
 
@@ -32,3 +53,13 @@ map f l =
 
 isnil [] = True
 isnil l  = False
+
+-- Maths
+
+fact 0 = 1
+fact n =
+  n * (fact (n - 1))
+
+power 0 n = 1
+power p n =
+  n * (power (p - 1) n)

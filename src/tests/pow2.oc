@@ -1,0 +1,6 @@
+power 0 n = 1
+power p n =
+  n * (power (p - 1) n)
+
+main n =
+  power 2 n

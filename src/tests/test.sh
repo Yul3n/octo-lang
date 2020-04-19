@@ -50,6 +50,8 @@ test4 "case1" 0 1 1 2 2 0 3 7
 test4 "case2" 0 1 1 7 2 8 3 9
 test4 "casel" 0 1 1 1 2 0 3 1
 test4 "empty" 0 0 1 1 2 2 3 3
+test4 "map"   0 1 1 1 2 2 3 6
+test4 "pow1"  0 1 1 2 2 4 3 8
 
 echo "✓ All tests passed"
 

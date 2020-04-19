@@ -246,10 +246,9 @@ let rec parse_tops tokens =
         begin
           let vars, tl = parse_args tl in
           match tl with
-            EQUAL :: BLOCK b :: tl ->
-            let b, _ = List.split b   in
-            let e    = parse_all b [] in
-            Decl (v, wrap_lam (List.rev vars) e) :: parse_tops tl
+            EQUAL :: tl ->
+            let e, tl = parse_expr tl [] false in
+            Decl (v, wrap_lam (List.rev vars) (reduce e)) :: parse_tops tl
           | _                      -> parse_error "Expected a function declaration"
         end
       | _ ->
