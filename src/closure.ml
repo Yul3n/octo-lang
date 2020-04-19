@@ -1,4 +1,5 @@
 open Syntax
+open Printf
 
 let pr =
 "   Value *tenv = malloc((len + 1) * sizeof(Value));
@@ -18,7 +19,8 @@ type closure
   | CloPair of closure * closure * expr_t
 
 let builtin_funs =
-  ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"; "head"; "tail"]
+  ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"; "head"; "tail";
+   "snd"; "fst"]
 
 let rec free e s =
   match e with
@@ -67,42 +69,42 @@ let rec to_closure expr =
   | TyList (l, t)      -> CloList (List.map to_closure l, t)
   | TyPair (l, r, t)   -> CloPair (to_closure l, to_closure r, t)
 
-let rec closure_to_c clo nlam env ctx =
+let rec closure_to_c clo nlam env  =
   match clo with
-    CloNum (n, _) -> Printf.sprintf "make_int(%d)" n, "", "", nlam, env
+    CloNum (n, _) -> sprintf "make_int(%d)" n, "", "", nlam, env
   | CloVar (n, _) ->
     begin
       (* If the index is not one, the variable is in the closure's context. *)
       match n with
         1 -> "n"
-      | n -> Printf.sprintf "(*(env + %d))" (n - 2)
+      | n -> sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
   | CloApp (f, arg, t) ->
-    let s1, nf, p1, nlam, _ = closure_to_c f nlam env ctx in
-    let n = Printf.sprintf "l%d" nlam in
+    let s1, nf, p1, nlam, _ = closure_to_c f nlam env  in
+    let n = sprintf "l%d" nlam in
     let s2, na, p2, nlam, v =
       match t with
-        TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env") ctx
-      | _           -> closure_to_c arg (nlam + 1) ("tenv") ctx
+        TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env")
+      | _           -> closure_to_c arg (nlam + 1) ("tenv")
     in
     begin
        n, nf ^ na, p1 ^  p2 ^
-                         (Printf.sprintf "Value %s = %s.clo.lam(%s.clo.env, %s, len + 1);\n"
+                         (sprintf "Value %s = %s.clo.lam(%s.clo.env, %s, len + 1);\n"
                             n s1 s1 s2), nlam, v
     end
   | CloGVar (v, _) -> v, "", "", nlam, env
   | Closure (_, body, _) ->
-    let n = Printf.sprintf "l%d" nlam in
-    let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv" ctx in
-    n, nf ^ (Printf.sprintf "Value __lam%d(Value *env, Value n, int len) {
+    let n = sprintf "l%d" nlam in
+    let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
+    n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
      %s%sfree(tenv);\nreturn(%s);\n}" nlam pr c cbody),
-    (Printf.sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
+    (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
     let equ_to_c t l r =
       match t with
-        TFun(TOth v, _)  -> Printf.sprintf "(%s._%s) == (%s._%s)" l v r v
-      | TFun(TList _, _) -> Printf.sprintf
+        TFun(TOth v, _)  -> sprintf "(%s._%s) == (%s._%s)" l v r v
+      | TFun(TList _, _) -> sprintf
                               "(intern_list_eq(%s, %s, %s))._int" l r
                               (String.uppercase_ascii "int")
       | _                -> raise (Error "invalid pattern matching")
@@ -111,7 +113,7 @@ let rec closure_to_c clo nlam env ctx =
       match p with
         []           -> "", "", "", nlam, []
       | (f, s) :: tl ->
-        let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env ctx in
+        let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env  in
         let prelude, postlude =
             match t with
               TFun(TList _, _) ->
@@ -120,16 +122,16 @@ let rec closure_to_c clo nlam env ctx =
                   (CloApp(CloApp(CloGVar ("conl", _), _, _), l, _)) -> 1 + min_len l
                 | _ -> 0
               in
-              Printf.sprintf "if ((*(tenv)).list.length >= %d){" (min_len f), "}"
+              sprintf "if ((*(tenv)).list.length >= %d){" (min_len f), "}"
             | _ -> "", ""
           in
         let p3, nlam, nf2, p4 =
           match f with
             CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-            Printf.sprintf "else{\n%s\nfree(tenv);\nreturn %s;\n}" p2 nbody, nlam, "", ""
+            sprintf "else{\n%s\nfree(tenv);\nreturn %s;\n}" p2 nbody, nlam, "", ""
           | _ ->
-            let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env ctx in
-            (Printf.sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
+            let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env  in
+            (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
                (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
@@ -143,14 +145,14 @@ let rec closure_to_c clo nlam env ctx =
     in
     let b, nf, p, nlam, _ = cases_to_c "" "" "" nlam c in
     let f =
-      Printf.sprintf
+      sprintf
         "Value __lam%d(Value *env, Value n, int len) {
         %s
         %s
         %s
 }" nlam pr p b
     in
-    Printf.sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, "", nlam + 1, env
+    sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, "", nlam + 1, env
   | CloList (clo, t) ->
     let v =
       match t with
@@ -159,30 +161,32 @@ let rec closure_to_c clo nlam env ctx =
       | TList (TVar _)  -> "INT"
       | _ -> raise (Error ("Invalid list of type :" ^ (Utils.string_of_type t)))
     in
-    let lp = Printf.sprintf "l%d" nlam in
+    let lp = sprintf "l%d" nlam in
     let rec l_to_c nlam pos =
       function
         []       ->  "", "", nlam
-      | hd :: tl -> let b, f, p, nlam, _ = closure_to_c hd nlam env ctx in
+      | hd :: tl -> let b, f, p, nlam, _ = closure_to_c hd nlam env  in
         let nf, np, nlam = l_to_c nlam (pos + 1) tl in
-        let pl = Printf.sprintf "*(%s + %d) = %s;\n" lp pos b in
+        let pl = sprintf "*(%s + %d) = %s;\n" lp pos b in
         f ^ nf, p ^ np ^ pl, nlam
     in
     let f, p, nlam = l_to_c nlam 0 clo in
-    (Printf.sprintf "make_list(%s, %d, %s)" lp (List.length clo)) v, f,
-    (Printf.sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
+    (sprintf "make_list(%s, %d, %s)" lp (List.length clo)) v, f,
+    (sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
        (List.length clo)) ^ p, nlam + 1, env
-  | _ -> raise Not_found
+  | CloPair (l, r, _) ->
+    let l, lf, lp, nlam, _ = closure_to_c l nlam env in
+    let r, rf, rp, nlam, _ = closure_to_c r nlam env in
+    sprintf "make_pair(%s, %s)" l r, lf ^ rf, lp ^ rp, nlam, env
 
-
-let rec decls_to_c decls funs body nlam ctx =
+let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
-    let s = List.fold_left (fun x y -> x ^ (Printf.sprintf "Value l%d;\n" y))
+    let s = List.fold_left (fun x y -> x ^ (sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
     "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
-Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tail;\n" ^ s ^
+Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tail, fst, snd;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){
@@ -206,20 +210,22 @@ Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tai
         conl = make_closure(cons, NULL, 0);
         indl = make_closure(ind, NULL, 0);
         tail = make_closure(octo_tail, NULL, 0);
-        head = make_closure(octo_head, NULL, 0);\n" ^
+        head = make_closure(octo_head, NULL, 0);
+        fst = make_closure(octo_fst, NULL, 0);
+        snd = make_closure(octo_snd, NULL, 0);\n" ^
     body ^
     "\n}\n"
   | hd :: tl ->
     match hd with
       TyDecl (v, b, _) when v = "main"->
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-          nlam "tenv" ctx
+          nlam "tenv"
       in
       decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%li\\n\"," ^
-                                 nbody ^ ".clo.lam(NULL, n, 0)._int);\n return 0;") nlam ctx
+                                 nbody ^ ".clo.lam(NULL, n, 0)._int);\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
-          nlam "tenv" ctx
+          nlam "tenv"
       in
-      let f = Printf.sprintf "Value _%s;\n" v in
-      decls_to_c tl (funs ^ f ^ nf ) (body ^ b ^ (Printf.sprintf "_%s = %s;\n" v fn)) nlam ctx
+      let f = sprintf "Value _%s;\n" v in
+      decls_to_c tl (funs ^ f ^ nf ) (body ^ b ^ (sprintf "_%s = %s;\n" v fn)) nlam

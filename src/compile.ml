@@ -84,7 +84,7 @@ let compile f =
   let c, t, n, e, lt, i, m, tp = def_ctx f Types.initial_ctx "" "" 0 [] "" "" "" "" in
   Utils.print_context c;
   let oc = open_out "out.c"      in
-  Printf.fprintf oc "%s\n" (Closure.decls_to_c e tp m 0 c);
+  Printf.fprintf oc "%s\n" (Closure.decls_to_c e tp m 0);
   close_out oc;
   let oc = open_out "core.h"     in
   Core.core oc lt t i n

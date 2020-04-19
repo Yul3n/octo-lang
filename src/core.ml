@@ -226,6 +226,20 @@ octo_tail (Value *env, Value n, int len)
   return(make_list(n.list.list + 1, n.list.length - 1, n.list.t));
 }
 
+
+Value
+octo_fst (Value *env, Value n, int len)
+{
+    return(*(n.pair.fst));
+}
+
+Value
+octo_snd (Value *env, Value n, int len)
+{
+    return(*(n.pair.snd));
+}
+
+
 Value
 intern_list_eq (Value l1, Value l2, enum Type t)
 {

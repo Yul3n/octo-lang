@@ -1,0 +1,2 @@
+main n =
+  fst (1, n)
