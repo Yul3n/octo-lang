@@ -6,10 +6,11 @@ exception Type_error of string
 (* Return the list of all free type variables in the type t. *)
 let rec ftv t =
   match t with
-    TOth  _     -> []
-  | TVar v      -> [v]
-  | TFun (l, r) -> (ftv l) @ (ftv r)
-  | TList (t)   -> ftv t
+    TOth  _      -> []
+  | TVar v       -> [v]
+  | TFun (l, r)  -> (ftv l) @ (ftv r)
+  | TList (t)    -> ftv t
+  | TPair (l, r) -> (ftv l) @ (ftv r)
 
 let ftv_sch (Forall(v, t)) =
   List.filter (fun x -> List.exists ((<>) x) v) (ftv t)
@@ -31,6 +32,7 @@ let rec app_subst subst ty =
   | TOth v        -> TOth v
   | TFun (lt, rt) -> TFun ((app_subst subst lt), (app_subst subst rt))
   | TList t       -> TList (app_subst subst t)
+  | TPair (l, r)  -> TPair (app_subst subst l, app_subst subst r)
 
 (* Apply a substitution to a scheme by ignoring bound variables. *)
 let subst_scheme subst (Forall(vars, ty)) =
@@ -91,6 +93,7 @@ let rec unify t1 t2 =
   in
   match t1, t2 with
     TOth _, TOth _ -> []
+  | TPair (l1, r1), TPair (l2, r2)
   | TFun (l1, r1), TFun (l2, r2) ->
     let sub1 = unify l1 l2 in
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
@@ -117,7 +120,10 @@ let initial_ctx =
    (* Forall a, the type of head is a list -> a *)
    "head", Forall([0], TFun(TList(TVar 0), TVar 0));
    (* Forall a, the type of tail is a list -> a list *)
-   "tail", Forall([0], TFun(TList(TVar 0), TList(TVar 0)))]
+   "tail", Forall([0], TFun(TList(TVar 0), TList(TVar 0)));
+   (* Forall a and b, the type of fst is a * b -> a *)
+   "fst", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 0));
+   "snd", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 1))]
 
 let rec unify_lst lst nvar t ctx subst exprs =
       match lst with

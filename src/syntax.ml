@@ -39,6 +39,7 @@ type expr_t
   | TFun  of expr_t * expr_t
   | TOth  of string
   | TList of expr_t
+  | TPair of expr_t * expr_t
 
 type expr
   = Var    of string

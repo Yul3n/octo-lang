@@ -55,10 +55,11 @@ let to_greek c =
 
 let rec string_of_type t =
   match t with
-    TVar v      -> to_greek (Char.chr (Char.code 'a' + v))
-  | TFun (f, t) -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
-  | TOth v      -> v
-  | TList t     -> "(" ^ string_of_type t ^ " list)"
+    TVar v       -> to_greek (Char.chr (Char.code 'a' + v))
+  | TFun (f, t)  -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
+  | TOth v       -> v
+  | TList t      -> "(" ^ string_of_type t ^ " list)"
+  | TPair (l, r) -> (string_of_type l) ^ " * " ^ (string_of_type r)
 
 let print_scheme (Forall(v, t)) =
   begin

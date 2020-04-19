@@ -1,0 +1,5 @@
+#+TITLE: Readme
+
+Octo is a small, pure functional programming language inspired by Ocaml and
+Haskell. Thus it is an hybrid with those 2. It is strictly evaluated and
+transpiles to C code.
