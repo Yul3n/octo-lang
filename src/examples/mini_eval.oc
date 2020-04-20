@@ -11,18 +11,22 @@ type expr
 eval e =
   case e of
     Const n -> n 
-    Binop (l, Plus, r) -> (ln + rn) where
-      ln = (eval l)
-      rn = (eval r)
-    Binop (l, Minus, r) -> (ln - rn) where
-      ln = (eval l)
-      rn = (eval r)
-    Binop (l, Mult, r) -> (ln * rn) where
-      ln = (eval l)
-      rn = (eval r)
-    Binop (l, Div, r) -> (ln / rn) where
-      ln = (eval l)
-      rn = (eval r)
+    Binop (l, Plus, r) ->
+      (ln + rn) where
+        ln = (eval l)
+        rn = (eval r)
+    Binop (l, Minus, r) ->
+      (ln - rn) where
+        ln = (eval l)
+        rn = (eval r)
+    Binop (l, Mult, r) ->
+      (ln * rn) where
+        ln = (eval l)
+        rn = (eval r)
+    Binop (l, Div, r) ->
+      (ln / rn) where
+        ln = (eval l)
+        rn = (eval r)
 
 main n =
   eval (Binop ((Const 1), Minus, Const 2))

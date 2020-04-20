@@ -6,9 +6,10 @@
 
 (defconst octo-highlights
   '(("where\\|type\\|int\\|case\\|of"    . font-lock-keyword-face)
-    ("--.*\n"                            . font-lock-comment-face)
-    ("\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)=" . (2 font-lock-variable-name-face))
-    ("\\([a-zA-Z]*\\).*="                . (1 font-lock-function-name-face))))
+    ("--.*$"                            . font-lock-comment-face)
+    ("\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
+    ("\\([a-zA-Z]*\\).*="                . (1 font-lock-function-name-face))
+    ("[0-9]*" . font-lock-constant-face)))
 
 (defun indent-line ()
   "Indent current line as octo code."
@@ -24,12 +25,12 @@
         (setq e1 (point))
         (beginning-of-line)
         (setq actindent (- e1 b1))
-         (if (looking-at "\\(\n\n[a-zA-Z]*\\).*=") ; If the line is a function declaration
+         (if (looking-at "\n\n[a-zA-Z]*.* =") ; If the line is a function declaration
              (setq curindent 0)                    ; to 0.
            (progn
              (forward-line -1)
              ; Indent the line if the line before is a function declaration
-             (if (and (looking-at "\\([a-zA-Z]*\\).*=$") (not (looking-at "[ ]+")))
+             (if (and (looking-at "[a-zA-Z]*.*[ \n]*=[ \n]*") (not (looking-at "[ ]+")))
                  (progn
                    (setq curindent 2))
                (let (b e)
@@ -37,9 +38,7 @@
                  (skip-chars-forward " ")
                  (setq e (point))
                  (if (looking-at ".*where[ ]*$\\|.*case.*of[ ]*$\\|.*->[ ]*$")
-                     (progn
-                       (forward-line 1)
-                       (setq curindent (+ (- e b) 2)))
+                     (setq curindent (+ (- e b) 2))
                    (progn
                      (if (looking-at "[^\\]*->.*") ; Set the indentation according to the last line
                          (progn
@@ -47,7 +46,14 @@
                            (if (looking-at "[^\\]*->.*")
                                (setq curindent (- e b))
                              (setq curindent (- (- e b) 2))))
-                       (setq curindent (- e b)))))))))))
+                       (progn
+                         (if (looking-at ".*=.*")
+                             (progn
+                               (forward-line 1)
+                               (if (looking-at ".*=.*")
+                                   (setq curindent (- e b))
+                                 (setq curindent (- (- e b) 2))))
+                           (setq curindent (- e b)))))))))))))
       (when (/= curindent actindent)
         (indent-line-to curindent)
         (goto-char (- (+ curindent begin) actindent)))
