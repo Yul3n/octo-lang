@@ -31,11 +31,13 @@ let rec lexer input pos act_ident =
   try
     match String.get input pos with
       '\n' -> let indent = String.length (parse_f ((=) ' ') input (pos + 1)) in
+      let g = (act_ident - indent - 2) / 2 - 1 in
+      let g = if g > 0 then g else 0 in
       begin
         match indent with
           len when len = act_ident ->
           lexer input (pos + 1 + indent) len
-        | len when len < act_ident -> [], pos + len + 1
+        | len when len < act_ident -> [], pos + len + 1 - g
         | len when len > act_ident ->
           let block, fpos1 = lexer input (pos + indent + 1) len   in
           let toks, fpos2  = lexer input (fpos1) act_ident in

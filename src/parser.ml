@@ -240,9 +240,17 @@ let rec parse_expr tokens exprs is_math =
     let l, tl = parse_list tokens in
     exprs @ [List l], tl
   | COMMA :: tl ->
-    let l     = Utils.last exprs       in
-    let r, tl = parse_expr tl [] false in
-    (Utils.firsts exprs) @ [Pair (l, reduce r)], tl
+    let rec parse_elem tokens exprs =
+      match tokens with
+        []           -> parse_error "Invalid pair declaration"
+      | COMMA :: _
+      | RPARENT :: _ -> reduce exprs, tokens
+      | _            -> let e, tl = parse_expr tokens exprs false in
+        parse_elem tl e
+    in
+    let l     = Utils.last exprs in
+    let r, tl = parse_elem tl [] in
+    (Utils.firsts exprs) @ [Pair (l, r)], tl
   | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   match is_math with
