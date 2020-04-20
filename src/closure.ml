@@ -97,18 +97,11 @@ let rec closure_to_c clo nlam env  =
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s%sfree(tenv);\nreturn(%s);\n}" nlam pr c cbody),
+     %s%sfree(tenv);\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
-    let equ_to_c t l r =
-      match t with
-        TFun(TOth v, _)  -> sprintf "(%s._%s) == (%s._%s)" l v r v
-      | TFun(TList _, _) -> sprintf
-                              "(intern_list_eq(%s, %s, %s))._int" l r
-                              (String.uppercase_ascii "int")
-      | _                -> raise (Error "invalid pattern matching")
-    in
+    let equ_to_c l r = sprintf "(intern_eq(%s, %s))._int" l r in
     let case_to_c p nlam =
       match p with
         []           -> "", "", "", nlam, []
@@ -130,9 +123,9 @@ let rec closure_to_c clo nlam env  =
             CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
             sprintf "else{\n%s\nfree(tenv);\nreturn %s;\n}" p2 nbody, nlam, "", ""
           | _ ->
-            let np, nf2, p4, nlam, _ = closure_to_c f (nlam) env  in
+            let np, nf2, p4, nlam, _ = closure_to_c f nlam env  in
             (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
-               (equ_to_c t np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
+               (equ_to_c np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
     in
@@ -150,18 +143,11 @@ let rec closure_to_c clo nlam env  =
         %s
         %s
         %s
-}" nlam pr p b
+}\n" nlam pr p b
     in
     sprintf "l%d" nlam, nf ^ f,
     sprintf "Value l%d = make_closure(__lam%d,tenv, len + 1);" nlam nlam, nlam + 1, env
-  | CloList (clo, t) ->
-    let v =
-      match t with
-        TList (TOth v)  -> String.uppercase_ascii v
-      | TList (TList _) -> "LIST"
-      | TList (TVar _)  -> "INT"
-      | _ -> raise (Error ("Invalid list of type :" ^ (Utils.string_of_type t)))
-    in
+  | CloList (clo, _) ->
     let lp = sprintf "l%d" nlam in
     let rec l_to_c nlam pos =
       function
@@ -172,7 +158,7 @@ let rec closure_to_c clo nlam env  =
         f ^ nf, p ^ np ^ pl, nlam
     in
     let f, p, nlam = l_to_c nlam 0 clo in
-    (sprintf "make_list(%s, %d, %s)" lp (List.length clo)) v, f,
+    (sprintf "make_list(%s, %d)" lp (List.length clo)), f,
     (sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
        (List.length clo)) ^ p, nlam + 1, env
   | CloPair (l, r, _) ->

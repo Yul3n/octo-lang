@@ -68,8 +68,7 @@ let compile f =
       let ntc       = ",\n  " ^ (String.uppercase_ascii v) in
       let nin       = Printf.sprintf
           "case %s :
-    for (int i = 0; i < l2.list.length; i ++)
-      if ((*(l1.list.list + i))._%s != (*(l2.list.list + i))._%s)
+      if (l1._%s != l2._%s)
         return (make_int(0));
     break;"
           (String.uppercase_ascii v) v v

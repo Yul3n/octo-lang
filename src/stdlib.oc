@@ -70,6 +70,3 @@ power p n =
   n * (power (p - 1) n)
 
 sum x y = x + y
-
-main n =
-  foldl 0 sum [0, 1]

@@ -156,6 +156,10 @@ let rec parse_expr tokens exprs is_math =
               let l2, b2 = parse_pattern (App(Var "head", env)) l body in
               let r2, b3 = parse_pattern (App(Var "tail", env)) r b2   in
               App(App(Var "conl", l2), r2), b3
+            | Pair (l, r) ->
+              let l2, b2 = parse_pattern (App(Var "fst", env)) l body in
+              let r2, b3 = parse_pattern (App(Var "snd", env)) r b2   in
+              Pair (l2, r2), b3
             | _ -> e, body
           in
           let rec parse_arr tokens exprs =

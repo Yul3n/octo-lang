@@ -16,11 +16,11 @@ struct Closure {
 
 enum Type {
   INT,
-  LIST%s
+  LIST,
+  PAIR%s
 };
 
 struct List {
-  enum Type t;
   struct Value *list;
   int length;
 };
@@ -39,6 +39,7 @@ struct Value {
     %s
   };
   struct Value *cell;
+  enum Type t;
 };
 
 typedef struct Value Value;
@@ -54,10 +55,10 @@ make_closure(Lambda lam, Value *env, int env_len)
 }
 
 Value
-make_list(Value *l, int length, enum Type t)
+make_list(Value *l, int length)
 {
   Value v;
-  v.list.t = t;
+  v.t = LIST;
   v.list.length = length;
   if (length)
     v.list.list = malloc(length * sizeof(Value));
@@ -69,6 +70,7 @@ Value
 make_pair(Value fst, Value snd)
 {
   Value v;
+  v.t = PAIR;
   v.pair.fst = malloc(sizeof(Value));
   *(v.pair.fst) = fst;
   v.pair.snd = malloc(sizeof(Value));
@@ -81,6 +83,7 @@ Value
 make_int(long n)
 {
   Value v;
+  v.t = INT;
   v._int = n;
   return v;
 }
@@ -149,6 +152,7 @@ Value
 lambda_cons(Value *env, Value n)
 {
     Value v;
+    v.t = LIST;
     v.list.list = malloc((n.list.length + 1) * sizeof(Value));
     memcpy(v.list.list, env, sizeof(Value));
     memcpy(v.list.list + 1, n.list.list, n.list.length * sizeof(Value));
@@ -169,6 +173,7 @@ Value
 lambda_union(Value *env, Value n)
 {
   Value v;
+  v.t = LIST;
   v.list.list = malloc ((n.list.length + ((*(env)).list.length)) * sizeof(Value));
   memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
   memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length * sizeof(Value));
@@ -222,8 +227,8 @@ octo_tail (Value *env, Value n, int len)
     exit (1);
   }
   if (n.list.length == 1)
-    return (make_list(NULL, 0, INT));
-  return(make_list(n.list.list + 1, n.list.length - 1, n.list.t));
+    return (make_list(NULL, 0));
+  return(make_list(n.list.list + 1, n.list.length - 1));
 }
 
 
@@ -241,18 +246,22 @@ octo_snd (Value *env, Value n, int len)
 
 
 Value
-intern_list_eq (Value l1, Value l2, enum Type t)
+intern_eq (Value l1, Value l2)
 {
-  if ((l2.list.length) != (l1.list.length)) return (make_int(0));
-  switch (t) {
+  switch (l1.t) {
   case INT :
-    for (int i = 0; i < l2.list.length; i ++)
-      if ((*(l1.list.list + i))._int != (*(l2.list.list + i))._int)
-        return (make_int(0));
+    if (l1._int != l2._int)
+      return (make_int(0));
     break;
   case LIST :
+    if ((l2.list.length) != (l1.list.length)) return (make_int(0));
     for (int i = 0; i < l2.list.length; i ++)
-      if (!(intern_list_eq ((*(l1.list.list + i)), (*(l2.list.list + i)), l2.list.t))._int)
+      if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._int)
+        return (make_int(0));
+    break;
+  case PAIR :
+    if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._int ||
+        !(intern_eq(*(l1.pair.snd), *(l2.pair.snd)))._int)
         return (make_int(0));
     break;
     %s
