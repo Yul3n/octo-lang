@@ -19,6 +19,7 @@ type token
   | LBRACKET
   | RBRACKET
   | AT
+  | MOD
   | EXCLAM
   | BLOCK of (token * int) list
   | IDENT of string

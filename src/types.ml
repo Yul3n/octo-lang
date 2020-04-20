@@ -107,16 +107,17 @@ let rec unify t1 t2 =
 let initial_ctx =
   (* Mathematical operators are of type : int -> int -> int *)
   let op_sch = Forall([], TFun(TOth "int", TFun(TOth "int", TOth "int"))) in
-  ["suml", op_sch;
-   "difl", op_sch;
-   "timl", op_sch;
-   "divl", op_sch;
+  ["suml@", op_sch;
+   "difl@", op_sch;
+   "timl@", op_sch;
+   "divl@", op_sch;
+   "modl@", op_sch;
    (* Forall a, the type of cons is a -> a list -> a list *)
-   "conl", Forall([0], TFun(TVar 0, TFun(TList (TVar 0), TList (TVar 0))));
+   "conl@", Forall([0], TFun(TVar 0, TFun(TList (TVar 0), TList (TVar 0))));
    (* Forall a, the type of union is a list -> a list -> a list *)
-   "unil", Forall([0], TFun(TList(TVar 0), TFun(TList (TVar 0), TList (TVar 0))));
+   "unil@", Forall([0], TFun(TList(TVar 0), TFun(TList (TVar 0), TList (TVar 0))));
    (* Forall a, the type of the indexing operator is a list -> int -> a *)
-   "indl", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)));
+   "indl@", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)));
    (* Forall a, the type of head is a list -> a *)
    "head", Forall([0], TFun(TList(TVar 0), TVar 0));
    (* Forall a, the type of tail is a list -> a list *)

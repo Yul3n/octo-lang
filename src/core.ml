@@ -149,6 +149,21 @@ tim (Value *env, Value n, int len)
 }
 
 Value
+lambda_mod (Value *env, Value n)
+{
+    return make_int((*env)._int %% n._int);
+}
+
+Value
+mod (Value *env, Value n, int len)
+{
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_mod, tenv, len + 1));
+}
+
+Value
 lambda_cons(Value *env, Value n)
 {
     Value v;

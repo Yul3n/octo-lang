@@ -70,3 +70,10 @@ power p n =
   n * (power (p - 1) n)
 
 sum x y = x + y
+
+prod x y = x * y
+
+gcd x y =
+  case y of
+    0 -> x
+    y -> (gcd y (x % y))

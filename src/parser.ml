@@ -49,9 +49,11 @@ let rec parse_expr tokens exprs is_math =
     let nval, ntl =
       match tokens with
         TIMES :: tl  -> let rval, tl = parse_expr tl [] false in
-        binop lval "timl" (reduce rval), tl
+        binop lval "timl@" (reduce rval), tl
       | DIVIDE :: tl -> let rval, tl = parse_expr tl [] true in
-        binop lval "divl" (reduce rval), tl
+        binop lval "divl@" (reduce rval), tl
+      | MOD :: tl -> let rval, tl = parse_expr tl [] true in
+        binop lval "modl@" (reduce rval), tl
       | tl           -> lval, tl
     in
     match ntl with
@@ -64,10 +66,10 @@ let rec parse_expr tokens exprs is_math =
       match tokens with
         PLUS :: tl  -> let mul_val, tl = parse_expr tl [] true in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
-        binop lval "suml" rval, ntl
+        binop lval "suml@" rval, ntl
       | MINUS :: tl -> let mul_val, tl = parse_expr tl [] true in
         let rval, ntl   = parse_mul tl (reduce mul_val) in
-        binop lval "difl" rval, ntl
+        binop lval "difl@" rval, ntl
       | tl           -> lval, tl
     in
     match ntl with
@@ -80,14 +82,14 @@ let rec parse_expr tokens exprs is_math =
     let l, tl = parse_add tl (reduce e)   in
     match tl with
       CONS :: tl -> let r, tl = parse_cons tl in
-      binop l "conl" r, tl
+      binop l "conl@" r, tl
     | tl         -> l, tl
   in
   let rec parse_union tokens =
     let l, tl = parse_cons tokens in
     match tl with
       AT :: tl -> let r, tl = parse_union tl in
-      binop l "unil" r, tl
+      binop l "unil@" r, tl
     | tl         -> l, tl
   in
   let e, tl =
@@ -106,15 +108,15 @@ let rec parse_expr tokens exprs is_math =
   | MINDE var :: tl
   | IDENT var :: tl -> exprs @ [Var var], tl
   | CONS :: tl -> let r, tl = parse_cons tl in
-    (Utils.firsts exprs) @ [binop (Utils.last exprs) "conl" r], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "conl@" r], tl
   | AT :: tl -> let r, tl = parse_union tl in
-    (Utils.firsts exprs) @ [binop (Utils.last exprs) "unil" r], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "unil@" r], tl
   | NUM num :: tl -> exprs @ [Num num], tl
   | PLUS :: _ | MINUS :: _ ->
     let lst = Utils.last exprs           in
     let expr, ntl = parse_add tokens lst in
     (Utils.firsts exprs) @ [expr], ntl
-  | TIMES :: _ | DIVIDE :: _ ->
+  | TIMES :: _ | DIVIDE :: _ | MOD :: _ ->
     let lst       = Utils.last exprs     in
     let expr, ntl = parse_mul tokens lst in
     (Utils.firsts exprs) @ [expr], ntl
@@ -152,10 +154,10 @@ let rec parse_expr tokens exprs is_math =
             match e with
               Var v2 when Char.code (String.get v2 0) >= Char.code 'a' ->
               env, (App (Lambda (v2, body), env))
-            | App (App (Var "conl", l), r) ->
+            | App (App (Var "conl@", l), r) ->
               let l2, b2 = parse_pattern (App(Var "head", env)) l body in
               let r2, b3 = parse_pattern (App(Var "tail", env)) r b2   in
-              App(App(Var "conl", l2), r2), b3
+              App(App(Var "conl@", l2), r2), b3
             | Pair (l, r) ->
               let l2, b2 = parse_pattern (App(Var "fst", env)) l body in
               let r2, b3 = parse_pattern (App(Var "snd", env)) r b2   in
@@ -194,7 +196,7 @@ let rec parse_expr tokens exprs is_math =
     exprs @ [parse_all b []], tl
   | EXCLAM :: tl ->
     let l, tl = parse_expr tl [] false in
-    (Utils.firsts exprs) @ [binop (Utils.last exprs) "indl" (reduce l)], tl
+    (Utils.firsts exprs) @ [binop (Utils.last exprs) "indl@" (reduce l)], tl
   | LBRACKET :: _ ->
     let rec parse_list tokens =
       match tokens with

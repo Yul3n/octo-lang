@@ -33,6 +33,7 @@ let rec string_of_token token =
   | EQUAL     -> "="
   | TIMES     -> "*"
   | DIVIDE    -> "/"
+  | MOD       -> "%"
   | ARROW     -> "->"
   | PIPE      -> "|"
   | TYPE      -> "type"

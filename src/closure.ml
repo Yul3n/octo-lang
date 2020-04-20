@@ -18,10 +18,6 @@ type closure
   | CloList of closure list * expr_t
   | CloPair of closure * closure * expr_t
 
-let builtin_funs =
-  ["suml"; "difl"; "timl"; "divl"; "unil"; "indl"; "conl"; "head"; "tail";
-   "snd"; "fst"]
-
 let rec free e s =
   match e with
     TyVar _
@@ -56,7 +52,7 @@ let rec to_closure expr =
   match expr with
     TyNum (n, t)       -> CloNum (n, t)
   | TyVar (n, t) when
-      (List.mem n builtin_funs)
+      (String.get n ((String.length n) - 1)) = '@'
                        -> CloGVar (n, t)
   | TyVar (n, t )      -> CloGVar ("_" ^ n, t)
   | TyIndVar (n, t)    -> CloVar (n, t)
@@ -92,7 +88,7 @@ let rec closure_to_c clo nlam env  =
     n, nf ^ na, p2 ^ p1 ^
                 (sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n"
                    n s1 nv s2), nlam, v
-  | CloGVar (v, _) -> v, "", "", nlam, env
+  | CloGVar (v, _) -> List.hd (String.split_on_char '@' v), "", "", nlam, env
   | Closure (_, body, _) ->
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
@@ -112,7 +108,7 @@ let rec closure_to_c clo nlam env  =
               TFun(TList _, _) ->
               let rec min_len e =
                 match e with
-                  (CloApp(CloApp(CloGVar ("conl", _), _, _), l, _)) -> 1 + min_len l
+                  (CloApp(CloApp(CloGVar ("conl@", _), _, _), l, _)) -> 1 + min_len l
                 | _ -> 0
               in
               sprintf "if ((*(tenv)).list.length >= %d){" (min_len f), "}"
@@ -172,8 +168,9 @@ let rec decls_to_c decls funs body nlam  =
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
     let s = List.fold_left (fun x y -> x ^ (sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
-    "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;\nValue difl;
-Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tail, fst, snd;\n" ^ s ^
+    "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;
+Value difl\n;Value divl;\nValue timl;\nValue modl;\nValue conl;\nValue unil;
+Value indl;\nValue _head, _tail, _fst, _snd;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){
@@ -190,16 +187,17 @@ Value divl;\nValue timl;\nValue conl;\nValue unil;\nValue indl;\nValue head, tai
         *tenv = n;
         int len = 0;
         difl = make_closure(dif, NULL, 0);
+        modl = make_closure(mod, NULL, 0);
         divl = make_closure(dv, NULL, 0);
         timl = make_closure(tim, NULL, 0);
         suml = make_closure(sum, NULL, 0);
         unil = make_closure(octo_union, NULL, 0);
         conl = make_closure(cons, NULL, 0);
         indl = make_closure(ind, NULL, 0);
-        tail = make_closure(octo_tail, NULL, 0);
-        head = make_closure(octo_head, NULL, 0);
-        fst = make_closure(octo_fst, NULL, 0);
-        snd = make_closure(octo_snd, NULL, 0);\n" ^
+        _tail = make_closure(octo_tail, NULL, 0);
+        _head = make_closure(octo_head, NULL, 0);
+        _fst = make_closure(octo_fst, NULL, 0);
+        _snd = make_closure(octo_snd, NULL, 0);\n" ^
     body ^
     "\n}\n"
   | hd :: tl ->

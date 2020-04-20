@@ -58,6 +58,7 @@ let rec lexer input pos act_ident =
     | ']'  -> slex 1 RBRACKET
     | '!'  -> slex 1 EXCLAM
     | ','  -> slex 1 COMMA
+    | '%'  -> slex 1 MOD
     | ':'  ->
       begin
         match String.get input (pos + 1) with
