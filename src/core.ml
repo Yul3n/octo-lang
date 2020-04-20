@@ -40,6 +40,7 @@ struct Value {
   };
   struct Value *cell;
   enum Type t;
+  int has_cell;
 };
 
 typedef struct Value Value;
@@ -259,6 +260,11 @@ octo_snd (Value *env, Value n, int len)
     return(*(n.pair.snd));
 }
 
+Value
+get_body (Value *env, Value n, int len)
+{
+    return (*(n.cell));
+}
 
 Value
 intern_eq (Value l1, Value l2)

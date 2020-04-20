@@ -46,19 +46,23 @@ let compile f =
             Printf.sprintf
               "Value make_%s() {
           Value n;
+          n.t = %s;
           n._%s = _%s;
           return (n);
-}\n" n v (String.uppercase_ascii n), Printf.sprintf "_%s = make_%s();" n n,
+}\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
+            Printf.sprintf "_%s = make_%s();" n n,
             Printf.sprintf "Value _%s;\n" n
           | _ ->
             Printf.sprintf
               "Value make_%s(Value *env, Value cell, int len) {
           Value n;
+          n.t = %s;
           n._%s = _%s;
           n.cell = malloc (sizeof(Value));
           *(n.cell) = cell;
+          n.has_cell = 1;
           return (n);
-}\n" n v (String.uppercase_ascii n),
+}\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
             Printf.sprintf "_%s = make_closure(make_%s, NULL, 0);" n n,
             Printf.sprintf "Value _%s;\n" n
         in
@@ -70,6 +74,8 @@ let compile f =
           "case %s :
       if (l1._%s != l2._%s)
         return (make_int(0));
+      else if (l1.has_cell)
+          return(intern_eq(*(l1.cell), *(l2.cell)));
     break;"
           (String.uppercase_ascii v) v v
       in

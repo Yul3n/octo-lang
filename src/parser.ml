@@ -41,7 +41,7 @@ let rec parse_expr tokens exprs is_math =
           parse_equ tl (App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)))
         | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
-    end
+      end
     | []            -> body, []
     | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
@@ -138,8 +138,23 @@ let rec parse_expr tokens exprs is_math =
     let fsts = Utils.firsts exprs in
     fsts @ [fst (parse_equ b lst)], tl
   | WHERE :: tl ->
+    let parse_sequ tokens body =
+    match tokens with
+      IDENT v :: tl ->
+      begin
+        let vars, tl = parse_args tl in
+        match tl with
+          EQUAL :: tl ->
+          let e, tl  = parse_expr tl [] false in
+          App(Lambda(v, body), wrap_lam (List.rev vars) (reduce e)), tl
+        | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
+        | []       -> parse_error ("Declaration without a body.")
+      end
+    | []            -> body, []
+    | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
+  in
     let lst   = Utils.last exprs   in
-    let w, tl = parse_equ tl lst   in
+    let w, tl = parse_sequ tl lst  in
     let fsts  = Utils.firsts exprs in
     fsts @ [w], tl
   | CASE :: tl ->
@@ -162,6 +177,10 @@ let rec parse_expr tokens exprs is_math =
               let l2, b2 = parse_pattern (App(Var "fst", env)) l body in
               let r2, b3 = parse_pattern (App(Var "snd", env)) r b2   in
               Pair (l2, r2), b3
+            | App (Var v, t)
+              when Char.code (String.get v 0) < Char.code 'a' ->
+              let t, b = parse_pattern (App (Var "get_b@", env)) t body in
+              App (Var v, t), b
             | _ -> e, body
           in
           let rec parse_arr tokens exprs =
@@ -294,7 +313,8 @@ let rec parse_tops tokens =
         let c, tl, v2 = parse_cf tokens v "" in
         Decl (v, Lambda(v2, App(Case c, Var v2))) :: parse_tops tl
     end
-  | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl ->
+  | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl
+  | TYPE :: IDENT v :: BLOCK ((EQUAL, _) :: bl) :: tl ->
     let rec parse_type tokens t =
       let b, tl =
         match tokens with
@@ -304,12 +324,21 @@ let rec parse_tops tokens =
               []
             | PIPE :: _ -> (v, Forall([], t)), tl
             | _ ->
-              let rec parse_multype tokens =
+              let rec parse_multype ?(t=None) tokens =
                 match tokens with
                   IDENT v :: ([])
-                | IDENT v :: PIPE :: _ -> TOth v, List.tl tokens
-                | IDENT v :: tl -> let t, tl = parse_multype tl in
-                  TPair(TOth v, t), tl
+                | IDENT v :: PIPE :: _ ->
+                  begin
+                    match t with
+                      None   -> TOth v
+                    | Some t -> TPair(t, TOth v)
+                  end, List.tl tokens
+                | IDENT v :: tl ->
+                  begin
+                    match t with
+                      None   -> parse_multype tl ~t:(Some(TOth v))
+                    | Some t -> parse_multype tl ~t:(Some(TPair(t, TOth v)))
+                  end
                 | tok :: _ -> parse_error
                                 ("Unexpected token: " ^ (Utils.string_of_token tok))
                 | [] -> parse_error "Empty type declaration."

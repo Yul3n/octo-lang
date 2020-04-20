@@ -8,12 +8,11 @@
 ** DONE Fix memory leaks in the C code
 ** DONE More syntaxic sugar
 ** TODO Floats
-** TODO Pattern matching on list
-** TODO More advanced datatypes
-** TODO OpenCL lists functions
+** DONE Pattern matching on list
+** DONE More advanced datatypes
+** TODO Strings
 * Standard library
 ** DONE Boolean Type
-** TODO Fixed point combinator
 ** TODO Mathematic operations
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode

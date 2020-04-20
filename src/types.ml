@@ -125,7 +125,8 @@ let initial_ctx =
    (* Forall a and b, the type of fst is a * b -> a *)
    "fst", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 0));
    (* Forall a and b, the type of snd is a * b -> b *)
-   "snd", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 1))]
+   "snd", Forall([0; 1], TFun(TPair(TVar 0, TVar 1), TVar 1));
+   "get_b@", Forall([0; 1], TFun(TVar 0, TVar 1))]
 
 let rec unify_lst lst nvar t ctx subst exprs =
       match lst with
