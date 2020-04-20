@@ -1,0 +1,5 @@
+compose f g x =
+  (f (g x))
+
+main n =
+  compose (\x -> x) (\x -> x) n

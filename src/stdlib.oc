@@ -51,10 +51,10 @@ map f l =
     [] -> []
     hd :: tl -> (f hd) :: (map f tl)
 
-foldl f n l =
+foldl n f l =
   case l of
     [] -> n
-    hd :: tl -> (foldl f (f n hd) tl)
+    hd :: tl -> (foldl (f n hd) f tl)
 
 isnil [] = True
 isnil l  = False
@@ -72,4 +72,4 @@ power p n =
 sum x y = x + y
 
 main n =
-  foldl sum 0 [0, 1]
+  foldl 0 sum [0, 1]

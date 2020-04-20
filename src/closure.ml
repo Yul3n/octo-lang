@@ -79,13 +79,10 @@ let rec closure_to_c clo nlam env  =
         1 -> "n"
       | n -> sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
-  | CloApp (f, arg, t) ->
+  | CloApp (f, arg, _) ->
     let s1, nf, p1, nlam, _ = closure_to_c f nlam env  in
     let n = sprintf "l%d" nlam in
-    let s2, na, p2, nlam, v =
-      match t with
-        TFun (_, _) -> closure_to_c arg (nlam + 1) (n ^ ".clo.env")
-      | _           -> closure_to_c arg (nlam + 1) ("tenv")
+    let s2, na, p2, nlam, v = closure_to_c arg (nlam + 1) env
     in
     let nv =
       match f with
@@ -155,7 +152,8 @@ let rec closure_to_c clo nlam env  =
         %s
 }" nlam pr p b
     in
-    sprintf "make_closure(__lam%d,tenv, len + 1)" nlam, nf ^ f, "", nlam + 1, env
+    sprintf "l%d" nlam, nf ^ f,
+    sprintf "Value l%d = make_closure(__lam%d,tenv, len + 1);" nlam nlam, nlam + 1, env
   | CloList (clo, t) ->
     let v =
       match t with
