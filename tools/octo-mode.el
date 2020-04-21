@@ -46,18 +46,23 @@
                            (if (looking-at "[^\\]*->.*")
                                (setq curindent (- e b))
                              (setq curindent (- (- e b) 2))))
-                       (progn
-                         (if (looking-at ".*=.*")
-                             (progn
-                               (forward-line 1)
-                               (if (looking-at ".*=.*")
-                                   (setq curindent (- e b))
-                                 (setq curindent (- (- e b) 2))))
-                           (setq curindent (- e b)))))))))))))
+                           (setq curindent (- e b)))))))))))
       (when (/= curindent actindent)
         (indent-line-to curindent)
         (goto-char (- (+ curindent begin) actindent)))
       (skip-chars-forward " ")))
+
+(defun back-indent ()
+  "Indent the line backward."
+  (interactive)
+  (let (e b)
+    (save-excursion
+      (beginning-of-line)
+      (setq b (point)) ; Get the indentation level of this line.
+      (skip-chars-forward " ")
+      (setq e (point))
+      (beginning-of-line)
+      (indent-line-to (- (- e b) 2)))))
 
 (define-derived-mode octo-mode fundamental-mode "octo"
   "major mode for editing octo language code."
@@ -74,5 +79,6 @@
 (add-to-list 'auto-mode-alist
              '("\\.oc\\'" . octo-mode)) ; Open the mode on each ".oc" file
 
+(global-set-key (kbd "<backtab>") 'back-indent)
 (provide 'octo-mode)
 ;;; octo-mode ends here
