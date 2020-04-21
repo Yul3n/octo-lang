@@ -21,19 +21,12 @@ type token
   | AT
   | MOD
   | EXCLAM
+  | STR   of string
+  | CHAR  of char
   | BLOCK of (token * int) list
   | IDENT of string
   | MINDE of string
   | NUM   of int
-
-type op
-  = Plus
-  | Minus
-  | Times
-  | Divide
-  | Cons
-  | Union
-  | Elem
 
 type expr_t
   = TVar  of int
@@ -50,6 +43,7 @@ type expr
   | Case   of (expr * expr) list
   | List   of expr list
   | Pair   of expr * expr
+  | Char   of char
 
 type scheme
   = Forall of int list * expr_t
@@ -67,6 +61,7 @@ type typed_expr
   | TyCase   of (typed_expr * typed_expr) list * expr_t
   | TyList   of typed_expr list * expr_t
   | TyPair   of typed_expr * typed_expr * expr_t
+  | TyChar   of char * expr_t
 
 type typed_decl
   = TyDecl of string * typed_expr * expr_t

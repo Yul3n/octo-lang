@@ -17,11 +17,13 @@ type closure
   | CloCase of (closure * closure) list * expr_t
   | CloList of closure list * expr_t
   | CloPair of closure * closure * expr_t
+  | CloChar of char * expr_t
 
 let rec free e s =
   match e with
     TyVar _
-  | TyNum _ -> []
+  | TyNum _
+  | TyChar _ -> []
   | TyApp(l, r, _) -> free l s @ free r s
   | TyIndVar (n, _) when n >= s -> [n]
   | TyIndVar _ -> []
@@ -39,6 +41,7 @@ let rec deB e (v, n) =
   | TyLambda (x, body, t)     -> TyLambda ("", deB (deB body (x, 1)) (v, n + 1) , t)
   | TyApp (l, r, t)           -> TyApp (deB l (v, n), deB r (v, n), t)
   | TyNum _ as n              -> n
+  | TyChar _ as n             -> n
   | TyIndVar _ as n           -> n
   | TyCase (c, t)             -> let p, e = List.split c in
     let m = fun y -> (List.map (fun x -> deB x (v, n + 1)) y) in
@@ -64,10 +67,12 @@ let rec to_closure expr =
     CloCase (List.combine cp ce, t)
   | TyList (l, t)      -> CloList (List.map to_closure l, t)
   | TyPair (l, r, t)   -> CloPair (to_closure l, to_closure r, t)
+  | TyChar (c, t)      -> CloChar (c, t)
 
 let rec closure_to_c clo nlam env  =
   match clo with
     CloNum (n, _) -> sprintf "make_int(%d)" n, "", "", nlam, env
+  | CloChar (c, _) -> sprintf "make_char('%c')" c, "", "", nlam, env
   | CloVar (n, _) ->
     begin
       (* If the index is not one, the variable is in the closure's context. *)

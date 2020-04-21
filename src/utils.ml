@@ -24,6 +24,12 @@ let rec get_t_n t =
   | TFun(_, t) -> get_t_n t
   | _          -> raise (Invalid_argument "Shouldn't happend")
 
+let rec string_to_char_list s =
+  match s with
+    "" -> []
+  | s  -> (String.get s 0) ::
+          string_to_char_list (String.sub s 1 ((String.length s) - 1))
+
 (* Printing and error reporting functions *)
 
 let rec string_of_token token =
@@ -52,6 +58,8 @@ let rec string_of_token token =
   | CONS      -> "::"
   | UNDER     -> "_"
   | EXCLAM    -> "!"
+  | CHAR c    -> "'" ^ (String.make 1 c) ^ "'"
+  | STR s     -> "\"" ^ s ^ "\""
   | NUM n     -> string_of_int n
   | BLOCK b   -> let b, _ = List.split b in
     List.fold_left (^) "" (List.map string_of_token b)

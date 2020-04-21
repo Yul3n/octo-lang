@@ -16,7 +16,7 @@ let rec lexer input pos act_ident =
                      (Char.code('a') <= Char.code chr) &&
                      (Char.code('z') >= Char.code chr)
   in
-  let is_ident chr = is_alpha chr || is_digit chr || chr = '_' in
+  let is_ident chr = is_alpha chr || is_digit chr || chr = '_' || chr = '\'' in
   let rec parse_f f str pos =
     match pos with
       len when len = String.length str -> ""
@@ -59,6 +59,12 @@ let rec lexer input pos act_ident =
     | '!'  -> slex 1 EXCLAM
     | ','  -> slex 1 COMMA
     | '%'  -> slex 1 MOD
+    | '\'' -> let c = String.get input (pos + 2) in
+      begin
+        match String.get input (pos + 3) with
+          '\'' -> slex 3 (CHAR c)
+        | c    -> unexpected_char (pos + 3) c
+      end
     | ':'  ->
       begin
         match String.get input (pos + 1) with
@@ -92,5 +98,9 @@ let rec lexer input pos act_ident =
             else MINDE ide
       in
       slex len tok
+    | '"' ->
+      let str = parse_f ((<>) '"') input (pos + 1) in
+      let len = String.length str                  in
+      slex (len + 2) (STR (String.sub str 0 len))
     | c -> unexpected_char pos c
   with Invalid_argument _ -> [], pos

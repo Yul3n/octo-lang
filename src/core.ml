@@ -18,6 +18,7 @@ struct Closure {
 
 enum Type {
   INT,
+  CHAR,
   LIST,
   PAIR%s
 };
@@ -34,7 +35,8 @@ struct Pair {
 
 struct Value {
   union {
-    long     _int;
+    long _int;
+    char _char;
     struct Closure clo;
     struct List list;
     struct Pair pair;
@@ -46,6 +48,15 @@ struct Value {
 };
 
 typedef struct Value Value;
+
+Value
+make_char (char c)
+{
+  Value v;
+  v.t = CHAR;
+  v._char = c;
+  return v;
+}
 
 Value
 make_closure(Lambda lam, Value *env, int env_len)
@@ -295,6 +306,10 @@ intern_eq (Value l1, Value l2)
   switch (l1.t) {
   case INT :
     if (l1._int != l2._int)
+      return (make_int(0));
+    break;
+  case CHAR :
+    if (l1._char != l2._char)
       return (make_int(0));
     break;
   case LIST :

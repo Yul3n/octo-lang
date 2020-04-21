@@ -181,3 +181,4 @@ and infer expr context nvar =
     let s2, rt, nvar, r = infer r tmp_ctx nvar     in
     let t               = TPair(lt, rt)            in
     compose_subst s2 s1, t, nvar, TyPair(l, r, t)
+  | Char c -> [], TOth "char", nvar, TyChar (c, TOth "char")
