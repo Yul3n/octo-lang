@@ -285,7 +285,7 @@ and parse_all tokens exprs =
 
 let rec parse_tops tokens =
   match tokens with
-    []            -> []
+    []            -> [], []
   | IDENT v :: tl ->
     begin
       match tl with
@@ -297,7 +297,9 @@ let rec parse_tops tokens =
           match tl with
             EQUAL :: tl ->
             let e, tl = parse_expr tl [] false in
-            Decl (v, wrap_lam (List.rev vars) (reduce e)) :: parse_tops tl
+            let e = Decl (v, wrap_lam (List.rev vars) (reduce e)) in
+            let n, m = parse_tops tl in
+            e :: n, m
           | _                      -> parse_error "Expected a function declaration"
         end
       | _ ->
@@ -323,7 +325,9 @@ let rec parse_tops tokens =
           | t -> [], t, v2
         in
         let c, tl, v2 = parse_cf tokens v "" in
-        Decl (v, Lambda(v2, App(Case c, Var v2))) :: parse_tops tl
+        let e = Decl (v, Lambda(v2, App(Case c, Var v2))) in
+        let n, m = parse_tops tl in
+        e :: n, m
     end
   | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl
   | TYPE :: IDENT v :: BLOCK ((EQUAL, _) :: bl) :: tl ->
@@ -370,7 +374,12 @@ let rec parse_tops tokens =
     let types, t = parse_type b (TOth v) in
     begin
       match t with
-        [] -> TDef types :: parse_tops tl
+        [] -> let e = TDef types in
+        let n, m = parse_tops tl in
+        e :: n, m
       | _  -> parse_error "Invalid type declaration."
     end
+  | OPEN :: IDENT v :: tl ->
+    let n, m = parse_tops tl in
+    n, v :: m
   | _             -> parse_error "Expected a function declaration"

@@ -58,6 +58,7 @@ let rec string_of_token token =
   | CONS      -> "::"
   | UNDER     -> "_"
   | EXCLAM    -> "!"
+  | OPEN      -> "open"
   | CHAR c    -> "'" ^ (String.make 1 c) ^ "'"
   | STR s     -> "\"" ^ s ^ "\""
   | NUM n     -> string_of_int n

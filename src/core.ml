@@ -314,9 +314,10 @@ intern_eq (Value l1, Value l2)
     break;
   case LIST :
     if ((l2.list.length) != (l1.list.length)) return (make_int(0));
-    for (int i = 0; i < l2.list.length; i ++)
-      if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._int)
-        return (make_int(0));
+    #pragma omp parallel for
+      for (int i = 0; i < l2.list.length; i ++)
+        if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._int)
+          return (make_int(0));
     break;
   case PAIR :
     if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._int ||

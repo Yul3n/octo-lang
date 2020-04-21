@@ -1,0 +1,20 @@
+type token
+  = PLUS
+  | MINUS
+  | DIV
+  | TIMES
+  | NUM int
+
+lexer s =
+  case s of
+    [] -> []
+    '+' :: tl -> PLUS :: (lexer tl)
+    '-' :: tl -> MINUS :: (lexer tl)
+    '/' :: tl -> DIV :: (lexer tl)
+    '*' :: tl -> TIMES :: (lexer tl)
+
+
+main n =
+  case (lexer "-+") of
+    PLUS :: [MINUS] -> 0
+    MINUS :: [PLUS] -> 1

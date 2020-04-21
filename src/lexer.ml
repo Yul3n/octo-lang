@@ -59,11 +59,11 @@ let rec lexer input pos act_ident =
     | '!'  -> slex 1 EXCLAM
     | ','  -> slex 1 COMMA
     | '%'  -> slex 1 MOD
-    | '\'' -> let c = String.get input (pos + 2) in
+    | '\'' -> let c = String.get input (pos + 1) in
       begin
-        match String.get input (pos + 3) with
+        match String.get input (pos + 2) with
           '\'' -> slex 3 (CHAR c)
-        | c    -> unexpected_char (pos + 3) c
+        | c    -> unexpected_char (pos + 2) c
       end
     | ':'  ->
       begin
@@ -92,6 +92,7 @@ let rec lexer input pos act_ident =
           | "type"  -> TYPE
           | "case"  -> CASE
           | "of"    -> OF
+          | "open"  -> OPEN
           | v       ->
             if (Char.code (String.get v 0) >= Char.code('a'))
             then IDENT ide
