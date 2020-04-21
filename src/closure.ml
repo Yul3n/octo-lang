@@ -170,7 +170,7 @@ let rec decls_to_c decls funs body nlam  =
         "" (range (nlam - 1)) in
     "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;
 Value difl\n;Value divl;\nValue timl;\nValue modl;\nValue conl;\nValue unil;
-Value indl;\nValue _head, _tail, _fst, _snd, get_b;\n" ^ s ^
+Value indl;\nValue _head, _tail, _fst, _snd, get_b, _map;\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){
@@ -195,6 +195,7 @@ Value indl;\nValue _head, _tail, _fst, _snd, get_b;\n" ^ s ^
         conl = make_closure(cons, NULL, 0);
         indl = make_closure(ind, NULL, 0);
         get_b = make_closure(get_body, NULL, 0);
+        _map = make_closure(octo_map, NULL, 0);
         _tail = make_closure(octo_tail, NULL, 0);
         _head = make_closure(octo_head, NULL, 0);
         _fst = make_closure(octo_fst, NULL, 0);

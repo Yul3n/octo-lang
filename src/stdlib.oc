@@ -46,11 +46,6 @@ flip f g x = (g (f x))
 
 -- Lists
 
-map f l =
-  case l of
-    [] -> []
-    hd :: tl -> (f hd) :: (map f tl)
-
 foldl n f l =
   case l of
     [] -> n

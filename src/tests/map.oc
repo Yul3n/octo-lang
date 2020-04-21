@@ -1,10 +1,5 @@
 fact 0 = 1
 fact n = (n * (fact (n - 1)))
 
-map f l =
-  case l of
-    [] -> []
-    hd :: tl -> (f hd) :: (map f tl)
-
 main n =
   (map fact [0, 1, 2, 3]) ! n

@@ -2,6 +2,8 @@ let core = fun x -> Printf.fprintf x "
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <omp.h>
+
 struct List;
 struct Closure;
 struct Value;
@@ -163,6 +165,27 @@ mod (Value *env, Value n, int len)
     *tenv = n;
     return (make_closure(lambda_mod, tenv, len + 1));
 }
+
+
+Value
+lambda_map (Value *env, Value n, int len)
+{
+    Value *l = malloc (n.list.length * sizeof(Value));
+    #pragma omp parallel for
+      for (int i = 0; i < n.list.length; i ++)
+        *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len + 1);
+    return make_list(l, n.list.length);
+}
+
+Value
+octo_map (Value *env, Value n, int len)
+{
+    Value *tenv = malloc((len + 1) * sizeof(Value));
+    memcpy (tenv + 1, env, len);
+    *tenv = n;
+    return (make_closure(lambda_map, tenv, len + 1));
+}
+
 
 Value
 lambda_cons(Value *env, Value n)
