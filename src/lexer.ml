@@ -88,11 +88,12 @@ let rec lexer input pos act_ident =
       let len = String.length ide          in
       let tok =
           match ide with
-            "where" -> WHERE
-          | "type"  -> TYPE
-          | "case"  -> CASE
-          | "of"    -> OF
-          | "open"  -> OPEN
+            "where"  -> WHERE
+          | "type"   -> TYPE
+          | "case"   -> CASE
+          | "of"     -> OF
+          | "open"   -> OPEN
+          | "extern" -> EXTERN
           | v       ->
             if (Char.code (String.get v 0) >= Char.code('a'))
             then IDENT ide

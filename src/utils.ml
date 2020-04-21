@@ -48,6 +48,7 @@ let rec string_of_token token =
   | WHERE     -> "where"
   | CASE      -> "case"
   | OF        -> "of"
+  | EXTERN    -> "extern"
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"

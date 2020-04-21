@@ -285,7 +285,7 @@ and parse_all tokens exprs =
 
 let rec parse_tops tokens =
   match tokens with
-    []            -> [], []
+    []            -> [], [], []
   | IDENT v :: tl ->
     begin
       match tl with
@@ -296,10 +296,10 @@ let rec parse_tops tokens =
           let vars, tl = parse_args tl in
           match tl with
             EQUAL :: tl ->
-            let e, tl = parse_expr tl [] false in
-            let e = Decl (v, wrap_lam (List.rev vars) (reduce e)) in
-            let n, m = parse_tops tl in
-            e :: n, m
+            let e, tl     = parse_expr tl [] false in
+            let e         = Decl (v, wrap_lam (List.rev vars) (reduce e)) in
+            let n, m, ext = parse_tops tl in
+            e :: n, m, ext
           | _                      -> parse_error "Expected a function declaration"
         end
       | _ ->
@@ -326,8 +326,8 @@ let rec parse_tops tokens =
         in
         let c, tl, v2 = parse_cf tokens v "" in
         let e = Decl (v, Lambda(v2, App(Case c, Var v2))) in
-        let n, m = parse_tops tl in
-        e :: n, m
+        let n, m, ext = parse_tops tl in
+        e :: n, m, ext
     end
   | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl
   | TYPE :: IDENT v :: BLOCK ((EQUAL, _) :: bl) :: tl ->
@@ -374,12 +374,15 @@ let rec parse_tops tokens =
     let types, t = parse_type b (TOth v) in
     begin
       match t with
-        [] -> let e = TDef types in
-        let n, m = parse_tops tl in
-        e :: n, m
+        [] -> let e   = TDef types in
+        let n, m, ext = parse_tops tl in
+        e :: n, m, ext
       | _  -> parse_error "Invalid type declaration."
     end
   | OPEN :: IDENT v :: tl ->
-    let n, m = parse_tops tl in
-    n, v :: m
+    let n, m, ext = parse_tops tl in
+    n, v :: m, ext
+  | EXTERN :: IDENT v :: tl ->
+    let n, m, ext = parse_tops tl in
+    n, m, v :: ext
   | _             -> parse_error "Expected a function declaration"

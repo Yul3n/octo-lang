@@ -83,14 +83,19 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       def_ctx tl (context @ t) (types ^ s) (nd ^ fn) (nlam + 1)
         texpr (tc ^ ntc) (ist ^ nin) (mn ^ m) (tp ^ t')
 
+let rec import_ext ext =
+  match ext with
+    [] -> "", ""
+
 let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
   match m with
     []       -> c1, c2, c3, c4, c5, c6, nlam, ctx
   | hd :: tl ->
-    let s = read_from_file ("lib/" ^ (String.lowercase_ascii hd) ^ ".oc") in
-    let t, _ = Lexer.lexer s 0 0 in
-    let t, _ = List.split t in
-    let p, _= Parser.parse_tops t in
+    let s =
+      read_from_file ("lib/" ^ (String.lowercase_ascii hd) ^ ".oc") in
+    let t, _      = Lexer.lexer s 0 0 in
+    let t, _      = List.split t in
+    let p, _, imp = Parser.parse_tops t in
     let rec compile_funs d fs b n =
       match d with
         [] -> fs, b, n
@@ -103,21 +108,21 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
     in
     let c, t, n, e, lt, i, m, tp, nlam = def_ctx p ctx "" "" nlam [] "" "" "" "" in
     let f, b, nlam = compile_funs e tp m nlam in
-    compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
+    compile_module tl nlam (ctx @ c) (imp ^ c1 ^ tp ^ f ) (c2 ^ m ^ b) (c3 ^ lt)
       (c4 ^ t) (c5 ^ i) (c6 ^ n)
 
 let compile f =
-  let s    = read_from_file f    in
-  let t, _ = Lexer.lexer s 0 0   in
-  let t, _ = List.split t        in
-  let f, m = Parser.parse_tops t in
+  let s         = read_from_file f    in
+  let t, _      = Lexer.lexer s 0 0   in
+  let t, _      = List.split t        in
+  let f, m, imp = Parser.parse_tops t in
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
     compile_module ("stdlib" :: m) 0 Types.initial_ctx "" "" "" "" "" "" in
   let c, t, n, e, lt, i, m, tp, _ =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
   Utils.print_context c;
   let oc = open_out "out.c"      in
-  fprintf oc "%s\n" (decls_to_c e (c1 ^ tp) (c2 ^ m) 0);
+  fprintf oc "%s\n" (decls_to_c e (imp ^ c1 ^ tp) (c2 ^ m) 0);
   close_out oc;
   let oc = open_out "core.h"     in
   Core.core oc (c3 ^ lt) (c4 ^ t) (c5 ^ i) (c6 ^ n)
