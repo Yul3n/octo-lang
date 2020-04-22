@@ -206,7 +206,7 @@ let rec parse_expr tokens exprs is_math =
               ARROW :: _ -> reduce exprs, tokens
             | []         -> parse_error "Invalid pattern matching"
             | PIPE :: tl ->
-              let e, tl = parse_expr tl [] false in
+              let e, tl = parse_expr tl [] true in
               parse_arr tl [App (App (Var "lor@", reduce exprs), reduce e)]
             | WHEN :: tl ->
               let e, tl = parse_expr tl [] false in

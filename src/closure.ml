@@ -81,7 +81,7 @@ let rec closure_to_c clo nlam env  =
       | n -> sprintf "(*(env + %d))" (n - 2)
     end, "", "", nlam, env
   | CloApp (f, arg, _) ->
-    let s1, nf, p1, nlam, _ = closure_to_c f nlam env  in
+    let s1, nf, p1, nlam, _ = closure_to_c f (nlam + 1) env  in
     let n = sprintf "l%d" nlam in
     let s2, na, p2, nlam, v = closure_to_c arg (nlam + 1) env
     in

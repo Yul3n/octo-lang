@@ -5,10 +5,11 @@
 ;;; Code:
 
 (defconst octo-highlights
-  '((" where[ $\n]\\|type\\|[ $\n]int[ $\n]\\| char[ $\n]\\|case\\|of[ $\n]\\|open "    . font-lock-keyword-face)
-    ("--.*$"                            . font-lock-comment-face)
+  '(("--.*$" . font-lock-comment-face)
+    (" where[ $\n]\\|type \\|[ $\n]float[ $\n]\\| char[ $\n]\\|case\\|of[ $\n]\\|open \\| when"
+     . font-lock-keyword-face)
     ("\\([a-zA-Z_']*\\)\\([a-zA-Z ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
-    ("\\([a-zA-Z_']*\\).*="                . (1 font-lock-function-name-face))
+    ("\\([a-zA-Z_']*\\).*=" . (1 font-lock-function-name-face))
     ("'.*'" . font-lock-string-face)
     ("[0-9]*" . font-lock-constant-face)))
 
@@ -27,7 +28,7 @@
         (beginning-of-line)
         (setq actindent (- e1 b1))
          (if (looking-at "\n\n[a-zA-Z]*.* =") ; If the line is a function declaration
-             (setq curindent 0)                    ; to 0.
+             (setq curindent 0)               ; to 0.
            (progn
              (forward-line -1)
              ; Indent the line if the line before is a function declaration

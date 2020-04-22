@@ -36,7 +36,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       let s    = "  enum {" ^
                  (List.fold_left (fun x y -> x ^ ", __" ^ y)
                     ("DUMB" ^ (string_of_int nlam))
-                    (List.map String.uppercase_ascii n)) ^ "} _" ^ v ^ ";" in
+                    n ^ "} _" ^ v ^ ";") in
       let rec com_t l s1 s2 s3 =
         match l with
           [] -> s1, s2, s3
@@ -51,7 +51,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
           n._%s = __%s;
           n.has_cell = 0;
           return (n);
-}\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
+}\n" n (String.uppercase_ascii v) v n,
             Printf.sprintf "_%s = make_%s();\n" n n,
             Printf.sprintf "Value _%s;\n" n
           | _ ->
@@ -64,7 +64,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
           *(n.cell) = cell;
           n.has_cell = 1;
           return (n);
-}\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
+}\n" n (String.uppercase_ascii v) v n,
             Printf.sprintf "_%s = make_closure(make_%s, NULL, 0);\n" n n,
             Printf.sprintf "Value _%s;\n" n
         in
@@ -81,7 +81,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
     break;"
           (String.uppercase_ascii v) v v
       in
-      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam
+      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) (nlam + 1)
         texpr (tc ^ ntc) (ist ^ nin) (mn ^ m) (tp ^ t')
 
 let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
