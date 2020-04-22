@@ -129,7 +129,8 @@ let initial_ctx =
    "map", Forall([0; 1], TFun(TFun(TVar 0, TVar 1), TFun(TList (TVar 0), TList (TVar 1))));
    "get_b@", Forall([0; 1], TFun(TVar 0, TVar 1));
    "lor@", Forall([0], TFun(TVar 0, TFun(TVar 0, TVar 0)));
-   "land@", Forall([0], TFun(TVar 0, TFun(TOth "bool", TVar 0)))]
+   "land@", Forall([0], TFun(TVar 0, TFun(TOth "bool", TVar 0)));
+   "char_code", Forall([], TFun (TOth "char", TOth "float"))]
 
 let rec unify_lst lst nvar t ctx subst exprs =
       match lst with

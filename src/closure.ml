@@ -184,9 +184,7 @@ let rec decls_to_c decls funs body nlam  =
     let rec range = function -1 -> [] | n -> n :: range (n - 1) in
     let s = List.fold_left (fun x y -> x ^ (sprintf "Value l%d;\n" y))
         "" (range (nlam - 1)) in
-    "#include \"core.h\"\n#include <stdlib.h>\n#include <stdio.h>\nValue suml;
-Value difl\n;Value divl;\nValue timl;\nValue modl;\nValue conl;\nValue unil;
-Value indl;\nValue _head, _tail, _fst, _snd, get_b, _map;\n" ^ s ^
+    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>\n#include <stdio.h>\n" ^ s ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){
@@ -198,24 +196,12 @@ Value indl;\nValue _head, _tail, _fst, _snd, get_b, _map;\n" ^ s ^
             puts(\"Error: the input should be a number.\");
             exit (1);
         }
+        base_init();
         Value *tenv = malloc(sizeof(Value));
         Value n = make_int(num);
         *tenv = n;
         int len = 0;
-        difl = make_closure(dif, NULL, 0);
-        modl = make_closure(mod, NULL, 0);
-        divl = make_closure(dv, NULL, 0);
-        timl = make_closure(tim, NULL, 0);
-        suml = make_closure(sum, NULL, 0);
-        unil = make_closure(octo_union, NULL, 0);
-        conl = make_closure(cons, NULL, 0);
-        indl = make_closure(ind, NULL, 0);
-        get_b = make_closure(get_body, NULL, 0);
-        _map = make_closure(octo_map, NULL, 0);
-        _tail = make_closure(octo_tail, NULL, 0);
-        _head = make_closure(octo_head, NULL, 0);
-        _fst = make_closure(octo_fst, NULL, 0);
-        _snd = make_closure(octo_snd, NULL, 0);\n" ^
+        \n" ^
     body ^
     "\n}\n"
   | hd :: tl ->
