@@ -104,10 +104,16 @@ let rec closure_to_c clo nlam env  =
   | CloCase (c, t) ->
     let case_to_c p nlam =
       let equ_to_c l r = sprintf "(intern_eq(%s, %s))._int" l r in
-      let pattern_to_c e r l =
+      let rec pattern_to_c e nlam =
         match e with
-          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "1"
-        | _ -> equ_to_c l r
+          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "1", nlam, "", ""
+        | CloApp (CloApp((CloGVar ("lor@", _)), l, _), r, _) ->
+          let l, nlam, lf, lp = pattern_to_c l nlam in
+          let r, nlam, rf, rp = pattern_to_c r nlam in
+          l ^ "||" ^ r, nlam, lf ^ rf, lp ^ rp
+        | _ ->
+          let np, nf2, p4, nlam, _ = closure_to_c e nlam env in
+          equ_to_c np "(*(tenv))", nlam, nf2, p4
       in
       match p with
         []           -> "", "", "", nlam, []
@@ -125,9 +131,9 @@ let rec closure_to_c clo nlam env  =
             | _ -> "", ""
           in
         let p3, nlam, nf2, p4 =
-            let np, nf2, p4, nlam, _ = closure_to_c f nlam env  in
-            (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
-               (pattern_to_c f np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
+          let np, nlam, nf2, p4 = pattern_to_c f nlam in
+          (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
+             np p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
     in
