@@ -1,3 +1,5 @@
+open char
+
 type token
   = PLUS
   | MINUS
@@ -12,7 +14,6 @@ lexer s =
     '-' :: tl -> MINUS :: (lexer tl)
     '/' :: tl -> DIV :: (lexer tl)
     '*' :: tl -> TIMES :: (lexer tl)
-
 
 main n =
   case (lexer "-+") of

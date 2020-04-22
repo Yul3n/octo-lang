@@ -5,10 +5,11 @@
 ;;; Code:
 
 (defconst octo-highlights
-  '(("where\\|type\\|int\\|case\\|of"    . font-lock-keyword-face)
+  '((" where[ $\n]\\|type\\|[ $\n]int[ $\n]\\| char[ $\n]\\|case\\|of[ $\n]\\|open "    . font-lock-keyword-face)
     ("--.*$"                            . font-lock-comment-face)
-    ("\\([a-zA-Z]*\\)\\([a-zA-Z _]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
-    ("\\([a-zA-Z]*\\).*="                . (1 font-lock-function-name-face))
+    ("\\([a-zA-Z_']*\\)\\([a-zA-Z ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
+    ("\\([a-zA-Z_']*\\).*="                . (1 font-lock-function-name-face))
+    ("'.*'" . font-lock-string-face)
     ("[0-9]*" . font-lock-constant-face)))
 
 (defun indent-line ()
