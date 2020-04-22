@@ -15,7 +15,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       [] -> context, types, nd, texpr, tc, ist, mn, tp, nlam
     | Decl(v, body) :: tl ->
       let tmp_ctx    = context @ [v, Forall([], TVar 0)] in
-      let s, t, n, e = Types.infer body tmp_ctx 1        in
+      let s, t, _, e = Types.infer body tmp_ctx 1        in
       let n_ctx  =
       match v with
           "main" ->
@@ -26,7 +26,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx types nd n (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
+      def_ctx tl n_ctx types nd nlam (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
     | TDef t :: tl ->
       let v =
         match snd (List.hd t) with
@@ -52,7 +52,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
           n.has_cell = 0;
           return (n);
 }\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
-            Printf.sprintf "_%s = make_%s();" n n,
+            Printf.sprintf "_%s = make_%s();\n" n n,
             Printf.sprintf "Value _%s;\n" n
           | _ ->
             Printf.sprintf
@@ -65,7 +65,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
           n.has_cell = 1;
           return (n);
 }\n" n (String.uppercase_ascii v) v (String.uppercase_ascii n),
-            Printf.sprintf "_%s = make_closure(make_%s, NULL, 0);" n n,
+            Printf.sprintf "_%s = make_closure(make_%s, NULL, 0);\n" n n,
             Printf.sprintf "Value _%s;\n" n
         in
         com_t tl (s1 ^ n1) (s2 ^ n2) (s3 ^ n3)
@@ -81,10 +81,11 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
     break;"
           (String.uppercase_ascii v) v v
       in
-      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) (nlam + 1)
+      def_ctx tl (context @ t) (types ^ s) (nd ^ fn) nlam
         texpr (tc ^ ntc) (ist ^ nin) (mn ^ m) (tp ^ t')
 
 let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
+
   match m with
     []       -> c1, c2, c3, c4, c5, c6, nlam, ctx
   | hd :: tl ->
@@ -97,15 +98,17 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
       match d with
         [] -> fs, b, n
       | TyDecl (v, bd, _) :: tl ->
-        let fn, nf, nb, nlam, _ = closure_to_c (to_closure (deB bd ("", 1)))
-            n "tenv"
-        in
-      let f = sprintf "Value _%s;\n" v in
-      compile_funs tl (fs ^ f ^ nf ) (b ^ nb ^ (sprintf "_%s = %s;\n" v fn)) (nlam + 1)
+        let fn, nf, nb, n, _ =
+          closure_to_c (to_closure (deB bd ("", 1))) n "tenv" in
+        let f = sprintf "Value _%s;\n" v in
+        compile_funs tl (fs ^ f ^ nf) (b ^ nb ^ (sprintf "_%s = %s;\n" v fn)) n
     in
+
     let c, t, n, e, lt, i, m, tp, nlam = def_ctx p ctx "" "" nlam [] "" "" "" "" in
+    print_int nlam;
+    print_newline ();
     let f, b, nlam = compile_funs e tp m nlam in
-    compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f ) (c2 ^ m ^ b) (c3 ^ lt)
+    compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
       (c4 ^ t) (c5 ^ i) (c6 ^ n)
 
 let compile f =
@@ -115,9 +118,8 @@ let compile f =
   let f, m = Parser.parse_tops t in
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
     compile_module ("stdlib" :: m) 0 Types.initial_ctx "" "" "" "" "" "" in
-  let c, t, n, e, lt, i, m, tp, _ =
+  let _, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
-  Utils.print_context c;
   let oc = open_out "out.c"      in
   fprintf oc "%s\n" (decls_to_c e (c1 ^ tp) (c2 ^ m) nlam);
   close_out oc;

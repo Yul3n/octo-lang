@@ -22,7 +22,7 @@ type token
   | MOD
   | EXCLAM
   | OPEN
-  | EXTERN
+  | WHEN
   | STR   of string
   | CHAR  of char
   | BLOCK of (token * int) list

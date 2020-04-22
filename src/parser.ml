@@ -181,6 +181,14 @@ let rec parse_expr tokens exprs is_math =
               when Char.code (String.get v 0) < Char.code 'a' ->
               let t, b = parse_pattern (App (Var "get_b@", env)) t body in
               App (Var v, t), b
+            | App (App (Var "lor@", l), r) ->
+              let l2, b2 = parse_pattern env l body in
+              let r2, b3 = parse_pattern env r b2   in
+              App (App (Var "lor@", l2), r2), b3
+            | App (App (Var "land@", l), r) ->
+              let l2, b2 = parse_pattern env l body in
+              let _, r2  = parse_pattern env l r    in
+              App (App (Var "land@", l2), r2), b2
             | _ -> e, body
           in
           let rec parse_arr tokens exprs =
@@ -190,6 +198,9 @@ let rec parse_expr tokens exprs is_math =
             | PIPE :: tl ->
               let e, tl = parse_expr tl [] false in
               parse_arr tl [App (App (Var "lor@", reduce exprs), reduce e)]
+            | WHEN :: tl ->
+              let e, tl = parse_expr tl [] false in
+              parse_arr tl [App (App (Var "land@", reduce exprs), reduce e)]
             | tl         ->
               let e, tl = parse_expr tl exprs false in
               parse_arr tl e

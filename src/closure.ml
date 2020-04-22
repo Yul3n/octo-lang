@@ -111,6 +111,10 @@ let rec closure_to_c clo nlam env  =
           let l, nlam, lf, lp = pattern_to_c l nlam in
           let r, nlam, rf, rp = pattern_to_c r nlam in
           l ^ "||" ^ r, nlam, lf ^ rf, lp ^ rp
+        | CloApp (CloApp((CloGVar ("land@", _)), l, _), r, _) ->
+          let l, nlam, lf, lp    = pattern_to_c l nlam in
+          let r, rf, rp, nlam, _ = closure_to_c r nlam env in
+          l ^ "&&" ^ (equ_to_c r "_True"), nlam, lf ^ rf, lp ^ rp
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c e nlam env in
           equ_to_c np "(*(tenv))", nlam, nf2, p4

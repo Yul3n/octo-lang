@@ -5,7 +5,7 @@ type token
   | MINUS
   | DIV
   | TIMES
-  | NUM int
+  | NUM float
 
 lexer s =
   case s of
@@ -14,8 +14,10 @@ lexer s =
     '-' :: tl -> MINUS :: (lexer tl)
     '/' :: tl -> DIV :: (lexer tl)
     '*' :: tl -> TIMES :: (lexer tl)
+    (n :: tl) when (is_num n) -> (lexer "+")
 
 main n =
-  case (lexer "-+") of
+  case (lexer "2") of
     PLUS :: [MINUS] -> 0
     MINUS :: [PLUS] -> 1
+    PLUS :: [] -> 2
