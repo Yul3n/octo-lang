@@ -62,7 +62,7 @@ let rec string_of_token token =
   | OPEN      -> "open"
   | CHAR c    -> "'" ^ (String.make 1 c) ^ "'"
   | STR s     -> "\"" ^ s ^ "\""
-  | NUM n     -> string_of_int n
+  | NUM n     -> string_of_float n
   | BLOCK b   -> let b, _ = List.split b in
     List.fold_left (^) "" (List.map string_of_token b)
 

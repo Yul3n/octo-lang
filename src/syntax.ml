@@ -28,7 +28,7 @@ type token
   | BLOCK of (token * int) list
   | IDENT of string
   | MINDE of string
-  | NUM   of int
+  | NUM   of float
 
 type expr_t
   = TVar  of int
@@ -41,7 +41,7 @@ type expr
   = Var    of string
   | Lambda of string * expr
   | App    of expr * expr
-  | Num    of int
+  | Num    of float
   | Case   of (expr * expr) list
   | List   of expr list
   | Pair   of expr * expr
@@ -59,7 +59,7 @@ type typed_expr
   | TyVar    of string * expr_t
   | TyApp    of typed_expr * typed_expr * expr_t
   | TyIndVar of int * expr_t
-  | TyNum    of int * expr_t
+  | TyNum    of float * expr_t
   | TyCase   of (typed_expr * typed_expr) list * expr_t
   | TyList   of typed_expr list * expr_t
   | TyPair   of typed_expr * typed_expr * expr_t

@@ -8,8 +8,9 @@ let rec lexer input pos act_ident =
     raise (Syntax_error ("Unexpected character: '" ^ (String.make 1 chr) ^ "', line " ^
                          (string_of_int l) ^ ", character " ^ string_of_int (r - 1)))
   in
-  let is_digit chr = (Char.code('0') <= Char.code chr) &&
-                     (Char.code('9') >= Char.code chr)
+  let is_digit chr = ((Char.code('0') <= Char.code chr) &&
+                      (Char.code('9') >= Char.code chr)) ||
+                     (chr = '.') || (chr = '-')
   in
   let is_alpha chr = (Char.code('A') <= Char.code chr) &&
                      (Char.code('Z') >= Char.code chr) ||
@@ -44,7 +45,15 @@ let rec lexer input pos act_ident =
       end
     | ' '
     | '\t' -> lexer input (pos + 1) act_ident
-    | '+'  -> slex 1 PLUS
+    | '+'  ->  let c = String.get input (pos + 1) in
+      begin
+        match c with
+          n when is_digit n ->
+          let num = parse_f is_digit input pos in
+          let len = String.length num          in
+          slex len (NUM (float_of_string num))
+        | _ -> slex 1 PLUS
+      end
     | '='  -> slex 1 EQUAL
     | '*'  -> slex 1 TIMES
     | '/'  -> slex 1 DIVIDE
@@ -77,12 +86,16 @@ let rec lexer input pos act_ident =
           '>' -> slex 2 ARROW
         | '-' -> let l = String.length (parse_f ((<>) '\n') input (pos + 2)) in
           lexer input (pos + 2 + l) act_ident
+        | n when is_digit n ->
+          let num = parse_f is_digit input pos in
+          let len = String.length num          in
+          slex len (NUM (float_of_string num))
         | _   -> slex 1 MINUS
       end
     | n when is_digit n ->
       let num = parse_f is_digit input pos in
       let len = String.length num          in
-      slex len (NUM (int_of_string num))
+      slex len (NUM (float_of_string num))
     | a when is_alpha a ->
       let ide = parse_f is_ident input pos in
       let len = String.length ide          in

@@ -19,10 +19,10 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       let n_ctx  =
       match v with
           "main" ->
-          (* The main function should be of type int -> int *)
-          let s2 = Types.unify t (TFun(TOth "int", TOth "int")) in
+          (* The main function should be of type float -> float *)
+          let s2 = Types.unify t (TFun(TOth "float", TOth "float")) in
           (Types.subst_context (Types.compose_subst s s2) context) @
-          [v, Forall([], (TFun(TOth "int", TOth "int")))]
+          [v, Forall([], (TFun(TOth "float", TOth "float")))]
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in

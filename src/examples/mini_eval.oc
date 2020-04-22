@@ -5,7 +5,7 @@ type op
   | Div
 
 type expr
-  = Const int
+  = Const float
   | Binop expr op expr
 
 eval e =

@@ -7,11 +7,11 @@
 ** DONE Lists
 ** DONE Fix memory leaks in the C code
 ** DONE More syntaxic sugar
-** TODO Floats
+** DONE Floats
 ** DONE Pattern matching on list
 ** DONE More advanced datatypes
 ** DONE Strings
-** TODO Modules
+** DONE Modules
 ** TODO Interface with C
 ** TODO Refix memory leaks in the C code
 ** TODO Custom operators

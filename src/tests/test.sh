@@ -6,13 +6,13 @@ build() {
     # Adds && to make sure that no step fails
         dune exec -- ./octo.exe "tests/$1.oc" > /dev/null &&
         cd tests &&
-        gcc ../out.c -o o
+        gcc ../out.c -o o -lm
 }
 
 test() {
     build "$1" # First build the program and compare its output with the expected one
     ret=$(./o "$2")
-    [ "$3" = "$ret" ] && return 0
+    [ "$3.000000" = "$ret" ] && return 0
     # This will only get execute if the last command failed because there is a return.
     echo "Test $1 failed: expected $3 returned $ret" && exit
 }

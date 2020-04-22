@@ -106,7 +106,7 @@ let rec unify t1 t2 =
 
 let initial_ctx =
   (* Mathematical operators are of type : int -> int -> int *)
-  let op_sch = Forall([], TFun(TOth "int", TFun(TOth "int", TOth "int"))) in
+  let op_sch = Forall([], TFun(TOth "float", TFun(TOth "float", TOth "float"))) in
   ["suml@", op_sch;
    "difl@", op_sch;
    "timl@", op_sch;
@@ -117,7 +117,7 @@ let initial_ctx =
    (* Forall a, the type of union is a list -> a list -> a list *)
    "unil@", Forall([0], TFun(TList(TVar 0), TFun(TList (TVar 0), TList (TVar 0))));
    (* Forall a, the type of the indexing operator is a list -> int -> a *)
-   "indl@", Forall([0], TFun(TList(TVar 0), TFun(TOth "int", TVar 0)));
+   "indl@", Forall([0], TFun(TList(TVar 0), TFun(TOth "float", TVar 0)));
    (* Forall a, the type of head is a list -> a *)
    "head", Forall([0], TFun(TList(TVar 0), TVar 0));
    (* Forall a, the type of tail is a list -> a list *)
@@ -148,7 +148,7 @@ and infer expr context nvar =
     let s, body_t, nvar, b   = infer body tmp_ctx (nvar + 1)          in
     let t                    = TFun ((app_subst s var_t), body_t)     in
     s, t, nvar, TyLambda (var, b, t)
-  | Num n -> [], TOth "int", nvar, TyNum (n, TOth "int")
+  | Num n -> [], TOth "float", nvar, TyNum (n, TOth "float")
   | Var var ->
     begin
       match List.assoc_opt var context with

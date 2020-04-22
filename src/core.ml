@@ -3,6 +3,7 @@ let core = fun x -> Printf.fprintf x "
 #include <stdlib.h>
 #include <stdio.h>
 #include <omp.h>
+#include <math.h>
 
 struct List;
 struct Closure;
@@ -35,7 +36,7 @@ struct Pair {
 
 struct Value {
   union {
-    long _int;
+    double _float;
     char _char;
     struct Closure clo;
     struct List list;
@@ -94,18 +95,18 @@ make_pair(Value fst, Value snd)
 
 
 Value
-make_int(long n)
+make_int(double n)
 {
   Value v;
   v.t = INT;
-  v._int = n;
+  v._float = n;
   return v;
 }
 
 Value
 lambda_sum (Value *env, Value n)
 {
-  return make_int((*env)._int + n._int);
+  return make_int((*env)._float + n._float);
 }
 
 Value
@@ -120,7 +121,7 @@ sum (Value *env, Value n, int len)
 Value
 lambda_dif (Value *env, Value n)
 {
-  return make_int((*env)._int - n._int);
+  return make_int((*env)._float - n._float);
 }
 
 Value
@@ -135,7 +136,7 @@ dif (Value *env, Value n, int len)
 Value
 lambda_div (Value *env, Value n)
 {
-    return make_int((*env)._int / n._int);
+    return make_int((*env)._float / n._float);
 }
 
 Value
@@ -150,7 +151,7 @@ dv (Value *env, Value n, int len)
 Value
 lambda_tim (Value *env, Value n)
 {
-    return make_int(((*env)._int) * (n._int));
+    return make_int(((*env)._float) * (n._float));
 }
 
 Value
@@ -165,7 +166,7 @@ tim (Value *env, Value n, int len)
 Value
 lambda_mod (Value *env, Value n)
 {
-    return make_int((*env)._int %% n._int);
+    return make_int(fmod((*env)._float, n._float));
 }
 
 Value
@@ -243,11 +244,11 @@ octo_union (Value *env, Value n, int len)
 Value
 lambda_index (Value *env, Value n)
 {
-  if ((n._int >= ((*(env)).list.length)) || (n._int < 0)){
-    printf (\"Error: invalid array index. Size of the array %%li, index: %%d.\\n\",
-    n._int, ((*(env)).list.length));
+  if ((n._float >= ((*(env)).list.length)) || (n._float < 0)){
+    printf (\"Error: invalid array index. Size of the array %%lf, index: %%d.\\n\",
+    n._float, ((*(env)).list.length));
     exit (1);
-  } else return *((*(env)).list.list + n._int);
+  } else return *((*(env)).list.list + (int) n._float);
 }
 
 Value
@@ -305,7 +306,7 @@ intern_eq (Value l1, Value l2)
 {
   switch (l1.t) {
   case INT :
-    if (l1._int != l2._int)
+    if (l1._float != l2._float)
       return (make_int(0));
     break;
   case CHAR :
@@ -316,12 +317,12 @@ intern_eq (Value l1, Value l2)
     if ((l2.list.length) != (l1.list.length)) return (make_int(0));
     #pragma omp parallel for
       for (int i = 0; i < l2.list.length; i ++)
-        if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._int)
+        if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._float)
           return (make_int(0));
     break;
   case PAIR :
-    if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._int ||
-        !(intern_eq(*(l1.pair.snd), *(l2.pair.snd)))._int)
+    if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._float ||
+        !(intern_eq(*(l1.pair.snd), *(l2.pair.snd)))._float)
         return (make_int(0));
     break;
     %s

@@ -10,7 +10,7 @@ exception Error of string
 
 type closure
   = CloVar  of int * expr_t
-  | CloNum  of int * expr_t
+  | CloNum  of float * expr_t
   | Closure of int list * closure * expr_t
   | CloApp  of closure * closure * expr_t
   | CloGVar of string * expr_t
@@ -71,7 +71,7 @@ let rec to_closure expr =
 
 let rec closure_to_c clo nlam env  =
   match clo with
-    CloNum (n, _) -> sprintf "make_int(%d)" n, "", "", nlam, env
+    CloNum (n, _) -> sprintf "make_int(%f)" n, "", "", nlam, env
   | CloChar (c, _) -> sprintf "make_char('%c')" c, "", "", nlam, env
   | CloVar (n, _) ->
     begin
@@ -103,7 +103,7 @@ let rec closure_to_c clo nlam env  =
     nnlam, env
   | CloCase (c, t) ->
     let case_to_c p nlam =
-      let equ_to_c l r = sprintf "(intern_eq(%s, %s))._int" l r in
+      let equ_to_c l r = sprintf "(intern_eq(%s, %s))._float" l r in
       let rec pattern_to_c e nlam =
         match e with
           CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "1", nlam, "", ""
@@ -220,8 +220,8 @@ Value indl;\nValue _head, _tail, _fst, _snd, get_b, _map;\n" ^ s ^
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in
-      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%li\\n\"," ^
-                                 nbody ^ ".clo.lam(NULL, n, 0)._int);\n return 0;") nlam
+      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%lf\\n\"," ^
+                                 nbody ^ ".clo.lam(NULL, n, 0)._float);\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
