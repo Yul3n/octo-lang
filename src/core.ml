@@ -1,4 +1,6 @@
 let core = fun x -> Printf.fprintf x "
+#ifndef __CORE_H_
+#define __CORE_H_
 struct List;
 struct Closure;
 struct Value;
@@ -128,4 +130,6 @@ intern_eq (Value l1, Value l2)
   return make_int(1);
 }
 %s
+
+#endif
 "

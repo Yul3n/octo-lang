@@ -27,24 +27,7 @@ let rec wrap_lam vals expr =
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
 let rec parse_expr tokens exprs is_math =
-  let binop l op r =
-    App(App(Var op, l), r)
-  in
-  let rec parse_equ tokens body =
-    match tokens with
-      IDENT v :: tl ->
-      begin
-        let vars, tl = parse_args tl in
-        match tl with
-          EQUAL :: tl ->
-          let e, tl  = parse_expr tl [] false in
-          parse_equ tl (App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)))
-        | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
-        | []       -> parse_error ("Declaration without a body.")
-      end
-    | []            -> body, []
-    | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
-  in
+  let binop l op r = App(App(Var op, l), r) in
   let rec parse_mul tokens lval =
     let nval, ntl =
       match tokens with
@@ -132,27 +115,54 @@ let rec parse_expr tokens exprs is_math =
     in
     let expr, ntl = parse_rparent tl [] in
     exprs @ [expr], ntl
-  | WHERE :: BLOCK(bl) :: tl ->
+  | WHERE :: BLOCK bl :: tl ->
     let b, _ = List.split bl      in
     let lst  = Utils.last exprs   in
     let fsts = Utils.firsts exprs in
-    fsts @ [fst (parse_equ b lst)], tl
+    let rec parse_equ b tokens =
+      match tokens with
+        [] -> b
+      | _  ->
+        let rec parse_e tokens exprs =
+          match tokens with
+            EQUAL :: tl -> exprs, tl
+          | []          -> parse_error "Invalid declaration"
+          | tl          ->
+            let e, tl = parse_expr tl exprs false in
+            parse_e tl e
+        in
+        let d, tl = parse_e tokens [] in
+        let e, tl = parse_expr tl [] false in
+        let rec replace env d b =
+          match d with
+            Var v when Char.code (String.get v 0) >= Char.code 'a' ->
+            (App (Lambda (v, b), env))
+          | Pair (l, r) ->
+            let b2 = replace (App(Var "fst", env)) l b  in
+            let b3 = replace (App(Var "snd", env)) r b2 in
+            b3
+          | _ -> parse_error "Invalid declaration"
+        in
+        let e = replace (reduce e) (reduce d) b in
+        parse_equ e tl
+    in
+    fsts @ [parse_equ lst b], tl
   | WHERE :: tl ->
     let parse_sequ tokens body =
-    match tokens with
-      IDENT v :: tl ->
-      begin
-        let vars, tl = parse_args tl in
-        match tl with
-          EQUAL :: tl ->
+      match tokens with
+        IDENT v :: tl ->
+        begin
+          let vars, tl = parse_args tl in
+          match tl with
+            EQUAL :: tl ->
           let e, tl  = parse_expr tl [] false in
           App(Lambda(v, body), wrap_lam (List.rev vars) (reduce e)), tl
         | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
-      end
-    | []            -> body, []
+        end
+      | []            -> body, []
     | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
-  in
+    in
     let lst   = Utils.last exprs   in
     let w, tl = parse_sequ tl lst  in
     let fsts  = Utils.firsts exprs in
@@ -258,6 +268,7 @@ let rec parse_expr tokens exprs is_math =
       match tokens with
         []           -> parse_error "Invalid pair declaration"
       | COMMA :: _
+      | EQUAL :: _
       | RPARENT :: _ -> reduce exprs, tokens
       | _            -> let e, tl = parse_expr tokens exprs false in
         parse_elem tl e

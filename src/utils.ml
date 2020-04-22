@@ -65,13 +65,16 @@ let rec string_of_token token =
   | NUM n     -> string_of_float n
   | BLOCK b   -> let b, _ = List.split b in
     List.fold_left (^) "" (List.map string_of_token b)
-
+(*
 let to_greek c =
-      Printf.sprintf "\206%c" (Char.chr @@ Char.code c - Char.code 'A' + 145)
+     (* Printf.sprintf "\206%c" (Char.chr @@ Char.code c - Char.code 'A' + 145)
+     *)
+  String.make 1 c
+*)
 
 let rec string_of_type t =
   match t with
-    TVar v       -> to_greek (Char.chr (Char.code 'a' + v))
+    TVar v       -> string_of_int v
   | TFun (f, t)  -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
   | TOth v       -> v
   | TList t      -> "(" ^ string_of_type t ^ " list)"
@@ -83,7 +86,9 @@ let print_scheme (Forall(v, t)) =
       [] -> ()
     | _  ->
       print_string "∀";
-      List.iter (fun x -> print_string (to_greek (Char.chr (Char.code 'a' + x)))) v;
+      (*List.iter (fun x -> print_string (to_greek (Char.chr (Char.code 'a' + x)))) v;
+      *)
+      List.iter (fun x -> print_string (string_of_int x)) v;
       print_string "."
   end;
   print_string (string_of_type t)

@@ -14,8 +14,8 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
     match decls with
       [] -> context, types, nd, texpr, tc, ist, mn, tp, nlam
     | Decl(v, body) :: tl ->
-      let tmp_ctx    = context @ [v, Forall([], TVar 0)] in
-      let s, t, _, e = Types.infer body tmp_ctx 1        in
+      let tmp_ctx    = context @ [v, Forall([], TVar (nlam))] in
+      let s, t, _, e = Types.infer body tmp_ctx (nlam + 1)    in
       let n_ctx  =
       match v with
           "main" ->
@@ -26,7 +26,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
         | _ ->
           (Types.subst_context s context) @ [v, Types.gen context t]
       in
-      def_ctx tl n_ctx types nd nlam (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
+      def_ctx tl n_ctx types nd (nlam + 2)(texpr @ [TyDecl (v, e, t)]) tc ist mn tp
     | TDef t :: tl ->
       let v =
         match snd (List.hd t) with
@@ -105,8 +105,6 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
     in
 
     let c, t, n, e, lt, i, m, tp, nlam = def_ctx p ctx "" "" nlam [] "" "" "" "" in
-    print_int nlam;
-    print_newline ();
     let f, b, nlam = compile_funs e tp m nlam in
     compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
       (c4 ^ t) (c5 ^ i) (c6 ^ n)
