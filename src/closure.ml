@@ -102,12 +102,17 @@ let rec closure_to_c clo nlam env  =
     (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
-    let equ_to_c l r = sprintf "(intern_eq(%s, %s))._int" l r in
     let case_to_c p nlam =
+      let equ_to_c l r = sprintf "(intern_eq(%s, %s))._int" l r in
+      let pattern_to_c e r l =
+        match e with
+          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "1"
+        | _ -> equ_to_c l r
+      in
       match p with
         []           -> "", "", "", nlam, []
       | (f, s) :: tl ->
-        let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env  in
+        let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env in
         let prelude, postlude =
             match t with
               TFun(TList _, _) ->
@@ -120,13 +125,9 @@ let rec closure_to_c clo nlam env  =
             | _ -> "", ""
           in
         let p3, nlam, nf2, p4 =
-          match f with
-            CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') ->
-            sprintf "else{\n%s\nfree(tenv);\nreturn %s;\n}" p2 nbody, nlam, "", ""
-          | _ ->
             let np, nf2, p4, nlam, _ = closure_to_c f nlam env  in
             (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
-               (equ_to_c np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
+               (pattern_to_c f np "(*(tenv))") p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
     in

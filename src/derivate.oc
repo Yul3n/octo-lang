@@ -1,0 +1,9 @@
+type op =
+  Plus | Minus | Mult | Div
+
+type expr =
+  Const int | App expr expr
+
+derivate e v =
+  case e of
+    Const 1 -> 1

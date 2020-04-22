@@ -1,0 +1,4 @@
+main x =
+  x + y + z where
+    y = 5
+    z = 5
