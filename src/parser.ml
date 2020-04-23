@@ -31,10 +31,12 @@ let rec parse_expr tokens exprs is_math =
   let rec parse_mul tokens lval =
     let nval, ntl =
       match tokens with
-        TIMES :: tl  -> let rval, tl = parse_expr tl [] false in
+        TIMES :: tl  -> let rval, tl = parse_expr tl [] true in
         binop lval "timl@" (reduce rval), tl
       | DIVIDE :: tl -> let rval, tl = parse_expr tl [] true in
         binop lval "divl@" (reduce rval), tl
+      | DDIVIDE :: tl -> let rval, tl = parse_expr tl [] true in
+        binop lval "ddivl@" (reduce rval), tl
       | MOD :: tl -> let rval, tl = parse_expr tl [] true in
         binop lval "modl@" (reduce rval), tl
       | tl           -> lval, tl
@@ -99,7 +101,7 @@ let rec parse_expr tokens exprs is_math =
     let lst = Utils.last exprs           in
     let expr, ntl = parse_add tokens lst in
     (Utils.firsts exprs) @ [expr], ntl
-  | TIMES :: _ | DIVIDE :: _ | MOD :: _ ->
+  | TIMES :: _ | DIVIDE :: _ | MOD :: _ | DDIVIDE :: _ ->
     let lst       = Utils.last exprs     in
     let expr, ntl = parse_mul tokens lst in
     (Utils.firsts exprs) @ [expr], ntl

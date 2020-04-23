@@ -56,7 +56,12 @@ let rec lexer input pos act_ident =
       end
     | '='  -> slex 1 EQUAL
     | '*'  -> slex 1 TIMES
-    | '/'  -> slex 1 DIVIDE
+    | '/'  ->
+      begin
+        match String.get input (pos + 1) with
+          '/' -> slex 2 DDIVIDE
+        | _   -> slex 1 DIVIDE
+      end
     | '\\' -> slex 1 BACKSLASH
     | '_'  -> slex 1 UNDER
     | '('  -> slex 1 LPARENT

@@ -18,6 +18,7 @@ type token
   | COMMA
   | LBRACKET
   | RBRACKET
+  | DDIVIDE
   | AT
   | MOD
   | EXCLAM

@@ -111,6 +111,7 @@ let initial_ctx =
    "difl@", op_sch;
    "timl@", op_sch;
    "divl@", op_sch;
+   "ddivl@", op_sch;
    "modl@", op_sch;
    (* Forall a, the type of cons is a -> a list -> a list *)
    "conl@", Forall([0], TFun(TVar 0, TFun(TList (TVar 0), TList (TVar 0))));

@@ -17,7 +17,7 @@ octo_str_to_c_str (Value s)
 Value
 c_str_to_octo_str (char *s)
 {
-  Value *str = malloc(strlen(s) * sizeof(s));
+  Value *str = malloc(strlen(s) * sizeof(Value));
   for (int i = 0; i < strlen(s); i ++)
     *(str + i) = make_char(*(s+i));
   return make_list(str, strlen(s));
@@ -37,6 +37,23 @@ sum (Value *env, Value n, int len)
   *tenv = n;
   return (make_closure(lambda_sum, tenv, len + 1));
 }
+
+Value
+lambda_ddiv (Value *env, Value n)
+{
+  return make_int(((int) (*env)._float) / ((int) n._float));
+}
+
+Value
+ddiv (Value *env, Value n, int len)
+{
+  Value *tenv = malloc((len + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_ddiv, tenv, len + 1));
+}
+
+
 
 Value
 lambda_dif (Value *env, Value n)
@@ -229,6 +246,7 @@ Value modl;
 Value conl;
 Value unil;
 Value indl;
+Value ddivl;
 Value _head, _tail, _fst, _snd, get_b, _map, _char_code;
 
 Value
@@ -264,6 +282,7 @@ base_init ()
     unil = make_closure(octo_union, NULL, 0);
     conl = make_closure(cons, NULL, 0);
     indl = make_closure(ind, NULL, 0);
+    ddivl = make_closure(ddiv, NULL, 0);
     get_b = make_closure(get_body, NULL, 0);
     _map = make_closure(octo_map, NULL, 0);
     _tail = make_closure(octo_tail, NULL, 0);
