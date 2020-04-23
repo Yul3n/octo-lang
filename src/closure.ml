@@ -155,6 +155,8 @@ let rec closure_to_c clo nlam env  =
         %s
         %s
         %s
+        puts(\"Non-exhaustive pattern-matching\");
+        exit(1);
 }\n" nlam pr p b
     in
     sprintf "l%d" nlam, nf ^ f,
