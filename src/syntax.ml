@@ -23,6 +23,7 @@ type token
   | EXCLAM
   | OPEN
   | WHEN
+  | AND
   | STR   of string
   | CHAR  of char
   | BLOCK of (token * int) list
@@ -53,6 +54,7 @@ type scheme
 type fun_decl
   = Decl of string * expr
   | TDef of (string * scheme) list
+  | And  of fun_decl
 
 type typed_expr
   = TyLambda of string * typed_expr * expr_t

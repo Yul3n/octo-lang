@@ -11,36 +11,46 @@ let read_from_file f =
   Bytes.unsafe_to_string s
 
 let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
-    match decls with
-      [] -> context, types, nd, texpr, tc, ist, mn, tp, nlam
-    | Decl(v, body) :: tl ->
-      let tmp_ctx    = context @ [v, Forall([], TVar (nlam))] in
-      let s, t, _, e = Types.infer body tmp_ctx (nlam + 1)    in
-      let n_ctx  =
+  match decls with
+    [] -> context, types, nd, texpr, tc, ist, mn, tp, nlam
+  | Decl (v1, b1) :: And (Decl (v2, b2)) :: tl ->
+    let tmp_ctx =
+      context @ [v1, Forall([], TVar nlam); v2, Forall([], TVar (nlam + 1))] in
+    let s, t, _, e = Types.infer b1 tmp_ctx (nlam + 2) in
+    let n_ctx  = (Types.subst_context s context) @ [v1, Types.gen context t;
+                                                    v2, Forall([], TVar (nlam + 1))] in
+    let s, t2, _, e2 = Types.infer b2 n_ctx (nlam + 3) in
+    let n_ctx  = (Types.subst_context s n_ctx) @ [v2, Types.gen context t2] in
+    def_ctx tl n_ctx types nd (nlam + 4)
+      (texpr @ [TyDecl (v1, e, t); TyDecl (v2, e2, t2)]) tc ist mn (tp ^ (sprintf "Value _%s;" v2))
+  | Decl(v, body) :: tl ->
+    let tmp_ctx    = context @ [v, Forall([], TVar (nlam))] in
+    let s, t, _, e = Types.infer body tmp_ctx (nlam + 1)    in
+    let n_ctx  =
       match v with
-          "main" ->
-          (* The main function should be of type float -> float *)
-          let s2 = Types.unify t (TFun(TOth "float", TOth "float")) in
-          (Types.subst_context (Types.compose_subst s s2) context) @
-          [v, Forall([], (TFun(TOth "float", TOth "float")))]
-        | _ ->
-          (Types.subst_context s context) @ [v, Types.gen context t]
-      in
-      def_ctx tl n_ctx types nd (nlam + 2)(texpr @ [TyDecl (v, e, t)]) tc ist mn tp
-    | TDef t :: tl ->
-      let v =
-        match snd (List.hd t) with
-          Forall (_, t) -> Utils.get_t_n t
-      in
-      let n, _ = List.split t in
-      let s    = "  enum {" ^
-                 (List.fold_left (fun x y -> x ^ ", __" ^ y)
-                    ("DUMB" ^ (string_of_int nlam))
-                    n ^ "} _" ^ v ^ ";") in
-      let rec com_t l s1 s2 s3 =
-        match l with
-          [] -> s1, s2, s3
-        | (n, Forall(_, t)) :: tl ->
+        "main" ->
+        (* The main function should be of type float -> float *)
+        let s2 = Types.unify t (TFun(TOth "float", TOth "float")) in
+        (Types.subst_context (Types.compose_subst s s2) context) @
+        [v, Forall([], (TFun(TOth "float", TOth "float")))]
+      | _ ->
+        (Types.subst_context s context) @ [v, Types.gen context t]
+    in
+    def_ctx tl n_ctx types nd (nlam + 2) (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
+  | TDef t :: tl ->
+    let v =
+      match snd (List.hd t) with
+        Forall (_, t) -> Utils.get_t_n t
+    in
+    let n, _ = List.split t in
+    let s    = "  enum {" ^
+               (List.fold_left (fun x y -> x ^ ", __" ^ y)
+                  ("DUMB" ^ (string_of_int nlam))
+                  n ^ "} _" ^ v ^ ";") in
+    let rec com_t l s1 s2 s3 =
+      match l with
+        [] -> s1, s2, s3
+      | (n, Forall(_, t)) :: tl ->
         let n1, n2, n3 =
           match t with
             TOth _ ->
@@ -83,6 +93,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       in
       def_ctx tl (context @ t) (types ^ s) (nd ^ fn) (nlam + 1)
         texpr (tc ^ ntc) (ist ^ nin) (mn ^ m) (tp ^ t')
+  | _ -> raise Not_found
 
 let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
 

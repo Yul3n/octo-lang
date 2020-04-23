@@ -59,7 +59,24 @@ eval e =
         ln = (eval l)
         rn = (eval r)
 
-parser tokens expr =
+parse_mul t l =
+  case ftl of
+    TIMES :: utl -> (parse_mul ftl nl)
+    DIV :: utl   -> (parse_mul ftl nl)
+    utl          -> (nl, utl)
+  where
+    nl, ftl =
+      case t of
+        [] -> (l, [])
+        TIMES :: tl ->
+          ((Binop (l, Mult, r)), ntl) where
+            r, ntl = (parser tl Null)
+        DIV :: tl ->
+          ((Binop (l, Div, r)), ntl) where
+            r, ntl = (parser tl Null)
+        tok -> (l, t)
+
+and parser tokens expr =
   case tokens of
     [] -> (expr, [])
     (NUM n) :: tl -> ((Const n), tl)
@@ -69,25 +86,14 @@ parser tokens expr =
   where
     parse_add = \t l ->
       case t of
-        [] -> (l, [])
         PLUS :: tl ->
           ((Binop (l, Plus, r)), ntl) where
-            r, ntl = (parse_mul tl Null)
-    parse_mul = \t l ->
-      case ftl of
-        TIMES :: utl -> (parse_mul ftl nl)
-        DIV :: utl   -> (parse_mul ftl nl)
-      where
-        nl, ftl =
-          case t of
-            [] -> (l, [])
-            TIMES :: tl ->
-              ((Binop (l, Mult, r)), ntl) where
-                r, ntl = (parser tl Null)
-            DIV :: tl ->
-              ((Binop (l, Div, r)), ntl) where
-                r, ntl = (parser tl Null)
-            tok -> (l, t)
+            r, ntl = (parse_mul mtl nr)
+            nr, mtl = (parser tl Null)
+        MINUS :: tl ->
+          ((Binop (l, Minus, r)), ntl) where
+            r, ntl = (parse_mul mtl nr)
+            nr, mtl = (parser tl Null)
 
 parse_all tokens expr =
   case tokens of
@@ -97,10 +103,4 @@ parse_all tokens expr =
         e, tl = (parser t expr)
 
 main n =
-  case (eval ((parse_all (lexer "2 / 2 + 1 * 2") Null))) of
-    3 -> 2
-    8 -> 1
-    1 -> 7
-    4 -> 0
-    2 -> 5
-    7 -> 6
+  eval ((parse_all (lexer "2 + 2 * 3") Null))

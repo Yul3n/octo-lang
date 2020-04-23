@@ -311,6 +311,7 @@ and parse_all tokens exprs =
 let rec parse_tops tokens =
   match tokens with
     []            -> [], []
+  | AND :: IDENT v :: tl
   | IDENT v :: tl ->
     begin
       match tl with
@@ -323,6 +324,11 @@ let rec parse_tops tokens =
             EQUAL :: tl ->
             let e, tl = parse_expr tl [] false in
             let e     = Decl (v, wrap_lam (List.rev vars) (reduce e)) in
+            let e =
+              match (List.hd tokens) with
+                AND -> And e
+              | _ -> e
+            in
             let n, m  = parse_tops tl in
             e :: n, m
           | _                      -> parse_error "Expected a function declaration"
@@ -351,6 +357,11 @@ let rec parse_tops tokens =
         in
         let c, tl, v2 = parse_cf tokens v "" in
         let e = Decl (v, Lambda(v2, App(Case c, Var v2))) in
+        let e =
+          match (List.hd tokens) with
+            AND -> And e
+          | _ -> e
+        in
         let n, m = parse_tops tl in
         e :: n, m
     end
@@ -407,4 +418,4 @@ let rec parse_tops tokens =
   | OPEN :: IDENT v :: tl ->
     let n, m = parse_tops tl in
     n, v :: m
-  | _             -> parse_error "Expected a function declaration"
+  | _ -> parse_error "Expected a function declaration"
