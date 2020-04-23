@@ -237,7 +237,21 @@ char_code (Value *env, Value n, int len)
     return make_int(n._char);
 }
 
+
+Value
+char_chr (Value *env, Value n, int len)
+{
+  if (n._float < 255)
+    return make_char(n._float);
+  else {
+    puts("Invalid argument for char chr.");
+    exit(1);
+  }
+}
+
+
 Value _char_code;
+Value _char_chr;
 
 void
 base_init ()

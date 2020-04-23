@@ -1,0 +1,5 @@
+-- reverse l: return the list l in reverse order
+reverse l =
+  case l of
+    [] -> []
+    hd :: tl -> (reverse tl) @ [hd]

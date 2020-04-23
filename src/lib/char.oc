@@ -4,8 +4,19 @@ is_num c =
     '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> True
     c -> False
 
--- int_of_string s n : Return the number contained in s plus n
-int_of_string s n =
+-- int_of_char c: Return the number contained in c
+int_of_char c =
+  (char_code c) - 48
+
+int_of_string_ s n =
   case s of
     [] -> n
-    c :: tl -> (int_of_string tl ((10 * n) + (char_code c) - 48))
+    c :: tl -> (int_of_string_ tl ((10 * n) + (int_of_char c)))
+
+-- int_of_string s: Return the number contained in s
+int_of_string s =
+  int_of_string_ s 0
+
+-- char_of_int n: return the character coresponding to the digit n
+char_of_int n =
+  char_chr (n + 48)

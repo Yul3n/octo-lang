@@ -24,7 +24,7 @@ lexer s =
     '*' :: tl -> TIMES :: (lexer tl)
     (n :: tl) when (is_num n) ->
       (NUM n) :: l where
-        n = (int_of_string ns 0)
+        n = (int_of_string ns)
         l = (lexer nl)
         ns, nl = (parse_f is_num s)
 
@@ -90,10 +90,6 @@ and parser tokens expr =
           ((Binop (l, Plus, r)), ntl) where
             r, ntl = (parse_mul mtl nr)
             nr, mtl = (parser tl Null)
-        MINUS :: tl ->
-          ((Binop (l, Minus, r)), ntl) where
-            r, ntl = (parse_mul mtl nr)
-            nr, mtl = (parser tl Null)
 
 parse_all tokens expr =
   case tokens of
@@ -102,5 +98,5 @@ parse_all tokens expr =
       (parse_all tl e) where
         e, tl = (parser t expr)
 
-main n =
-  eval (parse_all (lexer "2 * 3 + 2") Null)
+main s =
+  eval (parse_all (lexer s) Null)

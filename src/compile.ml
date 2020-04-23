@@ -30,9 +30,9 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
       match v with
         "main" ->
         (* The main function should be of type string -> string *)
-        let s2 = Types.unify t (TFun(TList (TOth "char"), TList (TOth "char"))) in
+        let s2 = Types.unify t (TFun(TList (TOth "char"), TOth "float")) in
         (Types.subst_context (Types.compose_subst s s2) context) @
-        [v, Forall([], TFun(TList (TOth "char"), TList (TOth "char")))]
+        [v, Forall([], TFun(TList (TOth "char"), TOth "float"))]
       | _ ->
         (Types.subst_context s context) @ [v, Types.gen context t]
     in
