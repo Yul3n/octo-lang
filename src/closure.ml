@@ -194,13 +194,9 @@ let rec decls_to_c decls funs body nlam  =
             exit(1);
         }
         int num;
-        if (sscanf(argv[1], \"%d\", &num) != 1) {
-            puts(\"Error: the input should be a number.\");
-            exit (1);
-        }
         base_init();
         Value *tenv = malloc(sizeof(Value));
-        Value n = make_int(num);
+        Value n = c_str_to_octo_str(argv);
         *tenv = n;
         int len = 0;
         \n" ^
@@ -212,8 +208,8 @@ let rec decls_to_c decls funs body nlam  =
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in
-      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%lf\\n\"," ^
-                                 nbody ^ ".clo.lam(NULL, n, 0)._float);\n return 0;") nlam
+      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nputs(octo_str_to_c_str(" ^
+                                 nbody ^ ".clo.lam(NULL, n, 0)));\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"

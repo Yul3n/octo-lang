@@ -15,11 +15,11 @@ or False x =
     True -> True
     False -> False
 
-and False _ = False
-and True x =
-  case x of
-    True -> True
-    False -> False
+-- and False _ = False
+-- and True x =
+--  case x of
+--    True -> True
+--    False -> False
 
 xor True x =
   case x of

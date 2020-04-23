@@ -103,4 +103,4 @@ parse_all tokens expr =
         e, tl = (parser t expr)
 
 main n =
-  eval ((parse_all (lexer "2 + 2 * 3") Null))
+  eval (parse_all (lexer "2 * 3 + 2") Null)

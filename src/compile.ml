@@ -29,10 +29,10 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
     let n_ctx  =
       match v with
         "main" ->
-        (* The main function should be of type float -> float *)
-        let s2 = Types.unify t (TFun(TOth "float", TOth "float")) in
+        (* The main function should be of type string -> string *)
+        let s2 = Types.unify t (TFun(TList (TOth "char"), TList (TOth "char"))) in
         (Types.subst_context (Types.compose_subst s s2) context) @
-        [v, Forall([], (TFun(TOth "float", TOth "float")))]
+        [v, Forall([], TFun(TList (TOth "char"), TList (TOth "char")))]
       | _ ->
         (Types.subst_context s context) @ [v, Types.gen context t]
     in
@@ -80,7 +80,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
         in
         com_t tl (s1 ^ n1) (s2 ^ n2) (s3 ^ n3)
       in
-      let fn, m, t' = com_t t "" "" "" in
+let fn, m, t' = com_t t "" "" "" in
       let ntc       = ",\n  " ^ (String.uppercase_ascii v) in
       let nin       = Printf.sprintf
           "case %s :

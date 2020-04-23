@@ -5,6 +5,24 @@
 #include <omp.h>
 #include <math.h>
 
+char*
+octo_str_to_c_str (Value s)
+{
+  char *str = malloc((s.list.length) * sizeof(char));
+  for (int i = 0; i < s.list.length; i ++)
+    *(str + i) = (*(s.list.list + i))._char;
+  return str;
+}
+
+Value
+c_str_to_octo_str (char *s)
+{
+  Value *str = malloc(strlen(s) * sizeof(s));
+  for (int i = 0; i < strlen(s); i ++)
+    *(str + i) = make_char(*(s+i));
+  return make_list(str, strlen(s));
+}
+
 Value
 lambda_sum (Value *env, Value n)
 {
@@ -214,7 +232,8 @@ Value indl;
 Value _head, _tail, _fst, _snd, get_b, _map, _char_code;
 
 Value
-_lchar_code (Value *env, Value n, int len) {
+char_code (Value *env, Value n, int len)
+{
     return make_int(n._char);
 }
 
@@ -237,4 +256,5 @@ base_init ()
     _head = make_closure(octo_head, NULL, 0);
     _fst = make_closure(octo_fst, NULL, 0);
     _snd = make_closure(octo_snd, NULL, 0);
+    _char_code = make_closure(char_code, NULL, 0);
 }
