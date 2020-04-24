@@ -101,6 +101,7 @@ let rec parse_expr tokens exprs is_math =
     let lst = Utils.last exprs           in
     let expr, ntl = parse_add tokens lst in
     (Utils.firsts exprs) @ [expr], ntl
+  | UNDER :: tl -> exprs @ [Var "a@"], tl
   | TIMES :: _ | DIVIDE :: _ | MOD :: _ | DDIVIDE :: _ ->
     let lst       = Utils.last exprs     in
     let expr, ntl = parse_mul tokens lst in
@@ -211,8 +212,8 @@ let rec parse_expr tokens exprs is_math =
               let e, tl = parse_expr tl [] true in
               parse_arr tl [App (App (Var "lor@", reduce exprs), reduce e)]
             | WHEN :: tl ->
-              let e, tl = parse_expr tl [] false in
-              parse_arr tl [App (App (Var "land@", reduce exprs), reduce e)]
+              let e, tl = parse_arr tl [] in
+              parse_arr tl [App (App (Var "land@", reduce exprs), e)]
             | tl         ->
               let e, tl = parse_expr tl exprs false in
               parse_arr tl e
@@ -317,7 +318,6 @@ and parse_all tokens exprs =
 let rec parse_tops tokens =
   match tokens with
     []            -> [], []
-  | AND :: IDENT v :: tl
   | IDENT v :: tl ->
     begin
       match tl with
@@ -330,11 +330,6 @@ let rec parse_tops tokens =
             EQUAL :: tl ->
             let e, tl = parse_expr tl [] false in
             let e     = Decl (v, wrap_lam (List.rev vars) (reduce e)) in
-            let e =
-              match (List.hd tokens) with
-                AND -> And e
-              | _ -> e
-            in
             let n, m  = parse_tops tl in
             e :: n, m
           | _                      -> parse_error "Expected a function declaration"
@@ -363,11 +358,6 @@ let rec parse_tops tokens =
         in
         let c, tl, v2 = parse_cf tokens v "" in
         let e = Decl (v, Lambda(v2, App(Case c, Var v2))) in
-        let e =
-          match (List.hd tokens) with
-            AND -> And e
-          | _ -> e
-        in
         let n, m = parse_tops tl in
         e :: n, m
     end
@@ -384,13 +374,26 @@ let rec parse_tops tokens =
             | _ ->
               let rec parse_multype ?(t=None) tokens =
                 match tokens with
-                  IDENT v :: ([])
+                  IDENT v :: IDENT "list" :: []
+                | IDENT v :: IDENT "list" :: PIPE :: _->
+                  begin
+                    match t with
+                      None   -> TList (TOth v)
+                    | Some t -> TPair(t, TList (TOth v))
+                  end, List.tl (List.tl tokens)
+                | IDENT v :: []
                 | IDENT v :: PIPE :: _ ->
                   begin
                     match t with
                       None   -> TOth v
                     | Some t -> TPair(t, TOth v)
                   end, List.tl tokens
+                | IDENT v :: IDENT "list" :: tl ->
+                  begin
+                    match t with
+                      None   -> parse_multype tl ~t:(Some(TList (TOth v)))
+                    | Some t -> parse_multype tl ~t:(Some(TPair(t, TList (TOth v))))
+                  end
                 | IDENT v :: tl ->
                   begin
                     match t with

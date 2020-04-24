@@ -1,0 +1,38 @@
+type op
+  = Plus
+  | Mult
+  | Pow
+  | Minus
+  | Div
+
+type expr
+  = Var char list
+  | App char list expr
+  | Binop expr op expr
+  | Const float
+
+is_const e v =
+  case e of
+    Const _ -> True
+    (Var x) when (x = v) -> False
+    Var _ -> True
+    App (_, x) -> (is_const x v)
+    Binop (l, _, r) -> (or (is_const l) (is_const r))
+
+derivate e v =
+  case e of
+    e when is_const e v -> (Const 0)
+    Binop (f, Plus, g) ->
+      (Binop (f', Plus, g')) where
+        f' = (derivate f v)
+        g' = (derivate g v)
+
+string_of_expr e =
+  case e of
+    Const n -> (string_of_int n)
+    Var v -> v
+    (Binop (l, Plus, r)) -> ((string_of_expr l) @ " + " @ (string_of_expr r))
+    (Binop (l, Minus, r)) -> ((string_of_expr l) @ " - " @ (string_of_expr r))
+
+main n =
+  string_of_expr (derivate (Binop((Const 1), Plus, (Const 1))) "e")

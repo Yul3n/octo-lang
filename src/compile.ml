@@ -10,26 +10,22 @@ let read_from_file f =
   close_in ic;
   Bytes.unsafe_to_string s
 
+let rec get_ctx decls nlam =
+  match decls with
+    [] -> [], nlam
+  | Decl (v, _) :: tl -> let tl, nnlam = get_ctx tl (nlam + 2) in
+    (v, Forall([], TVar nlam)) :: tl, nnlam
+  | _ :: tl -> get_ctx tl nlam
+
 let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
   match decls with
     [] -> context, types, nd, texpr, tc, ist, mn, tp, nlam
-  | Decl (v1, b1) :: And (Decl (v2, b2)) :: tl ->
-    let tmp_ctx =
-      context @ [v1, Forall([], TVar nlam); v2, Forall([], TVar (nlam + 1))] in
-    let s, t, _, e = Types.infer b1 tmp_ctx (nlam + 2) in
-    let n_ctx  = (Types.subst_context s context) @ [v1, Types.gen context t;
-                                                    v2, Forall([], TVar (nlam + 1))] in
-    let s, t2, _, e2 = Types.infer b2 n_ctx (nlam + 3) in
-    let n_ctx  = (Types.subst_context s n_ctx) @ [v2, Types.gen context t2] in
-    def_ctx tl n_ctx types nd (nlam + 4)
-      (texpr @ [TyDecl (v1, e, t); TyDecl (v2, e2, t2)]) tc ist mn (tp ^ (sprintf "Value _%s;" v2))
   | Decl(v, body) :: tl ->
-    let tmp_ctx    = context @ [v, Forall([], TVar (nlam))] in
-    let s, t, _, e = Types.infer body tmp_ctx (nlam + 1)    in
-    let n_ctx  =
-        (Types.subst_context s context) @ [v, Types.gen context t]
-    in
-    def_ctx tl n_ctx types nd (nlam + 2) (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
+    let s, t, nlam, e = Types.infer body context nlam in
+    let n_ctx  = (Types.subst_context s context) in
+    printf "%s : %s \n" v (Utils.string_of_type t);
+    def_ctx tl n_ctx types nd nlam (texpr @ [TyDecl (v, e, t)]) tc ist mn
+      (tp ^ (sprintf "Value _%s;\n" v))
   | TDef t :: tl ->
     let v =
       match snd (List.hd t) with
@@ -73,7 +69,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
         in
         com_t tl (s1 ^ n1) (s2 ^ n2) (s3 ^ n3)
       in
-let fn, m, t' = com_t t "" "" "" in
+      let fn, m, t' = com_t t "" "" "" in
       let ntc       = ",\n  " ^ (String.uppercase_ascii v) in
       let nin       = Printf.sprintf
           "case %s :
@@ -86,10 +82,8 @@ let fn, m, t' = com_t t "" "" "" in
       in
       def_ctx tl (context @ t) (types ^ s) (nd ^ fn) (nlam + 1)
         texpr (tc ^ ntc) (ist ^ nin) (mn ^ m) (tp ^ t')
-  | _ -> raise Not_found
 
 let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
-
   match m with
     []       -> c1, c2, c3, c4, c5, c6, nlam, ctx
   | hd :: tl ->
@@ -98,6 +92,7 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
     let t, _ = Lexer.lexer s 0 0 in
     let t, _ = List.split t in
     let p, _ = Parser.parse_tops t in
+    let c, n = get_ctx p nlam in
     let rec compile_funs d fs b n =
       match d with
         [] -> fs, b, n
@@ -107,8 +102,7 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
         let f = sprintf "Value _%s;\n" v in
         compile_funs tl (fs ^ f ^ nf) (b ^ nb ^ (sprintf "_%s = %s;\n" v fn)) n
     in
-
-    let c, t, n, e, lt, i, m, tp, nlam = def_ctx p ctx "" "" nlam [] "" "" "" "" in
+    let c, t, n, e, lt, i, m, tp, nlam = def_ctx p (ctx @ c) "" "" n [] "" "" "" "" in
     let f, b, nlam = compile_funs e tp m nlam in
     compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
       (c4 ^ t) (c5 ^ i) (c6 ^ n)
@@ -118,8 +112,9 @@ let compile f =
   let t, _ = Lexer.lexer s 0 0   in
   let t, _ = List.split t        in
   let f, m = Parser.parse_tops t in
+  let c, n = get_ctx f 0 in
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
-    compile_module (["stdlib"; "list"; "char"] @ m) 0 Types.initial_ctx
+    compile_module (["stdlib"; "list"; "char"] @ m) n (Types.initial_ctx @ c)
       "" "" "" "" "" "" in
   let _, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in

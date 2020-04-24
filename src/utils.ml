@@ -50,7 +50,6 @@ let rec string_of_token token =
   | CASE      -> "case"
   | OF        -> "of"
   | WHEN      -> "when"
-  | AND       -> "and"
   | BACKSLASH -> "\\"
   | LPARENT   -> "("
   | RPARENT   -> ")"
