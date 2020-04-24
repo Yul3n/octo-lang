@@ -6,12 +6,11 @@
 
 (defconst octo-highlights
   '(("--.*$" . font-lock-comment-face)
-
+    (" where[ $\n]\\|type \\|[ $\n]float[ $\n]\\| char[ $\n]\\|case\\|of[ $\n]\\|open \\|when "
+     . font-lock-keyword-face)
     ("\\([a-zA-Z_']*\\)\\([a-zA-Z_' ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
     ("'.'" . font-lock-string-face)
     ("[0-9]*" . font-lock-constant-face)
-    (" where[ $\n]\\|type \\|[ $\n]float[ $\n]\\| char[ $\n]\\|case\\|of[ $\n]\\|open \\|when "
-     . font-lock-keyword-face)
     ("\\([a-zA-Z_']*\\).*=" . (1 font-lock-function-name-face))))
 
 (defun indent-line ()

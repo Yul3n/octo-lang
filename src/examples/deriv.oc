@@ -1,3 +1,7 @@
+type token
+  = PLUS
+
+
 type op
   = Plus
   | Mult
@@ -28,12 +32,17 @@ derivate e v =
         f' = (derivate f v)
         g' = (derivate g v)
     Binop (f, Mult, g) ->
-      Binop ((Binop(g, Mult, f')), Plus, Binop(g', Mult, f)) where
+      Binop (Binop(g, Mult, f'), Plus, Binop(g', Mult, f)) where
         f' = (derivate f v)
         g' = (derivate g v)
     Binop (f, Div, g) ->
-      Binop ((Binop ((Binop(g, Mult, f')), Minus, Binop(g', Mult, f))),
-      Div, Binop(g, Pow, Const 2)) where
+      Binop (Binop (Binop (g, Mult, f'), Minus, Binop(g', Mult, f)), Div,
+      Binop(g, Pow, Const 2)) where
+        f' = (derivate f v)
+        g' = (derivate g v)
+    Binop (f, Pow, g) ->
+      Binop (Binop (e, Mult, Binop(f, Pow, Binop (e, Minus, Const 1))), Mult, f')
+      where
         f' = (derivate f v)
         g' = (derivate g v)
 
@@ -41,8 +50,11 @@ string_of_expr e =
   case e of
     Const n -> (string_of_int n)
     Var v -> v
-    (Binop (l, Plus, r)) -> ((string_of_expr l) @ " + " @ (string_of_expr r))
+    (Binop (l, Plus, r))  -> ((string_of_expr l) @ " + " @ (string_of_expr r))
     (Binop (l, Minus, r)) -> ((string_of_expr l) @ " - " @ (string_of_expr r))
+    (Binop (l, Pow, r))   -> ((string_of_expr l) @ " ^ " @ (string_of_expr r))
+    (Binop (l, Mult, r))  -> ((string_of_expr l) @ " * " @ (string_of_expr r))
+    (Binop (l, Div, r))   -> ((string_of_expr l) @ " / " @ (string_of_expr r))
 
 main n =
-  string_of_expr (derivate (Binop((Const 1), Plus, (Var "e"))) "e")
+  string_of_expr (derivate (Binop((Const 1), Mult, (Var "e"))) "e")

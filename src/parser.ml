@@ -276,9 +276,8 @@ let rec parse_expr tokens exprs is_math =
       | _            -> let e, tl = parse_expr tokens exprs false in
         parse_elem tl e
     in
-    let l     = Utils.last exprs in
     let r, tl = parse_elem tl [] in
-    (Utils.firsts exprs) @ [Pair (l, r)], tl
+    [Pair (reduce exprs, r)], tl
   | STR s :: tl -> let l = Utils.string_to_char_list s in
     let l = List.map (fun x -> Char x) l in
     exprs @ [List l], tl
