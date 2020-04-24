@@ -112,7 +112,6 @@ let rec lexer input pos act_ident =
           | "of"     -> OF
           | "open"   -> OPEN
           | "when"   -> WHEN
-          | "and"    -> AND
           | v        ->
             if (Char.code (String.get v 0) >= Char.code('a'))
             then IDENT ide

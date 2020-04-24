@@ -35,3 +35,24 @@ foldl n f l =
 -- is_nil l: return True if the list is empty
 isnil [] = True
 isnil l  = False
+
+-- uncons l: return the first and the last element of the list l in a pair
+uncons l =
+  ((head l), last l)
+
+-- elem l n: return True if n is an element of l
+elem l n =
+  case l of
+    [] -> False
+    hd :: tl when hd = n -> True
+    _ :: tl -> (elem tl n)
+
+nub_ l l' =
+  case l of
+    [] -> []
+    hd :: tl when (elem l' hd) -> (nub_ tl l')
+    hd :: tl -> hd :: (nub_ tl (hd :: l'))
+
+-- nub l: return the list l without duplicates
+nub l =
+  nub_ l []

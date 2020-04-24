@@ -142,8 +142,8 @@ let rec unify_lst lst nvar t ctx subst exprs =
         let tmpctx          = subst_context subst ctx in
         let s1, tt, nvar, e = infer hd tmpctx nvar    in
         let s2              = unify tt t              in
-        let sf              = compose_subst s2 s1     in
-        unify_lst tl nvar (app_subst sf t) ctx (compose_subst subst sf) (exprs @ [e])
+        let sf              = chain_compose [s2; s1; subst] in
+        unify_lst tl nvar (app_subst sf t) ctx sf (exprs @ [e])
 
 and infer expr context nvar =
   match expr with
@@ -176,7 +176,7 @@ and infer expr context nvar =
     let tmp_ctx         = subst_context s1 context in
     let et, nvar, s2, e = unify_lst exprs (nvar + 1) (TVar nvar) tmp_ctx [] [] in
     let sf              = compose_subst s2 s1 in
-    let t               = TFun (app_subst s1 pt, app_subst s2 et) in
+    let t               = TFun (app_subst sf pt, app_subst sf et) in
     sf, t, nvar, TyCase(List.combine p e, t)
   | List l ->
     let t, nvar, s, e = unify_lst l (nvar + 1) (TVar nvar) context [] [] in

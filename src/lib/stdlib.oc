@@ -9,17 +9,16 @@ if False _ y = y
 not True = False
 not False = True
 
-or True _ = True
-or False x =
+or x y =
+  case x of
+    True -> True
+    False -> y
+
+and False _ = False
+and True x =
   case x of
     True -> True
     False -> False
-
--- and False _ = False
--- and True x =
---  case x of
---    True -> True
---    False -> False
 
 xor True x =
   case x of
