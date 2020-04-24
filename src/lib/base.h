@@ -53,7 +53,23 @@ ddiv (Value *env, Value n, int len)
   return (make_closure(lambda_ddiv, tenv, len + 1));
 }
 
+Value
+lambda_eq (Value *env, Value n)
+{
+  double d = intern_eq(n, *(env))._float;
+  if (d) return make_True();
+  else return make_False();
 
+}
+
+Value
+eq (Value *env, Value n, int len)
+{
+  Value *tenv = malloc((len + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_eq, tenv, len + 1));
+}
 
 Value
 lambda_dif (Value *env, Value n)
@@ -238,6 +254,7 @@ get_body (Value *env, Value n, int len)
     return (*(n.cell));
 }
 
+Value eql;
 Value suml;
 Value difl;
 Value divl;
@@ -267,6 +284,30 @@ char_chr (Value *env, Value n, int len)
   }
 }
 
+void
+print_value(Value n)
+{
+  switch (n.t) {
+    case INT:
+      printf("%lf\n", n._float);
+      break;
+    case CHAR:
+      printf("%c", n._char);
+      break;
+    case LIST:
+      for (int i = 0; i < n.list.length; i ++)
+        print_value(*(n.list.list + i));
+      puts("");
+      break;
+    case PAIR:
+      print_value(*n.pair.fst);
+      printf(", ");
+      print_value(*n.pair.snd);
+      break;
+    default:
+      exit(1);
+  }
+}
 
 Value _char_code;
 Value _char_chr;
@@ -275,6 +316,7 @@ void
 base_init ()
 {
     difl = make_closure(dif, NULL, 0);
+    eql = make_closure(eq, NULL, 0);
     modl = make_closure(mod, NULL, 0);
     divl = make_closure(dv, NULL, 0);
     timl = make_closure(tim, NULL, 0);

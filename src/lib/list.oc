@@ -3,3 +3,35 @@ reverse l =
   case l of
     [] -> []
     hd :: tl -> (reverse tl) @ [hd]
+
+-- firsts l: return all the elements of the list l except for the last
+firsts l =
+  case l of
+    []        -> []
+    hd :: []  -> []
+    hd :: tl  -> hd :: (firsts tl)
+
+-- last l: return the last element of the list l
+last l =
+  case l of
+    hd :: [] -> hd
+    hd :: tl -> (last tl)
+
+-- range_n b e n: return the list of numbers between b and e with a step of n
+range_n b e n =
+  case b of
+    i when (b = e) -> []
+    i -> b :: (range_n (b + n) e n)
+
+-- range b e: return the list of integers between b and e
+range b e =
+  range_n b e 1
+
+foldl n f l =
+  case l of
+    [] -> n
+    hd :: tl -> (foldl (f n hd) f tl)
+
+-- is_nil l: return True if the list is empty
+isnil [] = True
+isnil l  = False

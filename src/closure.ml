@@ -216,13 +216,7 @@ let rec decls_to_c decls funs body nlam  =
         end ^ "Value *tenv = malloc(sizeof(Value));
         *tenv = n;"
       in
-      let print =
-        match t with
-          TFun (_, TOth "float") ->
-          sprintf "printf(\"%%lf\", %s.clo.lam(NULL, n, 0)._float);"
-        | _ ->
-          sprintf "puts(octo_str_to_c_str(%s.clo.lam(NULL, n, 0)));"
-      in
+      let print = sprintf "print_value(%s.clo.lam(NULL, n, 0));" in
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in

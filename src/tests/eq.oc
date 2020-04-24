@@ -1,0 +1,4 @@
+main n =
+  case (n = 1) of
+    True -> 1
+    False -> 0

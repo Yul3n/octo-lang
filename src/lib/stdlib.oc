@@ -44,16 +44,6 @@ compose f g x = (f (g x))
 
 flip f g x = (g (f x))
 
--- Lists
-
-foldl n f l =
-  case l of
-    [] -> n
-    hd :: tl -> (foldl (f n hd) f tl)
-
-isnil [] = True
-isnil l  = False
-
 -- Maths
 
 fact 0 = 1

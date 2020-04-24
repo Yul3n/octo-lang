@@ -15,7 +15,9 @@
 ** TODO Interface with C
 ** TODO Refix memory leaks in the C code
 ** TODO Custom operators
-** TODO When guards in pattern matching
+** DONE When guards in pattern matching
+** TODO Recursive dependencies
+** TODO Don't compile unused functions
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations

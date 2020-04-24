@@ -282,6 +282,10 @@ let rec parse_expr tokens exprs is_math =
     let l = List.map (fun x -> Char x) l in
     exprs @ [List l], tl
   | CHAR c :: tl -> exprs @ [Char c], tl
+  | EQUAL :: tl ->
+    let r = Utils.last exprs in
+    let l, tl = parse_expr tl [] false in
+    (Utils.firsts exprs) @ [binop r "eql@" (reduce l)], tl
   | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   match is_math with
