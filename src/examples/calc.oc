@@ -1,5 +1,3 @@
-open char
-
 type token
   = PLUS
   | MINUS
@@ -104,4 +102,4 @@ parse_all tokens expr =
         e, tl = (parser t expr)
 
 main s =
-  (eval (parse_all (lexer s) Null))
+  string_of_int (eval (parse_all (lexer s) Null))

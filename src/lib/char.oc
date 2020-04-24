@@ -20,3 +20,14 @@ int_of_string s =
 -- char_of_int n: return the character coresponding to the digit n
 char_of_int n =
   char_chr (n + 48)
+
+string_of_int_ n =
+  case n of
+    0 -> ""
+    i -> ((string_of_int_ (i // 10)) @ [(char_of_int (i % 10))])
+
+-- string_of_int n: return the number n as a string
+string_of_int n =
+  case n of
+    0 -> "0"
+    i -> (string_of_int_ i)

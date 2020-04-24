@@ -12,7 +12,7 @@ build() {
 test() {
     build "$1" # First build the program and compare its output with the expected one
     ret=$(./o "$2")
-    [ "$3.000000" = "$ret" ] && return 0
+    [ "$3" = "${ret%%.000000}" ] && return 0
     # This will only get execute if the last command failed because there is a return.
     echo "Test $1 failed: expected $3 returned $ret" && exit
 }
@@ -27,6 +27,7 @@ test4() {
 
 # Run the tests
 # The couples of argument represent the argument and the expected output
+
 #             I O I O I O I O
 test4 "id"    0 0 1 1 2 2 3 3
 test4 "cons1" 0 0 1 1 2 2 3 3

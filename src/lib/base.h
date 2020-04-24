@@ -290,4 +290,5 @@ base_init ()
     _fst = make_closure(octo_fst, NULL, 0);
     _snd = make_closure(octo_snd, NULL, 0);
     _char_code = make_closure(char_code, NULL, 0);
+    _char_chr = make_closure(char_chr, NULL, 0);
 }

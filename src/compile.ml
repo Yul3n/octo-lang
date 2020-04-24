@@ -27,13 +27,6 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
     let tmp_ctx    = context @ [v, Forall([], TVar (nlam))] in
     let s, t, _, e = Types.infer body tmp_ctx (nlam + 1)    in
     let n_ctx  =
-      match v with
-        "main" ->
-        (* The main function should be of type string -> string *)
-        let s2 = Types.unify t (TFun(TList (TOth "char"), TOth "float")) in
-        (Types.subst_context (Types.compose_subst s s2) context) @
-        [v, Forall([], TFun(TList (TOth "char"), TOth "float"))]
-      | _ ->
         (Types.subst_context s context) @ [v, Types.gen context t]
     in
     def_ctx tl n_ctx types nd (nlam + 2) (texpr @ [TyDecl (v, e, t)]) tc ist mn tp
@@ -126,7 +119,8 @@ let compile f =
   let t, _ = List.split t        in
   let f, m = Parser.parse_tops t in
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
-    compile_module ("stdlib" :: m) 0 Types.initial_ctx "" "" "" "" "" "" in
+    compile_module (["stdlib"; "list"; "char"] @ m) 0 Types.initial_ctx
+      "" "" "" "" "" "" in
   let _, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
   let oc = open_out "out.c"      in

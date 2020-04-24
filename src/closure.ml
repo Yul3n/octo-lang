@@ -193,23 +193,42 @@ let rec decls_to_c decls funs body nlam  =
             puts(\"Error: the program has to be called with an argument.\");
             exit(1);
         }
-        int num;
         base_init();
-        Value *tenv = malloc(sizeof(Value));
-        Value n = c_str_to_octo_str(*(argv + 1));
-        *tenv = n;
         int len = 0;
         \n" ^
     body ^
     "\n}\n"
   | hd :: tl ->
     match hd with
-      TyDecl (v, b, _) when v = "main"->
+      TyDecl (v, b, t) when v = "main"->
+      let get =
+        begin
+          match t with
+            TFun (TOth "float", _) ->
+            "int num;
+        if (sscanf(argv[1], \"%d\", &num) != 1) {
+            puts(\"Error: the input should be a number.\");
+            exit (1);
+
+        }
+        Value n = make_int(num);\n"
+          | _ -> "Value n = c_str_to_octo_str(*(argv + 1));"
+        end ^ "Value *tenv = malloc(sizeof(Value));
+        *tenv = n;"
+      in
+      let print =
+        match t with
+          TFun (_, TOth "float") ->
+          sprintf "printf(\"%%lf\", %s.clo.lam(NULL, n, 0)._float);"
+        | _ ->
+          sprintf "puts(octo_str_to_c_str(%s.clo.lam(NULL, n, 0)));"
+      in
       let nbody, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in
-      decls_to_c tl (funs ^ nf) (body ^ b ^ "\nfree (tenv);\nprintf(\"%lf\\n\"," ^
-                                 nbody ^ ".clo.lam(NULL, n, 0)._float);\n return 0;") nlam
+      decls_to_c tl (funs ^ nf) (get ^ body ^ b ^
+                                 "\nfree (tenv);\n" ^ (print nbody)
+                                 ^ "\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
