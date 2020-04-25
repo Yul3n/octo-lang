@@ -9,6 +9,7 @@ enum Type;
 #include <stdlib.h>
 #include <stdio.h>
 
+int nalloc = 0;
 typedef struct Value (*Lambda)();
 
 struct Closure {
@@ -54,7 +55,8 @@ struct cell {
   struct cell *next;
 } cell;
 
-extern struct cell *root;
+Value *alloc_t[10000];
+struct cell *root;
 
 Value*
 alloc(int length)
@@ -64,25 +66,22 @@ alloc(int length)
     puts (\"Unable to allocate memory\");
     exit(1);
   }
-  struct cell *tracer = root;
-  while (tracer != NULL) {
-    tracer = tracer->next;
-  }
-  tracer = malloc(sizeof(cell));
-  tracer->p = p;
-  tracer->next = NULL;
+  alloc_t[nalloc] = p;
+  nalloc ++;
   return p;
 }
 
 void
 free_all
-(struct cell *c)
+()
 {
-  if (c->next != NULL) {
-    free_all((c->next));
-    free(c->next);
-  }
-  free(c->p);
+/*  struct cell *tracer = root;
+  while (tracer != NULL){
+    free(tracer->p);
+    tracer = tracer->next;
+  } */
+  for (int i = 0; i < nalloc; i++)
+    free(alloc_t[i]);
 }
 
 

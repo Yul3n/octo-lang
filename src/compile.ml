@@ -60,7 +60,7 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
           Value n;
           n.t = %s;
           n._%s = __%s;
-          n.cell = malloc (sizeof(Value));
+          n.cell = alloc (1);
           *(n.cell) = cell;
           n.has_cell = 1;
           return (n);

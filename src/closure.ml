@@ -136,7 +136,7 @@ let rec closure_to_c clo nlam env  =
           in
         let p3, nlam, nf2, p4 =
           let np, nlam, nf2, p4 = pattern_to_c f nlam in
-          (sprintf "if (%s) {\n%s\nfree(tenv);\nreturn %s;\n}\n"
+          (sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
              np p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
@@ -184,7 +184,7 @@ let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
     "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>
-#include <stdio.h>\nstruct cell *root;" ^
+#include <stdio.h>" ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         root = malloc(sizeof(cell));
@@ -224,7 +224,7 @@ let rec decls_to_c decls funs body nlam  =
       in
       decls_to_c tl (funs ^ nf) (get ^ body ^ b ^
                                  "\nfree (tenv);\n" ^ (print nbody)
-                                 ^ "\nfree_all(root);\n return 0;") nlam
+                                 ^ "\nfree_all();\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
