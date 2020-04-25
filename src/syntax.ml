@@ -24,6 +24,8 @@ type token
   | EXCLAM
   | OPEN
   | WHEN
+  | GRT
+  | INFXL
   | STR   of string
   | CHAR  of char
   | BLOCK of (token * int) list

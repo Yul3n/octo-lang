@@ -54,6 +54,25 @@ ddiv (Value *env, Value n, int len)
 }
 
 Value
+lambda_grt (Value *env, Value n)
+{
+  if (n._float < (*(env))._float) return make_True();
+  else return make_False();
+
+}
+
+Value
+grt (Value *env, Value n, int len)
+{
+  Value *tenv = malloc((len + 1) * sizeof(Value));
+  memcpy (tenv + 1, env, len);
+  *tenv = n;
+  return (make_closure(lambda_grt, tenv, len + 1));
+}
+
+
+
+Value
 lambda_eq (Value *env, Value n)
 {
   double d = intern_eq(n, *(env))._float;
@@ -254,6 +273,7 @@ get_body (Value *env, Value n, int len)
     return (*(n.cell));
 }
 
+Value grtl;
 Value eql;
 Value suml;
 Value difl;
@@ -333,4 +353,5 @@ base_init ()
     _snd = make_closure(octo_snd, NULL, 0);
     _char_code = make_closure(char_code, NULL, 0);
     _char_chr = make_closure(char_chr, NULL, 0);
+    grtl = make_closure(grt, NULL, 0);
 }

@@ -1,10 +1,14 @@
--- is_num c : Return true if and only if c is a digital character
+-- is_alpha c: return true if c is a latin letter ([a-zA-Z])
+is_alpha c =
+  or (and (char_code c > 64) (91 > (char_code c))) (and (char_code c > 96) (123 > (char_code c)))
+
+-- is_num c : return True if and only if c is a digital character
 is_num c =
   case c of
     '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> True
     c -> False
 
--- int_of_char c: Return the number contained in c
+-- int_of_char c: return the number contained in c
 int_of_char c =
   (char_code c) - 48
 
@@ -13,7 +17,7 @@ int_of_string_ s n =
     [] -> n
     c :: tl -> (int_of_string_ tl ((10 * n) + (int_of_char c)))
 
--- int_of_string s: Return the number contained in s
+-- int_of_string s: return the number contained in s
 int_of_string s =
   int_of_string_ s 0
 

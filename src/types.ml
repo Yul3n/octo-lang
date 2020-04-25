@@ -113,6 +113,7 @@ let initial_ctx =
    "divl@", op_sch;
    "ddivl@", op_sch;
    "modl@", op_sch;
+   "grtl@", Forall([], TFun(TOth "float", TFun(TOth "float", TOth "bool")));
    "eql@", Forall([0], TFun(TVar 0, TFun(TVar 0, TOth "bool")));
    (* Forall a, the type of cons is a -> a list -> a list *)
    "conl@", Forall([0], TFun(TVar 0, TFun(TList (TVar 0), TList (TVar 0))));

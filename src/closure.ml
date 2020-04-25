@@ -183,10 +183,7 @@ let rec closure_to_c clo nlam env  =
 let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
-    let rec range = function -1 -> [] | n -> n :: range (n - 1) in
-    let s = List.fold_left (fun x y -> x ^ (sprintf "Value l%d;\n" y))
-        "" (range (nlam - 1)) in
-    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>\n#include <stdio.h>\n" ^ s ^
+    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>\n#include <stdio.h>\n" ^
     funs ^
     "\nint main (int argc, char* argv[]) {
         if (argc == 1){

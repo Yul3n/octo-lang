@@ -1,6 +1,34 @@
 type token
   = PLUS
+  | MINUS
+  | DIV
+  | TIMES
+  | LPAR
+  | RPAR
+  | NUM float
 
+parse_f f s =
+  case s of
+    [] -> ([], [])
+    (c :: tl) when (f c) -> (c :: l, n) where
+      l, n = (parse_f f tl)
+    c :: tl -> ([], s)
+
+lexer s =
+  case s of
+    [] -> []
+    ' ' :: tl -> (lexer tl)
+    '+' :: tl -> PLUS :: (lexer tl)
+    '-' :: tl -> MINUS :: (lexer tl)
+    '/' :: tl -> DIV :: (lexer tl)
+    '*' :: tl -> TIMES :: (lexer tl)
+    '(' :: tl -> LPAR :: (lexer tl)
+    ')' :: tl -> RPAR :: (lexer tl)
+    (n :: tl) when (is_num n) ->
+      (NUM n) :: l where
+        n = (int_of_string ns)
+        l = (lexer nl)
+        ns, nl = (parse_f is_num s)
 
 type op
   = Plus

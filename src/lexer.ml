@@ -71,6 +71,7 @@ let rec lexer input pos act_ident =
     | '['  -> slex 1 LBRACKET
     | ']'  -> slex 1 RBRACKET
     | '!'  -> slex 1 EXCLAM
+    | '>'  -> slex 1 GRT
     | ','  -> slex 1 COMMA
     | '%'  -> slex 1 MOD
     | '\'' -> let c = String.get input (pos + 1) in
@@ -112,6 +113,7 @@ let rec lexer input pos act_ident =
           | "of"     -> OF
           | "open"   -> OPEN
           | "when"   -> WHEN
+          | "infixl" -> INFXL
           | v        ->
             if (Char.code (String.get v 0) >= Char.code('a'))
             then IDENT ide

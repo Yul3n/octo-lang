@@ -40,6 +40,8 @@ let rec string_of_token token =
   | TIMES     -> "*"
   | DIVIDE    -> "/"
   | DDIVIDE   -> "//"
+  | INFXL     -> "infixl"
+  | GRT       -> ">"
   | MOD       -> "%"
   | ARROW     -> "->"
   | PIPE      -> "|"

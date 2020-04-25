@@ -283,9 +283,11 @@ let rec parse_expr tokens exprs is_math =
     exprs @ [List l], tl
   | CHAR c :: tl -> exprs @ [Char c], tl
   | EQUAL :: tl ->
-    let r = Utils.last exprs in
     let l, tl = parse_expr tl [] false in
-    (Utils.firsts exprs) @ [binop r "eql@" (reduce l)], tl
+    [binop (reduce exprs) "eql@" (reduce l)], tl
+  | GRT :: tl ->
+    let l, tl = parse_expr tl [] false in
+    [binop (reduce exprs) "grtl@" (reduce l)], tl
   | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   match is_math with

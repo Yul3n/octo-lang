@@ -9,26 +9,14 @@ if False _ y = y
 not True = False
 not False = True
 
-or x y =
-  case x of
-    True -> True
-    False -> y
+or True _ = True
+or False x = x
 
 and False _ = False
-and True x =
-  case x of
-    True -> True
-    False -> False
+and True x = x
 
-xor True x =
-  case x of
-    True -> False
-    False -> True
-
-xor False x =
-  case x of
-    True -> True
-    False -> False
+xor True x = (not x)
+xor False x = x
 
 iszero 0 = True
 iszero n = False
