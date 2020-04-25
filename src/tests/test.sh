@@ -6,7 +6,7 @@ build() {
     # Adds && to make sure that no step fails
         dune exec -- ./octo.exe "tests/$1.oc" > /dev/null &&
         cd tests &&
-        gcc ../out.c -o o -lm
+        "$CC" ../out.c -o o -lm
 }
 
 test() {

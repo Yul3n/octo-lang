@@ -5,7 +5,9 @@ type token
   | TIMES
   | LPAR
   | RPAR
+  | POW
   | NUM float
+  | IDE char list
 
 parse_f f s =
   case s of
@@ -22,13 +24,19 @@ lexer s =
     '-' :: tl -> MINUS :: (lexer tl)
     '/' :: tl -> DIV :: (lexer tl)
     '*' :: tl -> TIMES :: (lexer tl)
+    '^' :: tl -> POW :: (lexer tl)
     '(' :: tl -> LPAR :: (lexer tl)
     ')' :: tl -> RPAR :: (lexer tl)
-    (n :: tl) when (is_num n) ->
+    n :: tl when is_num n ->
       (NUM n) :: l where
         n = (int_of_string ns)
         l = (lexer nl)
         ns, nl = (parse_f is_num s)
+    a :: tl when is_alpha a ->
+      (IDE i) :: l where
+        l = (lexer nl)
+        i, nl = (parse_f is_alpha s)
+
 
 type op
   = Plus
@@ -42,6 +50,61 @@ type expr
   | App char list expr
   | Binop expr op expr
   | Const float
+  | Null
+
+parse_mul t l =
+  case ftl of
+    TIMES :: utl -> (parse_mul ftl nl)
+    DIV :: utl   -> (parse_mul ftl nl)
+    utl          -> (nl, utl)
+  where
+    nl, ftl =
+      case t of
+        [] -> (l, [])
+        TIMES :: tl ->
+          ((Binop (l, Mult, r)), ntl) where
+            r, ntl = (parser tl Null)
+        DIV :: tl ->
+          ((Binop (l, Div, r)), ntl) where
+            r, ntl = (parser tl Null)
+        tok -> (l, t)
+
+parse_par tokens expr =
+  case tokens of
+    [] -> (expr, [])
+    RPAR :: tl -> (expr, tl)
+    t ->
+      (parse_par tl e) where
+        e, tl = (parser t expr)
+
+parser tokens expr =
+  case tokens of
+    [] -> (expr, [])
+    (NUM n) :: tl -> (Const n, tl)
+    (IDE v) :: tl -> (Var v, tl)
+    TIMES :: tl   -> (parse_mul tokens expr)
+    DIV :: tl     -> (parse_mul tokens expr)
+    PLUS :: tl    -> (parse_add tokens expr)
+    MINUS :: tl   -> (parse_add tokens expr)
+    LPAR :: tl    -> (parse_par tl Null)
+  where
+    parse_add = \t l ->
+      case t of
+        PLUS :: tl ->
+          ((Binop (l, Plus, r)), ntl) where
+            r, ntl = (parse_mul mtl nr)
+            nr, mtl = (parser tl Null)
+        MINUS :: tl ->
+          ((Binop (l, Minus, r)), ntl) where
+            r, ntl = (parse_mul mtl nr)
+            nr, mtl = (parser tl Null)
+
+parse_all tokens expr =
+  case tokens of
+    [] -> expr
+    t ->
+      (parse_all tl e) where
+        e, tl = (parser t expr)
 
 is_const e v =
   case e of
@@ -74,6 +137,13 @@ derivate e v =
         f' = (derivate f v)
         g' = (derivate g v)
 
+free e =
+  case e of
+    Const _ -> []
+    Var v -> [v]
+    Binop (l, _, r) -> (free l) @ (free r)
+    App (_, x) -> (free x)
+
 string_of_expr e =
   case e of
     Const n -> (string_of_int n)
@@ -84,5 +154,7 @@ string_of_expr e =
     (Binop (l, Mult, r))  -> ((string_of_expr l) @ " * " @ (string_of_expr r))
     (Binop (l, Div, r))   -> ((string_of_expr l) @ " / " @ (string_of_expr r))
 
-main n =
-  string_of_expr (derivate (Binop((Const 1), Mult, (Var "e"))) "e")
+main s =
+  (foldl "" (\x y -> x @ " " @ y)
+  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (derivate e x))) (free e))) where
+    e = (parse_all (lexer s) Null)

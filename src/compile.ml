@@ -13,7 +13,7 @@ let read_from_file f =
 let rec get_ctx decls nlam =
   match decls with
     [] -> [], nlam
-  | Decl (v, _) :: tl -> let tl, nnlam = get_ctx tl (nlam + 2) in
+  | Decl (v, _) :: tl -> let tl, nnlam = get_ctx tl (nlam + 1) in
     (v, Forall([], TVar nlam)) :: tl, nnlam
   | _ :: tl -> get_ctx tl nlam
 
@@ -23,7 +23,8 @@ let rec def_ctx decls context types nd nlam texpr tc ist mn tp =
   | Decl(v, body) :: tl ->
     let s, t, nlam, e = Types.infer body context nlam in
     let n_ctx  = (Types.subst_context s context) in
-    printf "%s : %s \n" v (Utils.string_of_type t);
+    let n_ctx = List.remove_assoc v n_ctx in
+    let n_ctx = (v, Types.gen n_ctx t) :: n_ctx in
     def_ctx tl n_ctx types nd nlam (texpr @ [TyDecl (v, e, t)]) tc ist mn
       (tp ^ (sprintf "Value _%s;\n" v))
   | TDef t :: tl ->
@@ -104,7 +105,7 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
     in
     let c, t, n, e, lt, i, m, tp, nlam = def_ctx p (ctx @ c) "" "" n [] "" "" "" "" in
     let f, b, nlam = compile_funs e tp m nlam in
-    compile_module tl nlam (ctx @ c) (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
+    compile_module tl nlam c (c1 ^ tp ^ f) (c2 ^ m ^ b) (c3 ^ lt)
       (c4 ^ t) (c5 ^ i) (c6 ^ n)
 
 let compile f =
@@ -116,9 +117,10 @@ let compile f =
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
     compile_module (["stdlib"; "list"; "char"] @ m) n (Types.initial_ctx @ c)
       "" "" "" "" "" "" in
-  let _, t, n, e, lt, i, m, tp, nlam =
+  let c, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
   let oc = open_out "out.c"      in
+  Utils.print_context c;
   fprintf oc "%s\n" (decls_to_c e (c1 ^ tp) (c2 ^ m) nlam);
   close_out oc;
   let oc = open_out "core.h"     in

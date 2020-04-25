@@ -17,10 +17,14 @@
 ** TODO Custom operators
 ** DONE When guards in pattern matching
 ** TODO Recursive dependencies
+** TODO Escape sequencies in strings
 ** TODO Don't compile unused functions
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations
+** TODO More examples
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs
+** TODO Website
+** TODO The Octonomicon
