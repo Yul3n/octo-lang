@@ -19,6 +19,7 @@
 ** TODO Recursive dependencies
 ** TODO Escape sequencies in strings
 ** TODO Don't compile unused functions
+** TODO Add memory safety (a bit)
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations

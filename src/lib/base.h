@@ -1,3 +1,5 @@
+#ifndef __BASE_H_
+#define __BASE_H_
 #include "../core.h"
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +11,10 @@ char*
 octo_str_to_c_str (Value s)
 {
   char *str = malloc((s.list.length) * sizeof(char));
+  if (str == NULL){
+    puts ("Unable to allocate memory");
+    exit(1);
+  }
   for (int i = 0; i < s.list.length; i ++)
     *(str + i) = (*(s.list.list + i))._char;
   return str;
@@ -17,7 +23,7 @@ octo_str_to_c_str (Value s)
 Value
 c_str_to_octo_str (char *s)
 {
-  Value *str = malloc(strlen(s) * sizeof(Value));
+  Value *str = alloc(strlen(s));
   for (int i = 0; i < strlen(s); i ++)
     *(str + i) = make_char(*(s+i));
   return make_list(str, strlen(s));
@@ -32,7 +38,7 @@ lambda_sum (Value *env, Value n)
 Value
 sum (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((len + 1) * sizeof(Value));
+  Value *tenv = alloc(len + 1);
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_sum, tenv, len + 1));
@@ -47,7 +53,7 @@ lambda_ddiv (Value *env, Value n)
 Value
 ddiv (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((len + 1) * sizeof(Value));
+  Value *tenv = alloc(len + 1);
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_ddiv, tenv, len + 1));
@@ -64,7 +70,7 @@ lambda_grt (Value *env, Value n)
 Value
 grt (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((len + 1) * sizeof(Value));
+  Value *tenv = alloc(len + 1);
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_grt, tenv, len + 1));
@@ -84,7 +90,7 @@ lambda_eq (Value *env, Value n)
 Value
 eq (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((len + 1) * sizeof(Value));
+  Value *tenv = alloc(len + 1);
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_eq, tenv, len + 1));
@@ -99,7 +105,7 @@ lambda_dif (Value *env, Value n)
 Value
 dif (Value *env, Value n, int len)
 {
-  Value *tenv = malloc((len + 1) * sizeof(Value));
+  Value *tenv = alloc(len + 1);
   memcpy (tenv + 1, env, len);
   *tenv = n;
   return (make_closure(lambda_dif, tenv, len + 1));
@@ -114,7 +120,7 @@ lambda_div (Value *env, Value n)
 Value
 dv (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len);
     *tenv = n;
     return (make_closure(lambda_div, tenv, len + 1));
@@ -129,7 +135,7 @@ lambda_tim (Value *env, Value n)
 Value
 tim (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len);
     *tenv = n;
     return (make_closure(lambda_tim, tenv, len + 1));
@@ -144,7 +150,7 @@ lambda_mod (Value *env, Value n)
 Value
 mod (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len);
     *tenv = n;
     return (make_closure(lambda_mod, tenv, len + 1));
@@ -154,7 +160,7 @@ mod (Value *env, Value n, int len)
 Value
 lambda_map (Value *env, Value n, int len)
 {
-    Value *l = malloc (n.list.length * sizeof(Value));
+    Value *l = alloc(n.list.length);
     #pragma omp parallel for
       for (int i = 0; i < n.list.length; i ++)
         *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len + 1);
@@ -164,7 +170,7 @@ lambda_map (Value *env, Value n, int len)
 Value
 octo_map (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len);
     *tenv = n;
     return (make_closure(lambda_map, tenv, len + 1));
@@ -176,7 +182,7 @@ lambda_cons(Value *env, Value n)
 {
     Value v;
     v.t = LIST;
-    v.list.list = malloc((n.list.length + 1) * sizeof(Value));
+    v.list.list = alloc(n.list.length + 1);
     memcpy(v.list.list, env, sizeof(Value));
     memcpy(v.list.list + 1, n.list.list, n.list.length * sizeof(Value));
     v.list.length = n.list.length + 1;
@@ -186,7 +192,7 @@ lambda_cons(Value *env, Value n)
 Value
 cons (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_cons, tenv, len + 1));
@@ -197,7 +203,7 @@ lambda_union(Value *env, Value n)
 {
   Value v;
   v.t = LIST;
-  v.list.list = malloc ((n.list.length + ((*(env)).list.length)) * sizeof(Value));
+  v.list.list = alloc(n.list.length + ((*(env)).list.length));
   memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
   memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length * sizeof(Value));
   v.list.length = (*(env)).list.length + n.list.length;
@@ -207,7 +213,7 @@ lambda_union(Value *env, Value n)
 Value
 octo_union (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_union, tenv, len + 1));
@@ -226,7 +232,7 @@ lambda_index (Value *env, Value n)
 Value
 ind (Value *env, Value n, int len)
 {
-    Value *tenv = malloc((len + 1) * sizeof(Value));
+    Value *tenv = alloc(len + 1);
     memcpy (tenv + 1, env, len * sizeof(Value));
     *tenv = n;
     return (make_closure(lambda_index, tenv, len + 1));
@@ -335,7 +341,7 @@ Value _char_chr;
 void
 base_init ()
 {
-    difl = make_closure(dif, NULL, 0);
+  difl = make_closure(dif, NULL, 0);
     eql = make_closure(eq, NULL, 0);
     modl = make_closure(mod, NULL, 0);
     divl = make_closure(dv, NULL, 0);
@@ -355,3 +361,4 @@ base_init ()
     _char_chr = make_closure(char_chr, NULL, 0);
     grtl = make_closure(grt, NULL, 0);
 }
+#endif

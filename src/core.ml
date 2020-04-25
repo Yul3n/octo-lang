@@ -7,6 +7,7 @@ struct Value;
 enum Type;
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef struct Value (*Lambda)();
 
@@ -48,6 +49,43 @@ struct Value {
 
 typedef struct Value Value;
 
+struct cell {
+  Value *p;
+  struct cell *next;
+} cell;
+
+extern struct cell *root;
+
+Value*
+alloc(int length)
+{
+  Value *p = malloc(length * sizeof(Value));
+  if (p == NULL) {
+    puts (\"Unable to allocate memory\");
+    exit(1);
+  }
+  struct cell *tracer = root;
+  while (tracer != NULL) {
+    tracer = tracer->next;
+  }
+  tracer = malloc(sizeof(cell));
+  tracer->p = p;
+  tracer->next = NULL;
+  return p;
+}
+
+void
+free_all
+(struct cell *c)
+{
+  if (c->next != NULL) {
+    free_all((c->next));
+    free(c->next);
+  }
+  free(c->p);
+}
+
+
 Value
 make_char (char c)
 {
@@ -62,7 +100,7 @@ make_closure(Lambda lam, Value *env, int env_len)
 {
   Value v;
   v.clo.lam = lam;
-  v.clo.env = malloc(env_len * sizeof(Value));
+  v.clo.env = alloc(env_len);
   memcpy(v.clo.env, env, env_len * sizeof(Value));
   return v;
 }
@@ -74,7 +112,7 @@ make_list(Value *l, int length)
   v.t = LIST;
   v.list.length = length;
   if (length)
-    v.list.list = malloc(length * sizeof(Value));
+    v.list.list = alloc(length);
   memcpy(v.list.list, l, length * sizeof(Value));
   return v;
 }
@@ -84,13 +122,12 @@ make_pair(Value fst, Value snd)
 {
   Value v;
   v.t = PAIR;
-  v.pair.fst = malloc(sizeof(Value));
+  v.pair.fst = alloc(1);
   *(v.pair.fst) = fst;
-  v.pair.snd = malloc(sizeof(Value));
+  v.pair.snd = alloc(1);
   *(v.pair.snd) = snd;
   return v;
 }
-
 
 Value
 make_int(double n)

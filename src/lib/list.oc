@@ -1,3 +1,7 @@
+-- union l l': the union of the lists l and l'
+union l l' =
+  l @ l'
+
 -- reverse l: return the list l in reverse order
 reverse l =
   case l of
@@ -56,3 +60,7 @@ nub_ l l' =
 -- nub l: return the list l without duplicates
 nub l =
   nub_ l []
+
+-- length l: return the length of the list l
+length l =
+  foldl 0 (\x y -> x + 1) l

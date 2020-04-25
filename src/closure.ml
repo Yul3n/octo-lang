@@ -2,7 +2,7 @@ open Syntax
 open Printf
 
 let pr =
-"   Value *tenv = malloc((len + 1) * sizeof(Value));
+"   Value *tenv = alloc(len + 1);
         memcpy (tenv + 1, env, len * sizeof(Value));
         *tenv = n;\n"
 
@@ -98,7 +98,7 @@ let rec closure_to_c clo nlam env  =
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s%sfree(tenv);\nreturn(%s);\n}\n" nlam pr c cbody),
+     %s%s\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
@@ -173,7 +173,7 @@ let rec closure_to_c clo nlam env  =
     in
     let f, p, nlam = l_to_c nlam 0 clo in
     (sprintf "make_list(%s, %d)" lp (List.length clo)), f,
-    (sprintf "Value *%s = malloc (%d * sizeof(Value));\n" lp
+    (sprintf "Value *%s = alloc (%d);\n" lp
        (List.length clo)) ^ p, nlam + 1, env
   | CloPair (l, r, _) ->
     let l, lf, lp, nlam, _ = closure_to_c l nlam env in
@@ -183,9 +183,14 @@ let rec closure_to_c clo nlam env  =
 let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
-    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>\n#include <stdio.h>\n" ^
+    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>
+#include <stdio.h>\nstruct cell *root;" ^
     funs ^
     "\nint main (int argc, char* argv[]) {
+        root = malloc(sizeof(cell));
+    if (!root)
+    exit(1);
+        root->next = NULL;
         if (argc == 1){
             puts(\"Error: the program has to be called with an argument.\");
             exit(1);
@@ -210,7 +215,7 @@ let rec decls_to_c decls funs body nlam  =
         }
         Value n = make_int(num);\n"
           | _ -> "Value n = c_str_to_octo_str(*(argv + 1));"
-        end ^ "Value *tenv = malloc(sizeof(Value));
+        end ^ "Value *tenv = alloc(1);
         *tenv = n;"
       in
       let print = sprintf "print_value(%s.clo.lam(NULL, n, 0));" in
@@ -219,10 +224,10 @@ let rec decls_to_c decls funs body nlam  =
       in
       decls_to_c tl (funs ^ nf) (get ^ body ^ b ^
                                  "\nfree (tenv);\n" ^ (print nbody)
-                                 ^ "\n return 0;") nlam
+                                 ^ "\nfree_all(root);\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))
           nlam "tenv"
       in
       let f = sprintf "Value _%s;\n" v in
-      decls_to_c tl (funs ^ f ^ nf ) (body ^ b ^ (sprintf "_%s = %s;\n" v fn)) nlam
+      decls_to_c tl (funs ^ f ^ nf) (body ^ b ^ (sprintf "_%s = %s;\n" v fn)) nlam

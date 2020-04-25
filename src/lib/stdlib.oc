@@ -27,6 +27,9 @@ id x = x
 
 cons x _ = x
 
+con =
+  cons
+
 compose f g x = (f (g x))
 
 flip f g x = (g (f x))
