@@ -98,7 +98,7 @@ let rec closure_to_c clo nlam env  =
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s%s\nreturn(%s);\n}\n" nlam pr c cbody),
+     %s%sfree_cell(tenv);\n\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, t) ->
@@ -136,7 +136,7 @@ let rec closure_to_c clo nlam env  =
           in
         let p3, nlam, nf2, p4 =
           let np, nlam, nf2, p4 = pattern_to_c f nlam in
-          (sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
+          (sprintf "if (%s) {\n%s\nfree_cell(tenv);\nreturn %s;\n}\n"
              np p2 nbody), nlam + 1, nf2, p4
         in
         prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
@@ -184,13 +184,9 @@ let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
     "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>
-#include <stdio.h>" ^
+#include <stdio.h>\n" ^
     funs ^
     "\nint main (int argc, char* argv[]) {
-        root = malloc(sizeof(cell));
-    if (!root)
-    exit(1);
-        root->next = NULL;
         if (argc == 1){
             puts(\"Error: the program has to be called with an argument.\");
             exit(1);

@@ -52,36 +52,46 @@ typedef struct Value Value;
 
 struct cell {
   Value *p;
-  struct cell *next;
+  int size;
+  int freed;
 } cell;
 
-Value *alloc_t[10000];
-struct cell *root;
+struct cell alloc_t[10000];
 
 Value*
 alloc(int length)
 {
-  Value *p = malloc(length * sizeof(Value));
-  if (p == NULL) {
+  Value *p = NULL;
+  for (int i = 0; i < nalloc; i++)
+    if (alloc_t[i].freed && (alloc_t[i].size >= length)) {
+      alloc_t[i].freed = 0;
+      return alloc_t[i].p;
+    }
+  p = malloc(sizeof(Value) * length);
+  if (!p) {
     puts (\"Unable to allocate memory\");
     exit(1);
   }
-  alloc_t[nalloc] = p;
+  alloc_t[nalloc].p = p;
+  alloc_t[nalloc].size = length;
+  alloc_t[nalloc].freed = 0;
   nalloc ++;
   return p;
 }
 
 void
-free_all
-()
+free_cell (Value *p)
 {
-/*  struct cell *tracer = root;
-  while (tracer != NULL){
-    free(tracer->p);
-    tracer = tracer->next;
-  } */
+    for (int i = 0; i < nalloc; i++)
+      if (alloc_t[i].p == p)
+        alloc_t[i].freed = 1;
+}
+
+void
+free_all()
+{
   for (int i = 0; i < nalloc; i++)
-    free(alloc_t[i]);
+    free(alloc_t[i].p);
 }
 
 
@@ -151,10 +161,12 @@ intern_eq (Value l1, Value l2)
     break;
   case LIST :
     if ((l2.list.length) != (l1.list.length)) return (make_int(0));
+    int i = 1;
     #pragma omp parallel for
       for (int i = 0; i < l2.list.length; i ++)
         if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._float)
-          return (make_int(0));
+          i = 0;
+      return (make_int(i));
     break;
   case PAIR :
     if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._float ||

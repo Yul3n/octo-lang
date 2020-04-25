@@ -13,13 +13,13 @@
 ** DONE Strings
 ** DONE Modules
 ** TODO Interface with C
-** TODO Refix memory leaks in the C code
+** DONE Refix memory leaks in the C code
 ** TODO Custom operators
 ** DONE When guards in pattern matching
 ** TODO Recursive dependencies
 ** TODO Escape sequencies in strings
 ** TODO Don't compile unused functions
-** TODO Add memory safety (a bit)
+** DONE Add memory safety (a bit)
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations
