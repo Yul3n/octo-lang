@@ -47,6 +47,17 @@ lambda_ddiv (Value *env, Value n)
   return make_int(((int) (*env)._float) / ((int) n._float));
 }
 
+int
+pair_length (Value p)
+{
+  switch (p.t) {
+    case PAIR:
+      return 1 + pair_length(*(p.pair.fst));
+    default:
+      return 0;
+  }
+}
+
 Value
 ddiv (Value *env, Value n, int len)
 {

@@ -165,7 +165,13 @@ string_of_expr e =
     Binop (l, Div, r)   -> (string_of_expr l) @ " / " @ (string_of_expr r)
     App (f, x) -> f @ "(" @ (string_of_expr x) @ ")"
 
+simplify e =
+  case e of
+    Binop (l, Plus, Const 0) -> (simplify l)
+    Binop (Const 0, Plus, f) -> (simplify f)
+    n -> n
+
 main s =
   (foldl "" (\x y -> x @ " " @ y)
-  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (derivate e x))) (free e))) where
+  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (simplify (derivate e x)))) (free e))) where
     e = (parse_all (lexer s) Null)

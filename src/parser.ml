@@ -269,7 +269,7 @@ let rec parse_expr tokens exprs is_math =
   | COMMA :: tl ->
     let rec parse_elem tokens exprs =
       match tokens with
-        []           -> parse_error "Invalid pair declaration"
+        []
       | COMMA :: _
       | EQUAL :: _
       | RPARENT :: _ -> reduce exprs, tokens

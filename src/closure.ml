@@ -101,45 +101,56 @@ let rec closure_to_c clo nlam env  =
      %s%sfree_cell(tenv);\n\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
-  | CloCase (c, t) ->
+  | CloCase (c, _) ->
     let case_to_c p nlam =
       let equ_to_c l r = sprintf "(intern_eq(%s, %s))._float" l r in
       let rec pattern_to_c e nlam =
+        let rec get_prelude e env =
+
+          match e with
+            (CloApp(CloApp(CloGVar ("conl@", _), _, _), _, _)) ->
+            let rec min_len e =
+              match e with
+                (CloApp(CloApp(CloGVar ("conl@", _), _, _), l, _)) -> 1 + min_len l
+              | _ -> 0
+            in
+            sprintf "(%s.list.length >= %d)" env (min_len e)
+          | CloPair (_, _, _) ->
+            let rec min_len e =
+              match e with
+                CloPair (l, _, _) -> 1 + (min_len l)
+              | CloApp (_, r, _) -> min_len r
+              | _ -> 0
+            in
+            sprintf "(pair_length(%s) >= %d)" env (min_len e)
+          | CloApp (_, r, _) -> get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
+          | _ -> "1"
+        in
+        let prelude = sprintf "if(%s){\n" (get_prelude e "(*(tenv))") in
         match e with
-          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "1", nlam, "", ""
+          CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "", "", "1", nlam, "", ""
         | CloApp (CloApp((CloGVar ("lor@", _)), l, _), r, _) ->
-          let l, nlam, lf, lp = pattern_to_c l nlam in
-          let r, nlam, rf, rp = pattern_to_c r nlam in
-          l ^ "||" ^ r, nlam, lf ^ rf, lp ^ rp
+          let prl, pol, l, nlam, lf, lp = pattern_to_c l nlam in
+          let prr, por, r, nlam, rf, rp = pattern_to_c r nlam in
+          prl ^ prr ^ prelude, por ^ pol ^ "}", l ^ "||" ^ r, nlam, lf ^ rf, lp ^ rp
         | CloApp (CloApp((CloGVar ("land@", _)), l, _), r, _) ->
-          let l, nlam, lf, lp    = pattern_to_c l nlam in
-          let r, rf, rp, nlam, _ = closure_to_c r nlam env in
-          l ^ "&&" ^ (equ_to_c r "_True"), nlam, lf ^ rf, lp ^ rp
+          let prl, pol, l, nlam, lf, lp = pattern_to_c l nlam in
+          let r, rf, rp, nlam, _        = closure_to_c r nlam env in
+          prl ^ prelude, pol ^ "}", l ^ "&&" ^ (equ_to_c r "_True"), nlam, lf ^ rf, lp ^ rp
         | _ ->
           let np, nf2, p4, nlam, _ = closure_to_c e nlam env in
-          equ_to_c np "(*(tenv))", nlam, nf2, p4
+          prelude, "}", equ_to_c np "(*(tenv))", nlam, nf2, p4
       in
       match p with
         []           -> "", "", "", nlam, []
       | (f, s) :: tl ->
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env in
-        let prelude, postlude =
-            match t with
-              TFun(TList _, _) ->
-              let rec min_len e =
-                match e with
-                  (CloApp(CloApp(CloGVar ("conl@", _), _, _), l, _)) -> 1 + min_len l
-                | _ -> 0
-              in
-              sprintf "if ((*(tenv)).list.length >= %d){" (min_len f), "}"
-            | _ -> "", ""
-          in
-        let p3, nlam, nf2, p4 =
-          let np, nlam, nf2, p4 = pattern_to_c f nlam in
-          (sprintf "if (%s) {\n%s\nfree_cell(tenv);\nreturn %s;\n}\n"
+        let pr, po, p3, nlam, nf2, p4 =
+          let pr, po, np, nlam, nf2, p4 = pattern_to_c f nlam in
+          pr, po, (sprintf "if (%s) {\n%s\nfree_cell(tenv);\nreturn %s;\n}\n"
              np p2 nbody), nlam + 1, nf2, p4
         in
-        prelude ^ p4 ^ p3 ^ postlude, nf ^ nf2, "", nlam, tl
+        pr ^ p4 ^ p3 ^ po, nf ^ nf2, "", nlam, tl
     in
     let rec cases_to_c n nf p nlam l =
       match l with
