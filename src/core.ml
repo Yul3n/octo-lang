@@ -56,22 +56,35 @@ struct cell {
   int freed;
 } cell;
 
-struct cell alloc_t[10000];
+struct cell alloc_t[100000];
+
+void
+free_all()
+{
+  for (int i = 0; i < nalloc; i++)
+    free(alloc_t[i].p);
+}
+
+void
+err(char *s)
+{
+  free_all();
+  puts(s);
+  exit(1);
+}
 
 Value*
 alloc(int length)
 {
   Value *p = NULL;
   for (int i = 0; i < nalloc; i++)
-    if (alloc_t[i].freed && (alloc_t[i].size >= length)) {
+    if ((alloc_t[i].freed) && (alloc_t[i].size >= length)) {
       alloc_t[i].freed = 0;
       return alloc_t[i].p;
     }
   p = malloc(sizeof(Value) * length);
-  if (!p) {
-    puts (\"Unable to allocate memory\");
-    exit(1);
-  }
+  if (!p)
+    err (\"Unable to allocate memory\");
   alloc_t[nalloc].p = p;
   alloc_t[nalloc].size = length;
   alloc_t[nalloc].freed = 0;
@@ -86,14 +99,6 @@ free_cell (Value *p)
       if (alloc_t[i].p == p)
         alloc_t[i].freed = 1;
 }
-
-void
-free_all()
-{
-  for (int i = 0; i < nalloc; i++)
-    free(alloc_t[i].p);
-}
-
 
 Value
 make_char (char c)
@@ -120,8 +125,7 @@ make_list(Value *l, int length)
   Value v;
   v.t = LIST;
   v.list.length = length;
-  if (length)
-    v.list.list = alloc(length);
+  v.list.list = alloc(length);
   memcpy(v.list.list, l, length * sizeof(Value));
   return v;
 }
@@ -161,12 +165,10 @@ intern_eq (Value l1, Value l2)
     break;
   case LIST :
     if ((l2.list.length) != (l1.list.length)) return (make_int(0));
-    int i = 1;
     #pragma omp parallel for
       for (int i = 0; i < l2.list.length; i ++)
         if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._float)
-          i = 0;
-      return (make_int(i));
+           return(make_int(0));
     break;
   case PAIR :
     if (!(intern_eq(*(l1.pair.fst), *(l2.pair.fst)))._float ||

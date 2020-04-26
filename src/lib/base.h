@@ -10,10 +10,8 @@ char*
 octo_str_to_c_str (Value s)
 {
   char *str = malloc((s.list.length) * sizeof(char));
-  if (str == NULL){
-    puts ("Unable to allocate memory");
-    exit(1);
-  }
+  if (str == NULL)
+    err ("Unable to allocate memory");
   for (int i = 0; i < s.list.length; i ++)
     *(str + i) = (*(s.list.list + i))._char;
   return str;
@@ -222,8 +220,9 @@ Value
 lambda_index (Value *env, Value n)
 {
   if ((n._float >= ((*(env)).list.length)) || (n._float < 0)){
-    printf ("Error: invalid array index. Size of the array %lf, index: %d.\n",
+    printf("Error: invalid array index. Size of the array %lf, index: %d.\n",
     n._float, ((*(env)).list.length));
+    free_all();
     exit (1);
   } else return *((*(env)).list.list + (int) n._float);
 }
@@ -240,20 +239,16 @@ ind (Value *env, Value n, int len)
 Value
 octo_head (Value *env, Value n, int len)
 {
-  if (n.list.length == 0) {
-    puts("Using head on an empty list.");
-    exit (1);
-  }
+  if (n.list.length == 0)
+    err("Using head on an empty list.");
   return(*(n.list.list));
 }
 
 Value
 octo_tail (Value *env, Value n, int len)
 {
-  if (n.list.length == 0) {
-    puts("Using tail on an empty list.");
-    exit (1);
-  }
+  if (n.list.length == 0)
+    err("Using tail on an empty list.");
   if (n.list.length == 1)
     return (make_list(NULL, 0));
   return(make_list(n.list.list + 1, n.list.length - 1));
@@ -275,7 +270,7 @@ octo_snd (Value *env, Value n, int len)
 Value
 get_body (Value *env, Value n, int len)
 {
-    return (*(n.cell));
+  return (*(n.cell));
 }
 
 Value grtl;
@@ -303,11 +298,10 @@ char_chr (Value *env, Value n, int len)
 {
   if (n._float < 255)
     return make_char(n._float);
-  else {
-    puts("Invalid argument for char chr.");
-    exit(1);
-  }
+  else
+    err("Invalid argument for char chr.");
 }
+
 
 void
 print_value(Value n)

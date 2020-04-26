@@ -219,7 +219,7 @@ let rec decls_to_c decls funs body nlam  =
           nlam "tenv"
       in
       decls_to_c tl (funs ^ nf) (get ^ body ^ b ^
-                                 "\nfree (tenv);\n" ^ (print nbody)
+                                 "\n" ^ (print nbody)
                                  ^ "\nfree_all();\n return 0;") nlam
     | TyDecl (v, b, _) ->
       let fn, nf, b, nlam, _ = closure_to_c (to_closure (deB b ("", 1)))

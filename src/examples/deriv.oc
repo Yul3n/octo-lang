@@ -37,7 +37,6 @@ lexer s =
         l = (lexer nl)
         i, nl = (parse_f is_alpha s)
 
-
 type op
   = Plus
   | Mult
@@ -81,7 +80,9 @@ parser tokens expr =
   case tokens of
     [] -> (expr, [])
     (NUM n) :: tl -> (Const n, tl)
-    (IDE v) :: tl -> (Var v, tl)
+    (IDE v) :: LPAR :: tl -> (App (v, e), l) where
+      e, l = (parse_par tl Null)
+    (IDE v) :: tl -> ((Var v), tl)
     TIMES :: tl   -> (parse_mul tokens expr)
     DIV :: tl     -> (parse_mul tokens expr)
     PLUS :: tl    -> (parse_add tokens expr)
@@ -136,6 +137,15 @@ derivate e v =
       where
         f' = (derivate f v)
         g' = (derivate g v)
+    App (f, g) ->
+      Binop (f'g, Mult, g') where
+        g' = (derivate g v)
+        f'g =
+          case f of
+            "sin" -> (App ("cos", g))
+            "cos" -> (Binop(App ("sin", g), Mult, Const -1))
+            "exp" -> (App ("exp", g))
+            "log" -> (Binop (Const 1, Div, g))
 
 free e =
   case e of
@@ -148,11 +158,12 @@ string_of_expr e =
   case e of
     Const n -> (string_of_int n)
     Var v -> v
-    (Binop (l, Plus, r))  -> ((string_of_expr l) @ " + " @ (string_of_expr r))
-    (Binop (l, Minus, r)) -> ((string_of_expr l) @ " - " @ (string_of_expr r))
-    (Binop (l, Pow, r))   -> ((string_of_expr l) @ " ^ " @ (string_of_expr r))
-    (Binop (l, Mult, r))  -> ((string_of_expr l) @ " * " @ (string_of_expr r))
-    (Binop (l, Div, r))   -> ((string_of_expr l) @ " / " @ (string_of_expr r))
+    Binop (l, Plus, r)  -> (string_of_expr l) @ " + " @ (string_of_expr r)
+    Binop (l, Minus, r) -> (string_of_expr l) @ " - " @ (string_of_expr r)
+    Binop (l, Pow, r)   -> (string_of_expr l) @ " ^ " @ (string_of_expr r)
+    Binop (l, Mult, r)  -> (string_of_expr l) @ " * " @ (string_of_expr r)
+    Binop (l, Div, r)   -> (string_of_expr l) @ " / " @ (string_of_expr r)
+    App (f, x) -> f @ "(" @ (string_of_expr x) @ ")"
 
 main s =
   (foldl "" (\x y -> x @ " " @ y)
