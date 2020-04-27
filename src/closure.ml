@@ -95,11 +95,32 @@ let rec closure_to_c clo nlam env  =
                    n s1 nv s2 len), nlam, v
   | CloGVar (v, _) -> List.hd (String.split_on_char '@' v), "", "", nlam, env
   | Closure (_, body, _) ->
+    let pr =
+      let rec has_free e =
+        match e with
+          CloPair (l, r, _)
+        | CloApp (l, r, _) -> (has_free l) || (has_free r)
+        | Closure (_, e, _) -> has_free e
+        | CloNum _
+        | CloChar _
+        | CloGVar _
+        | CloVar (1, _) -> false
+        | CloVar _ -> true
+        | CloCase (e, _) -> let l, r = List.split e in
+          List.fold_left (||) false ((List.map has_free l) @ (List.map has_free r))
+        | CloList (l, _) -> List.fold_left (||) false (List.map has_free l)
+      in
+      match has_free body with
+        false ->
+        "Value *tenv = &n;
+len = 0;"
+      | true -> pr
+    in
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
      %s%sfree_cell(tenv);\n\nreturn(%s);\n}\n" nlam pr c cbody),
-    (sprintf "Value %s = make_closure (__lam%d, %s, len + 1);\n" n nlam env),
+    (sprintf "Value %s = make_closure(__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, _) ->
     let case_to_c p nlam =

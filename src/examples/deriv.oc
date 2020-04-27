@@ -52,14 +52,6 @@ type expr
   | Const float
   | Null
 
-parse_pow t l =
-  case t of
-    [] -> (l, [])
-    POW :: tl ->
-      ((Binop (l, Pow, r)), ntl) where
-        r, ntl = (parser tl Null)
-    tok -> (l, t)
-
 parse_mul t l =
   case ftl of
     TIMES :: utl -> (parse_mul ftl nl)
@@ -71,12 +63,10 @@ parse_mul t l =
         [] -> (l, [])
         TIMES :: tl ->
           ((Binop (l, Mult, r)), ntl) where
-            r, ntl = (parse_pow mtl nr)
-            nr, mtl = (parser tl Null)
+            r, ntl = (parser tl Null)
         DIV :: tl ->
           ((Binop (l, Div, r)), ntl) where
-            r, ntl = (parse_pow mtl nr)
-            nr, mtl = (parser tl Null)
+            r, ntl = (parser tl Null)
         tok -> (l, t)
 
 parse_par tokens expr =
@@ -88,29 +78,34 @@ parse_par tokens expr =
         e, tl = (parser t expr)
 
 parser tokens expr =
-  case tokens of
-    [] -> (expr, [])
-    (NUM n) :: tl -> (Const n, tl)
-    (IDE v) :: LPAR :: tl -> (App (v, e), l) where
-      e, l = (parse_par tl Null)
-    (IDE v) :: tl -> ((Var v), tl)
-    TIMES :: tl   -> (parse_mul tokens expr)
-    DIV :: tl     -> (parse_mul tokens expr)
-    PLUS :: tl    -> (parse_add tokens expr)
-    MINUS :: tl   -> (parse_add tokens expr)
-    POW :: tl     -> (parse_pow tokens expr)
-    LPAR :: tl    -> (parse_par tl Null)
+  case tl of
+    POW :: t -> (Binop (e, Pow, r), ntl) where
+      r, ntl = (parser t Null)
+    _ -> (e, tl)
   where
-    parse_add = \t l ->
-      case t of
-        PLUS :: tl ->
-          ((Binop (l, Plus, r)), ntl) where
-            r, ntl = (parse_mul mtl nr)
-            nr, mtl = (parser tl Null)
-        MINUS :: tl ->
-          ((Binop (l, Minus, r)), ntl) where
-            r, ntl = (parse_mul mtl nr)
-            nr, mtl = (parser tl Null)
+    e, tl =
+      case tokens of
+        [] -> (expr, [])
+        (NUM n) :: tl -> (Const n, tl)
+        (IDE v) :: LPAR :: tl -> (App (v, e), l) where
+          e, l = (parse_par tl Null)
+        (IDE v) :: tl -> ((Var v), tl)
+        TIMES :: tl   -> (parse_mul tokens expr)
+        DIV :: tl     -> (parse_mul tokens expr)
+        PLUS :: tl    -> (parse_add tokens expr)
+        MINUS :: tl   -> (parse_add tokens expr)
+        LPAR :: tl    -> (parse_par tl Null)
+      where
+        parse_add = \t l ->
+          case t of
+            PLUS :: tl ->
+              ((Binop (l, Plus, r)), ntl) where
+                r, ntl = (parse_mul mtl nr)
+                nr, mtl = (parser tl Null)
+            MINUS :: tl ->
+              ((Binop (l, Minus, r)), ntl) where
+                r, ntl = (parse_mul mtl nr)
+                nr, mtl = (parser tl Null)
 
 parse_all tokens expr =
   case tokens of

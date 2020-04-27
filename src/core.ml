@@ -53,11 +53,11 @@ typedef struct Value Value;
 struct cell {
   Value *p;
   int size;
-  int freed;
   int is_double;
 } cell;
 
 struct cell alloc_t[100000];
+struct cell freed  [100000];
 
 void
 free_all()
@@ -77,41 +77,40 @@ err(char *s)
 
 Value*
 alloc(int length)
-{
+{/* FIXME: takes too long to run
   for (int i = 0; i < nalloc; i++) {
-    if ((alloc_t[i].freed) && (alloc_t[i].size == length)) {
-      alloc_t[i].freed = 0;
+    if ((freed[i].p) && (freed[i].size >= length)) {
+      alloc_t[i] = freed[i];
+      freed[i].p = NULL;
       return alloc_t[i].p;
-    } if ((alloc_t[i].freed) && (alloc_t[i].size > length)) {
-      alloc_t[i].freed = 0;
+    } if ((freed[i].p) && (freed[i].size > length)) {
       alloc_t[i].size = length;
-      alloc_t[nalloc].freed = 1;
-      alloc_t[nalloc].p = alloc_t[i].p + length;
-      alloc_t[nalloc].size = alloc_t[i].size - length;
-      alloc_t[nalloc].is_double = 1;
+      freed[nalloc].p = alloc_t[i].p + length;
+      freed[nalloc].size = alloc_t[i].size - length;
+      freed[nalloc].is_double = 1;
       nalloc ++;
       return alloc_t[i].p;
     }
-  }
+  }*/
   Value *p = malloc(sizeof(Value) * length);
   if (!p)
     err (\"Unable to allocate memory\");
   alloc_t[nalloc].p = p;
   alloc_t[nalloc].size = length;
-  alloc_t[nalloc].freed = 0;
   alloc_t[nalloc].is_double = 0;
+    freed[nalloc].p = NULL;
   nalloc ++;
   return p;
 }
 
 void
 free_cell (Value *p)
-{
+{/* FIXME: takes too long to run
     for (int i = 0; i < nalloc; i++)
         if (alloc_t[i].p == p) {
-            alloc_t[i].freed = 1;
+            freed[i] = alloc_t[i];
             return;
-        }
+        }*/
 }
 
 Value
@@ -139,8 +138,7 @@ make_list(Value *l, int length)
   Value v;
   v.t = LIST;
   v.list.length = length;
-  v.list.list = alloc(length);
-  memcpy(v.list.list, l, length * sizeof(Value));
+  v.list.list = l;
   return v;
 }
 
