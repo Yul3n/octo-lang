@@ -71,10 +71,12 @@ parse_mul t l =
         [] -> (l, [])
         TIMES :: tl ->
           ((Binop (l, Mult, r)), ntl) where
-            r, ntl = (parser tl Null)
+            r, ntl = (parse_pow mtl nr)
+            nr, mtl = (parser tl Null)
         DIV :: tl ->
           ((Binop (l, Div, r)), ntl) where
-            r, ntl = (parser tl Null)
+            r, ntl = (parse_pow mtl nr)
+            nr, mtl = (parser tl Null)
         tok -> (l, t)
 
 parse_par tokens expr =
@@ -96,6 +98,7 @@ parser tokens expr =
     DIV :: tl     -> (parse_mul tokens expr)
     PLUS :: tl    -> (parse_add tokens expr)
     MINUS :: tl   -> (parse_add tokens expr)
+    POW :: tl     -> (parse_pow tokens expr)
     LPAR :: tl    -> (parse_par tl Null)
   where
     parse_add = \t l ->
@@ -145,7 +148,7 @@ derivate e v =
         f' = (derivate f v)
         g' = (derivate g v)
     Binop (f, Pow, g) ->
-      Binop (Binop (e, Mult, Binop(f, Pow, Binop (e, Minus, Const 1))), Mult, f')
+      Binop (Binop (g, Mult, Binop(f, Pow, Binop (g, Minus, Const 1))), Mult, f')
       where
         f' = (derivate f v)
         g' = (derivate g v)
@@ -170,11 +173,16 @@ string_of_expr e =
   case e of
     Const n -> (string_of_int n)
     Var v -> v
-    Binop (l, Plus, r)  -> (string_of_expr l) @ " + " @ (string_of_expr r)
-    Binop (l, Minus, r) -> (string_of_expr l) @ " - " @ (string_of_expr r)
-    Binop (l, Pow, r)   -> (string_of_expr l) @ " ^ " @ (string_of_expr r)
-    Binop (l, Mult, r)  -> (string_of_expr l) @ " * " @ (string_of_expr r)
-    Binop (l, Div, r)   -> (string_of_expr l) @ " / " @ (string_of_expr r)
+    Binop (l, Plus, r)  ->
+      (string_of_expr l) @ " + " @ (string_of_expr r)
+    Binop (l, Minus, r) ->
+      (string_of_expr l) @ " - " @ (string_of_expr r)
+    Binop (l, Pow, r)   ->
+      "(" @ (string_of_expr l) @ ") ^ (" @ (string_of_expr r) @ ")"
+    Binop (l, Mult, r)  ->
+      "(" @ (string_of_expr l) @ ") * (" @ (string_of_expr r) @ ")"
+    Binop (l, Div, r)   ->
+      "(" @ (string_of_expr l) @ ") / (" @ (string_of_expr r) @ ")"
     App (f, x) -> f @ "(" @ (string_of_expr x) @ ")"
 
 simplify e =
@@ -186,10 +194,14 @@ simplify e =
     Binop (l, Mult, Const 0) -> (Const 0)
     Binop (Const 0, Mult, r) -> (Const 0)
     Binop (Const l, Plus, Const r) -> (Const (l + r))
+    Binop (Const l, Minus, Const r) -> (Const (l - r))
+    Binop (l, Pow, Const 0) -> (Const 1)
+    Binop (l, Pow, Const 1) -> (simplify l)
     Binop (l, o, r) ->
-      (if (or (not (l' = l)) (not (r' = r)))
-      (simplify (Binop (simplify l, o, simplify r)))
-      (Binop (simplify l, o, simplify r))) where
+      case "" of
+        _ when (and (l' = l) (r' = r)) -> (Binop (l', o, r'))
+        _ -> (simplify (Binop (l', o, r')))
+      where
         l' = (simplify l)
         r' = (simplify r)
     n -> n
