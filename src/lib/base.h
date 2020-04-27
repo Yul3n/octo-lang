@@ -171,7 +171,7 @@ lambda_map (Value *env, Value n, int len)
     Value *l = alloc(n.list.length);
     #pragma omp parallel for
       for (int i = 0; i < n.list.length; i ++)
-        *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len + 1);
+        *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len);
     return make_list(l, n.list.length);
 }
 
@@ -260,8 +260,6 @@ octo_tail (Value *env, Value n, int len)
 {
   if (n.list.length == 0)
     err("Using tail on an empty list.");
-  if (n.list.length == 1)
-    return (make_list(NULL, 0));
   return(make_list(n.list.list + 1, n.list.length - 1));
 }
 

@@ -173,7 +173,15 @@ let rec parse_expr tokens exprs is_math =
   | CASE :: tl ->
     let v = "aaa@@@" in
     let e = Var v in
-    let te, tl = parse_expr tl [] false in
+    let rec parse_of tokens exprs =
+      match tokens with
+        OF :: _ -> reduce exprs, tokens
+      | []         -> parse_error "Invalid pattern matching"
+      | tl         ->
+        let e, tl = parse_expr tl exprs false in
+        parse_of tl e
+    in
+    let te, tl = parse_of tl [] in
     begin
       match tl with
         OF :: BLOCK bl :: tl ->
@@ -234,7 +242,7 @@ let rec parse_expr tokens exprs is_math =
             (p, e) :: parse_cases tl
         in
         let b, _ = List.split bl in
-        exprs @ [App(Lambda (v, App(Case(parse_cases b), e)), reduce te)], tl
+        exprs @ [App(Lambda (v, App(Case(parse_cases b), e)), te)], tl
       | _ -> parse_error "Invalid pattern matching"
     end
   | BLOCK bl :: tl ->

@@ -195,5 +195,7 @@ simplify e =
     n -> n
 
 main s =
-  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (simplify (derivate e x)))) (nub (free e))) where
+  (map
+  (\x -> "df/d" @ x @ ": " @ (string_of_expr (simplify (derivate e x))))
+  (nub (free e))) where
     e = (parse_all (lexer s) Null)

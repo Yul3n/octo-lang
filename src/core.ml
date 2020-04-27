@@ -78,7 +78,6 @@ err(char *s)
 Value*
 alloc(int length)
 {
-  Value *p = NULL;
   for (int i = 0; i < nalloc; i++) {
     if ((alloc_t[i].freed) && (alloc_t[i].size == length)) {
       alloc_t[i].freed = 0;
@@ -94,7 +93,7 @@ alloc(int length)
       return alloc_t[i].p;
     }
   }
-  p = malloc(sizeof(Value) * length);
+  Value *p = malloc(sizeof(Value) * length);
   if (!p)
     err (\"Unable to allocate memory\");
   alloc_t[nalloc].p = p;
@@ -109,8 +108,10 @@ void
 free_cell (Value *p)
 {
     for (int i = 0; i < nalloc; i++)
-      if (alloc_t[i].p == p)
-        alloc_t[i].freed = 1;
+        if (alloc_t[i].p == p) {
+            alloc_t[i].freed = 1;
+            return;
+        }
 }
 
 Value
@@ -178,7 +179,6 @@ intern_eq (Value l1, Value l2)
     break;
   case LIST :
     if ((l2.list.length) != (l1.list.length)) return (make_int(0));
-    #pragma omp parallel for
       for (int i = 0; i < l2.list.length; i ++)
         if (!(intern_eq (*(l1.list.list + i), *(l2.list.list + i)))._float)
            return(make_int(0));
