@@ -89,12 +89,12 @@ parse_par tokens expr =
 parser tokens expr =
   case tokens of
     [] -> (expr, [])
-    (NUM n) :: tl -> ((Const n), tl)
     TIMES :: tl   -> (parse_mul tokens expr)
     DIV :: tl     -> (parse_mul tokens expr)
     PLUS :: tl    -> (parse_add tokens expr)
     MINUS :: tl   -> (parse_add tokens expr)
     LPAR :: tl    -> (parse_par tl Null)
+    (NUM n) :: tl -> ((Const n), tl)
   where
     parse_add = \t l ->
       case t of
@@ -115,4 +115,4 @@ parse_all tokens expr =
         e, tl = (parser t expr)
 
 main s =
-  eval (parse_all (lexer s) Null)
+  eval (parse_all (lexer "1") Null)

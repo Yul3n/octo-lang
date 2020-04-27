@@ -72,7 +72,12 @@ let rec to_closure expr =
 let rec closure_to_c clo nlam env  =
   match clo with
     CloNum (n, _) -> sprintf "make_int(%f)" n, "", "", nlam, env
-  | CloChar (c, _) -> sprintf "make_char('%c')" c, "", "", nlam, env
+  | CloChar (c, _) ->
+    begin
+      match c with
+        '\\' -> "make_char('\\\\')", "", "", nlam, env
+      | c    -> sprintf "make_char('%c')" c, "", "", nlam, env
+    end
   | CloVar (n, _) ->
     begin
       (* If the index is not one, the variable is in the closure's context. *)

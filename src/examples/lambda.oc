@@ -1,0 +1,71 @@
+type token
+  = LPAR
+  | RPAR
+  | ARROW
+  | LAM
+  | IDE char list
+
+parse_f f s =
+  case s of
+    [] -> ([], [])
+    (c :: tl) when (f c) -> (c :: l, n) where
+      l, n = (parse_f f tl)
+    c :: tl -> ([], s)
+
+lexer s =
+  case s of
+    [] -> []
+    ' ' :: tl -> (lexer tl)
+    '-' :: '>' :: tl -> ARROW :: (lexer tl)
+    '(' :: tl -> LPAR :: (lexer tl)
+    ')' :: tl -> RPAR :: (lexer tl)
+    '\' :: tl -> LAM :: (lexer tl)
+    a :: tl when is_alpha a ->
+      (IDE i) :: l where
+        l = (lexer nl)
+        i, nl = (parse_f is_alpha s)
+
+type expr
+  = Var char list
+  | Lam char list expr
+  | App expr expr
+
+type opt_expr
+  = None
+  | Some expr
+
+parse_par tokens e =
+  case tokens of
+    [] ->
+      case e of
+        Some expr -> (expr, [])
+    RPAR :: tl ->
+      case e of
+        Some expr -> (expr, tl)
+    t ->
+      (parse_par tl (Some expr)) where
+        expr, tl =
+          case e of
+            None -> (expr, ntl) where
+              expr, ntl = (parse_expr t)
+            Some ex -> (App (ex, expr), ntl) where
+              expr, ntl = (parse_expr t)
+
+parse_expr tokens =
+  case tokens of
+    (IDE v) :: tl -> (Var v, tl)
+    LAM :: (IDE v) :: ARROW :: tl ->
+      (Lam (v, e), t) where
+        e, t = (parse_expr tl)
+    LPAR :: tl -> (parse_par tl None)
+
+string_of_expr e =
+  case e of
+    Var v -> v
+    App (l, r) ->
+      "(" @ (string_of_expr l) @ ")" @ "(" @ (string_of_expr r) @ ")"
+    Lam (v, e) ->
+      "\\" @ v @ " -> " @ (string_of_expr e)
+
+main s =
+  string_of_expr (fst (parse_expr (lexer s)))

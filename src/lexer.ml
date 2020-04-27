@@ -123,6 +123,6 @@ let rec lexer input pos act_ident =
     | '"' ->
       let str = parse_f ((<>) '"') input (pos + 1) in
       let len = String.length str                  in
-      slex (len + 2) (STR (String.sub str 0 len))
+      slex (len + 2) (STR str)
     | c -> unexpected_char pos c
   with Invalid_argument _ -> [], pos

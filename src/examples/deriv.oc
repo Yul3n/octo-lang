@@ -169,15 +169,15 @@ string_of_expr e =
     Const n -> (string_of_int n)
     Var v -> v
     Binop (l, Plus, r)  ->
-      (string_of_expr l) @ " + " @ (string_of_expr r)
+      "(" @ (string_of_expr l) @ " + " @ (string_of_expr r) @ ")"
     Binop (l, Minus, r) ->
-      (string_of_expr l) @ " - " @ (string_of_expr r)
+      "(" @ (string_of_expr l) @ " - " @ (string_of_expr r) @ ")"
     Binop (l, Pow, r)   ->
-      "(" @ (string_of_expr l) @ ") ^ (" @ (string_of_expr r) @ ")"
+      (string_of_expr l) @ " ^ " @ (string_of_expr r)
     Binop (l, Mult, r)  ->
-      "(" @ (string_of_expr l) @ ") * (" @ (string_of_expr r) @ ")"
+      "(" @ (string_of_expr l) @ " * " @ (string_of_expr r) @ ")"
     Binop (l, Div, r)   ->
-      "(" @ (string_of_expr l) @ ") / (" @ (string_of_expr r) @ ")"
+      "(" @ (string_of_expr l) @ " / " @ (string_of_expr r) @ ")"
     App (f, x) -> f @ "(" @ (string_of_expr x) @ ")"
 
 simplify e =
@@ -190,6 +190,8 @@ simplify e =
     Binop (Const 0, Mult, r) -> (Const 0)
     Binop (Const l, Plus, Const r) -> (Const (l + r))
     Binop (Const l, Minus, Const r) -> (Const (l - r))
+    Binop (Const l, Mult, Const r) -> (Const (l * r))
+    Binop (Const l, Div, Const r) -> (Const (l / r))
     Binop (l, Pow, Const 0) -> (Const 1)
     Binop (l, Pow, Const 1) -> (simplify l)
     Binop (l, o, r) ->
