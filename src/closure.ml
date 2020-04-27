@@ -85,14 +85,14 @@ let rec closure_to_c clo nlam env  =
     let n = sprintf "l%d" nlam in
     let s2, na, p2, nlam, v = closure_to_c arg (nlam + 1) env
     in
-    let nv =
+    let nv, len =
       match f with
-        CloGVar (_,_) -> "tenv"
-      | _             -> s1 ^ ".clo.env"
+        CloGVar (_,_) -> "tenv", "0"
+      | _             -> s1 ^ ".clo.env", "len + 1"
     in
     n, nf ^ na, p2 ^ p1 ^
-                (sprintf "Value %s = %s.clo.lam(%s, %s, len + 1);\n"
-                   n s1 nv s2), nlam, v
+                (sprintf "Value %s = %s.clo.lam(%s, %s, %s);\n"
+                   n s1 nv s2 len), nlam, v
   | CloGVar (v, _) -> List.hd (String.split_on_char '@' v), "", "", nlam, env
   | Closure (_, body, _) ->
     let n = sprintf "l%d" nlam in
@@ -203,7 +203,7 @@ let rec decls_to_c decls funs body nlam  =
             exit(1);
         }
         base_init();
-        int len = 0;
+        int len = -1;
         \n" ^
     body ^
     "\n}\n"

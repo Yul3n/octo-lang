@@ -27,6 +27,7 @@ lexer s =
     '^' :: tl -> POW :: (lexer tl)
     '(' :: tl -> LPAR :: (lexer tl)
     ')' :: tl -> RPAR :: (lexer tl)
+    '^' :: tl -> POW :: (lexer tl)
     n :: tl when is_num n ->
       (NUM n) :: l where
         n = (int_of_string ns)
@@ -50,6 +51,14 @@ type expr
   | Binop expr op expr
   | Const float
   | Null
+
+parse_pow t l =
+  case t of
+    [] -> (l, [])
+    POW :: tl ->
+      ((Binop (l, Pow, r)), ntl) where
+        r, ntl = (parser tl Null)
+    tok -> (l, t)
 
 parse_mul t l =
   case ftl of
@@ -120,14 +129,17 @@ derivate e v =
     e when is_const e v -> (Const 0)
     Var _ -> (Const 1)
     Binop (f, Plus, g) ->
+      -- (f(x) + g(x))' = f'(x) + g'(x)
       (Binop (f', Plus, g')) where
         f' = (derivate f v)
         g' = (derivate g v)
     Binop (f, Mult, g) ->
+      -- (f(x) * g(x))' = f'g(x) + fg'(x)
       Binop (Binop(g, Mult, f'), Plus, Binop(g', Mult, f)) where
         f' = (derivate f v)
         g' = (derivate g v)
     Binop (f, Div, g) ->
+      -- (f(x) / g(x))' =
       Binop (Binop (Binop (g, Mult, f'), Minus, Binop(g', Mult, f)), Div,
       Binop(g, Pow, Const 2)) where
         f' = (derivate f v)
@@ -168,10 +180,20 @@ string_of_expr e =
 simplify e =
   case e of
     Binop (l, Plus, Const 0) -> (simplify l)
-    Binop (Const 0, Plus, f) -> (simplify f)
+    Binop (Const 0, Plus, r) -> (simplify r)
+    Binop (l, Mult, Const 1) -> (simplify l)
+    Binop (Const 1, Mult, r) -> (simplify r)
+    Binop (l, Mult, Const 0) -> (Const 0)
+    Binop (Const 0, Mult, r) -> (Const 0)
+    Binop (Const l, Plus, Const r) -> (Const (l + r))
+    Binop (l, o, r) ->
+      (if (or (not (l' = l)) (not (r' = r)))
+      (simplify (Binop (simplify l, o, simplify r)))
+      (Binop (simplify l, o, simplify r))) where
+        l' = (simplify l)
+        r' = (simplify r)
     n -> n
 
 main s =
-  (foldl "" (\x y -> x @ " " @ y)
-  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (simplify (derivate e x)))) (free e))) where
+  (map (\x -> "df/d" @ x @ ": " @ (string_of_expr (simplify (derivate e x)))) (nub (free e))) where
     e = (parse_all (lexer s) Null)
