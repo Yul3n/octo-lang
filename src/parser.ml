@@ -370,62 +370,76 @@ let rec parse_tops tokens =
         let n, m = parse_tops tl in
         e :: n, m
     end
-  | TYPE :: IDENT v :: EQUAL :: BLOCK(bl) :: tl
-  | TYPE :: IDENT v :: BLOCK ((EQUAL, _) :: bl) :: tl ->
-    let rec parse_type tokens t =
+  | TYPE :: IDENT v :: tl ->
+    let rec parse_type tokens t frl =
+      let n, f = List.split frl in
       let b, tl =
+        let ty_of_s s =
+          match s with
+            s when List.exists ((=) s) n -> TVar (List.assoc s frl)
+          | s -> TOth s
+        in
         match tokens with
           MINDE v :: tl ->
           begin
             match tl with
               []
-            | PIPE :: _ -> (v, Forall([], t)), tl
+            | PIPE :: _ -> (v, Forall(f, t)), tl
             | _ ->
               let rec parse_multype ?(t=None) tokens =
                 match tokens with
                   IDENT v :: IDENT "list" :: []
-                | IDENT v :: IDENT "list" :: PIPE :: _->
+                | IDENT v :: IDENT "list" :: PIPE :: _ ->
                   begin
                     match t with
-                      None   -> TList (TOth v)
-                    | Some t -> TPair(t, TList (TOth v))
+                      None   -> TList (ty_of_s v)
+                    | Some t -> TPair(t, TList (ty_of_s v))
                   end, List.tl (List.tl tokens)
                 | IDENT v :: []
                 | IDENT v :: PIPE :: _ ->
                   begin
                     match t with
-                      None   -> TOth v
-                    | Some t -> TPair(t, TOth v)
+                      None   -> ty_of_s v
+                    | Some t -> TPair(t, ty_of_s v)
                   end, List.tl tokens
                 | IDENT v :: IDENT "list" :: tl ->
                   begin
                     match t with
-                      None   -> parse_multype tl ~t:(Some(TList (TOth v)))
-                    | Some t -> parse_multype tl ~t:(Some(TPair(t, TList (TOth v))))
+                      None   -> parse_multype tl ~t:(Some(TList (ty_of_s v)))
+                    | Some t ->
+                      parse_multype tl ~t:(Some(TPair(t, TList (ty_of_s v))))
                   end
                 | IDENT v :: tl ->
                   begin
                     match t with
-                      None   -> parse_multype tl ~t:(Some(TOth v))
-                    | Some t -> parse_multype tl ~t:(Some(TPair(t, TOth v)))
+                      None   -> parse_multype tl ~t:(Some(ty_of_s v))
+                    | Some t -> parse_multype tl ~t:(Some(TPair(t, ty_of_s v)))
                   end
                 | tok :: _ -> parse_error
                                 ("Unexpected token: " ^ (Utils.string_of_token tok))
                 | [] -> parse_error "Empty type declaration."
               in
               let t2, tl = parse_multype tl in
-              (v, Forall([], TFun(t2, t))), tl
+              (v, Forall(f, TFun(t2, t))), tl
           end
         | tok :: _      -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []            -> parse_error "Empty type declaration."
       in
       match tl with
-        PIPE :: tl -> let n, tl = (parse_type tl t) in
+        PIPE :: tl -> let n, tl = (parse_type tl t frl) in
         b :: n, tl
       | _ -> [b], tl
     in
+    let a, tl = parse_args tl in
+    let bl, tl =
+      match tl with
+        EQUAL :: BLOCK (bl) :: tl -> bl, tl
+      | BLOCK ((EQUAL, _) :: bl) :: tl -> bl, tl
+      | _ -> parse_error "Invalid type declaration."
+    in
     let b, _     = List.split bl in
-    let types, t = parse_type b (TOth v) in
+    let frl = List.mapi (fun x _ -> x) a in
+    let types, t = parse_type b (TOth v) (List.combine a frl) in
     begin
       match t with
         [] -> let e = TDef types in

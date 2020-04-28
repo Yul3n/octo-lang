@@ -94,9 +94,9 @@ eval e env ind =
     App (l, r) ->
       case (eval l env ind) of
         Lam (_, b) ->
-          eval b (r :: env) (ind + 1)
+          eval b (r :: env) (ind)
         n -> n
-    Lam (_, b) -> (Lam ("", eval b env ind))
+    Lam (_, b) -> (Lam ("", eval b env (ind + 1)))
     n -> n
 
 main s =
