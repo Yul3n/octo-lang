@@ -76,6 +76,7 @@ let rec closure_to_c clo nlam env  =
     begin
       match c with
         '\\' -> "make_char('\\\\')", "", "", nlam, env
+      | '\n' -> "make_char('\\n')", "", "", nlam, env
       | c    -> sprintf "make_char('%c')" c, "", "", nlam, env
     end
   | CloVar (n, _) ->

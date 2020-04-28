@@ -19,7 +19,7 @@ lexer s =
     '-' :: '>' :: tl -> ARROW :: (lexer tl)
     '(' :: tl -> LPAR :: (lexer tl)
     ')' :: tl -> RPAR :: (lexer tl)
-    '\' :: tl -> LAM :: (lexer tl)
+    '\\' :: tl -> LAM :: (lexer tl)
     a :: tl when is_alpha a ->
       (IDE i) :: l where
         l = (lexer nl)

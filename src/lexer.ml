@@ -75,10 +75,22 @@ let rec lexer input pos act_ident =
     | ','  -> slex 1 COMMA
     | '%'  -> slex 1 MOD
     | '\'' -> let c = String.get input (pos + 1) in
+      let c, p =
+        match c with
+          '\\' ->
+          begin
+            match String.get input (pos + 2) with
+              '\\' -> '\\', 3
+            | 'n'  -> '\n', 3
+            | 't'  -> '\t', 3
+            | c -> (unexpected_char (pos + 2) c)
+          end
+        | c -> c, 2
+      in
       begin
-        match String.get input (pos + 2) with
-          '\'' -> slex 3 (CHAR c)
-        | c    -> unexpected_char (pos + 2) c
+        match String.get input (pos + p) with
+          '\'' -> slex (p + 1) (CHAR c)
+        | c    -> unexpected_char (pos + p) c
       end
     | ':'  ->
       begin
@@ -123,6 +135,21 @@ let rec lexer input pos act_ident =
     | '"' ->
       let str = parse_f ((<>) '"') input (pos + 1) in
       let len = String.length str                  in
-      slex (len + 2) (STR str)
+      let rec de_scp s =
+        try
+          match (String.get s 0) with
+            '\\' ->
+            let c =
+              match (String.get s 1) with
+              'n' -> "\n"
+              | '\\' -> "\\"
+              | c -> unexpected_char (pos) c
+            in
+            c ^ (de_scp (String.sub s 2 ((String.length s) - 2)))
+          | c ->
+            (String.make 1 c) ^ (de_scp (String.sub s 1 ((String.length s) - 1)))
+        with _ -> ""
+      in
+      slex (len + 2) (STR (de_scp str))
     | c -> unexpected_char pos c
   with Invalid_argument _ -> [], pos
