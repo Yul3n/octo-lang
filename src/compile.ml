@@ -117,9 +117,8 @@ let compile f =
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
     compile_module (["stdlib"; "list"; "char"] @ m) n (Types.initial_ctx @ c)
       "" "" "" "" "" "" in
-  let c, t, n, e, lt, i, m, tp, nlam =
+  let _, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
-  Utils.print_context c;
   let oc = open_out "out.c"      in
   fprintf oc "%s\n" (decls_to_c e (c1 ^ tp) (c2 ^ m) nlam);
   close_out oc;

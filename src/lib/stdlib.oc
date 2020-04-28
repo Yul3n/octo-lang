@@ -52,3 +52,9 @@ gcd x y =
   case y of
     0 -> x
     y -> (gcd y (x % y))
+
+-- Types
+
+type option a
+  = None
+  | Some a

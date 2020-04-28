@@ -26,16 +26,13 @@ lexer s =
       (IDE i) :: l where
         l = (lexer nl)
         i, nl = (parse_f is_alpha s)
+    c :: _ -> (error "Unexpected character: " @ [c])
 
 type expr
   = Var char list
   | Lam char list expr
   | App expr expr
   | Deb float
-
-type opt_expr
-  = None
-  | Some expr
 
 parse_til tokens e del =
   case tokens of
