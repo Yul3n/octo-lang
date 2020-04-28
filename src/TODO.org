@@ -19,7 +19,8 @@
 ** TODO Recursive dependencies
 ** DONE Escape sequencies in strings
 ** TODO Don't compile unused functions
-** TODO Polymorphic custom types
+** DONE Runtime errors
+** DONE Polymorphic custom types
 ** DONE Add memory safety (a bit)
 ** TODO Lazy evaluation
 * Standard library

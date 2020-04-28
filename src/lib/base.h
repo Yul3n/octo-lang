@@ -27,6 +27,12 @@ c_str_to_octo_str (char *s)
 }
 
 Value
+error (Value *env, Value n, int length)
+{
+  err(octo_str_to_c_str(n));
+}
+
+Value
 lambda_sum (Value *env, Value n)
 {
   return make_int((*env)._float + n._float);
@@ -340,6 +346,7 @@ print_value(Value n)
 
 Value _char_code;
 Value _char_chr;
+Value _error;
 
 void
 base_init ()
@@ -363,5 +370,6 @@ base_init ()
     _char_code = make_closure(char_code, NULL, 0);
     _char_chr = make_closure(char_chr, NULL, 0);
     grtl = make_closure(grt, NULL, 0);
+    _error = make_closure(error, NULL, 0);
 }
 #endif
