@@ -119,6 +119,7 @@ make_char (char c)
   Value v;
   v.t = CHAR;
   v._char = c;
+  v.has_cell = 0;
   return v;
 }
 
@@ -129,6 +130,7 @@ make_closure(Lambda lam, Value *env, int env_len)
   v.clo.lam = lam;
   v.clo.env = alloc(env_len);
   memcpy(v.clo.env, env, env_len * sizeof(Value));
+  v.has_cell = 0;
   return v;
 }
 
@@ -139,6 +141,7 @@ make_list(Value *l, int length)
   v.t = LIST;
   v.list.length = length;
   v.list.list = l;
+  v.has_cell = 0;
   return v;
 }
 
@@ -151,6 +154,7 @@ make_pair(Value fst, Value snd)
   *(v.pair.fst) = fst;
   v.pair.snd = alloc(1);
   *(v.pair.snd) = snd;
+  v.has_cell = 0;
   return v;
 }
 
@@ -160,6 +164,7 @@ make_int(double n)
   Value v;
   v.t = INT;
   v._float = n;
+  v.has_cell = 0;
   return v;
 }
 

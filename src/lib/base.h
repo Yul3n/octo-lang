@@ -54,7 +54,8 @@ pair_length (Value p)
     case PAIR:
       return 1 + pair_length(*(p.pair.fst));
     default:
-      return 0;
+      if (p.has_cell) return (pair_length(*p.cell));
+      else return 0;
   }
 }
 
@@ -231,8 +232,8 @@ Value
 lambda_index (Value *env, Value n)
 {
   if ((n._float >= ((*(env)).list.length)) || (n._float < 0)){
-    printf("Error: invalid array index. Size of the array %lf, index: %d.\n",
-    n._float, ((*(env)).list.length));
+    printf("Error: invalid array index. Size of the array %d, index: %lf.\n",
+    ((*(env)).list.length), n._float);
     free_all();
     exit (1);
   } else return *((*(env)).list.list + (int) n._float);

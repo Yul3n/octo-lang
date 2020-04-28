@@ -71,7 +71,7 @@ to_deb e v n =
     Var var -> (Var var)
     Deb n -> (Deb n)
     App (l, r) -> (App (to_deb l v n, to_deb r v n))
-    Lam (var, b) -> (Lam ("", to_deb (to_deb b var 1) v (n + 1)))
+    Lam (var, b) -> (Lam ("", to_deb (to_deb b var 0) v (n + 1)))
 
 string_of_expr e =
   case e of
@@ -84,5 +84,20 @@ string_of_expr e =
       "\\" @ v @ " -> " @ (string_of_expr e)
     Deb n -> (string_of_int n)
 
+eval e env ind =
+  case e of
+    Deb n ->
+      case "" of
+        _ when (and ((length env) > (n - ind)) (n - ind > -1)) ->
+          (env ! (n - ind))
+        _ -> (Deb n)
+    App (l, r) ->
+      case (eval l env ind) of
+        Lam (_, b) ->
+          eval b (r :: env) (ind + 1)
+        n -> n
+    Lam (_, b) -> (Lam ("", eval b env ind))
+    n -> n
+
 main s =
-  string_of_expr (to_deb (fst (parse_til (lexer s) None EOL)) "x" 0)
+  string_of_expr (eval (to_deb (fst (parse_til (lexer s) None EOL)) "x" -1) [] 0)

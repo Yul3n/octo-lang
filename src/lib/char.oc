@@ -1,6 +1,6 @@
 -- is_alpha c: return true if c is a latin letter ([a-zA-Z])
 is_alpha c =
-  or (and (char_code c > 64) (91 > (char_code c))) (and (char_code c > 96) (123 > (char_code c)))
+  or (and ((char_code c) > 64) (91 > (char_code c))) (and ((char_code c) > 96) (123 > (char_code c)))
 
 -- is_num c : return True if and only if c is a digital character
 is_num c =
