@@ -3,6 +3,7 @@ type token
   | RPAR
   | ARROW
   | LAM
+  | EOL
   | IDE char list
 
 parse_f f s =
@@ -15,11 +16,12 @@ parse_f f s =
 lexer s =
   case s of
     [] -> []
-    ' ' :: tl -> (lexer tl)
-    '-' :: '>' :: tl -> ARROW :: (lexer tl)
-    '(' :: tl -> LPAR :: (lexer tl)
-    ')' :: tl -> RPAR :: (lexer tl)
-    '\\' :: tl -> LAM :: (lexer tl)
+    ' '  :: tl -> (lexer tl)
+    '-'  :: '>' :: tl -> ARROW :: (lexer tl)
+    '('  :: tl -> LPAR :: (lexer tl)
+    ')'  :: tl -> RPAR :: (lexer tl)
+    '\\' :: tl -> LAM  :: (lexer tl)
+    '\n' :: tl -> EOL  :: (lexer tl)
     a :: tl when is_alpha a ->
       (IDE i) :: l where
         l = (lexer nl)
@@ -29,21 +31,25 @@ type expr
   = Var char list
   | Lam char list expr
   | App expr expr
+  | Deb float
 
 type opt_expr
   = None
   | Some expr
 
-parse_par tokens e =
+parse_til tokens e del =
   case tokens of
     [] ->
       case e of
         Some expr -> (expr, [])
-    RPAR :: tl ->
+    c :: tl when c = del ->
       case e of
         Some expr -> (expr, tl)
+    RPAR :: _ ->
+       case e of
+        Some expr -> (expr, tokens)
     t ->
-      (parse_par tl (Some expr)) where
+      (parse_til tl (Some expr) del) where
         expr, tl =
           case e of
             None -> (expr, ntl) where
@@ -56,16 +62,27 @@ parse_expr tokens =
     (IDE v) :: tl -> (Var v, tl)
     LAM :: (IDE v) :: ARROW :: tl ->
       (Lam (v, e), t) where
-        e, t = (parse_expr tl)
-    LPAR :: tl -> (parse_par tl None)
+        e, t = (parse_til tl None EOL)
+    LPAR :: tl -> (parse_til tl None RPAR)
+
+to_deb e v n =
+  case e of
+    Var var when var = v -> (Deb n)
+    Var var -> (Var var)
+    Deb n -> (Deb n)
+    App (l, r) -> (App (to_deb l v n, to_deb r v n))
+    Lam (var, b) -> (Lam ("", to_deb (to_deb b var 1) v (n + 1)))
 
 string_of_expr e =
   case e of
     Var v -> v
     App (l, r) ->
       "(" @ (string_of_expr l) @ ")" @ "(" @ (string_of_expr r) @ ")"
+    Lam ("", e) ->
+      "\\" @ (string_of_expr e)
     Lam (v, e) ->
       "\\" @ v @ " -> " @ (string_of_expr e)
+    Deb n -> (string_of_int n)
 
 main s =
-  string_of_expr (fst (parse_expr (lexer s)))
+  string_of_expr (to_deb (fst (parse_til (lexer s) None EOL)) "x" 0)
