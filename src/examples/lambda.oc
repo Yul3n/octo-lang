@@ -4,6 +4,7 @@ type token
   | ARROW
   | LAM
   | EOL
+  | EQUAL
   | IDE char list
 
 parse_f f s =
@@ -20,8 +21,9 @@ lexer s =
     '-'  :: '>' :: tl -> ARROW :: (lexer tl)
     '('  :: tl -> LPAR :: (lexer tl)
     ')'  :: tl -> RPAR :: (lexer tl)
-    '\\' :: tl -> LAM  :: (lexer tl)
-    '\n' :: tl -> EOL  :: (lexer tl)
+    '\\' :: tl -> LAM :: (lexer tl)
+    '\n' :: tl -> EOL :: (lexer tl)
+    '='  :: tl -> EQUAL :: (lexer tl)
     a :: tl when is_alpha a ->
       (IDE i) :: l where
         l = (lexer nl)
@@ -81,14 +83,13 @@ string_of_expr e =
       "\\" @ v @ " -> " @ (string_of_expr e)
     Deb n -> (string_of_int n)
 
-type decl
-  = Decl char list expr
+parse_decl t =
+  case t of
+    (IDE name) :: EQUAL :: tl -> ((name, to_deb e "" -1), ttl) where
+      e, ttl = (parse_til tl None EOL)
+    _ -> (error "Invalid declaration.")
 
-parse_decl s =
-  case tl of
-    '=' ->
-
-eval e env ind =
+eval e env ind ctx =
   case e of
     Deb n ->
       case "" of
@@ -98,10 +99,24 @@ eval e env ind =
     App (l, r) ->
       case (eval l env ind) of
         Lam (_, b) ->
-          eval b (r :: env) (ind)
+          eval b (r :: env) ind
         n -> n
     Lam (_, b) -> (Lam ("", eval b env (ind + 1)))
+    Var n -> (lookup ctx n)
     n -> n
 
+program t d =
+  case t of
+    [] -> d
+    _  -> (program tl (nd :: d)) where
+      nd, tl = (parse_decl t)
+
+exec d ctx =
+  case d of
+    [] -> ""
+    ("main", b) :: _ -> (string_of_expr (eval b [] 0 d))
+    hd :: tl -> (exec tl ctx)
+
 main s =
-  string_of_expr (eval (to_deb (fst (parse_til (lexer s) None EOL)) "x" -1) [] 0)
+  (exec d d) where
+    d = (program (lexer s) [])
