@@ -280,6 +280,8 @@ let rec parse_expr tokens exprs is_math =
         []
       | COMMA :: _
       | EQUAL :: _
+      | OF :: _
+      | ARROW :: _
       | RPARENT :: _ -> reduce exprs, tokens
       | _            -> let e, tl = parse_expr tokens exprs false in
         parse_elem tl e

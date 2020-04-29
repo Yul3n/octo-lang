@@ -115,7 +115,7 @@ let compile f =
   let f, m = Parser.parse_tops t in
   let c, n = get_ctx f 0 in
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
-    compile_module (["stdlib"; "list"; "char"] @ m) n (Types.initial_ctx @ c)
+    compile_module (["stdlib"; "list"; "char"; "pair"] @ m) n (Types.initial_ctx @ c)
       "" "" "" "" "" "" in
   let _, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in

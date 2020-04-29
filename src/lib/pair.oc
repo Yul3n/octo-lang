@@ -1,0 +1,27 @@
+--- lookup_opt l e: return the Some the value corresponding to the key e in the
+--- list of pairs l.
+lookup_opt l e =
+  case l of
+    (f, s) :: tl when f = e -> (Some s)
+    hd :: tl -> (lookup_opt tl e)
+    [] -> None
+
+--- lookup_opt l e: return the value corresponding to the key e in the list of
+--- pairs l or throw an error if there is not one.
+lookup l e =
+  case lookup_opt l e of
+    Some n -> n
+    None -> (error "The element is not in the list.")
+
+--- zip l r: return a list of pairs made from a pair of lists.
+zip l r =
+  case l, r of
+    [], [] -> []
+    (hl :: tll), (hr :: tlr) -> ((hl, hr) :: (zip tll tlr))
+
+--- split l: return a pair of list made from a list of pairs.
+split l =
+  case l of
+    [] -> ([], [])
+    (f, s) :: tl -> (f :: tlf, s :: tlr) where
+      tlf, tlr = (split tl)

@@ -146,7 +146,7 @@ let rec lexer input pos act_ident =
           | _ -> ""
       in
       let str = parse_s input (pos + 1) in
-      let len = String.length str                  in
+      let len = String.length str       in
       let rec de_scp s =
         try
           match (String.get s 0) with

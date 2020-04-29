@@ -81,6 +81,13 @@ string_of_expr e =
       "\\" @ v @ " -> " @ (string_of_expr e)
     Deb n -> (string_of_int n)
 
+type decl
+  = Decl char list expr
+
+parse_decl s =
+  case tl of
+    '=' ->
+
 eval e env ind =
   case e of
     Deb n ->

@@ -6,11 +6,11 @@
 
 (defconst octo-highlights
   '(("--.*$" . font-lock-comment-face)
+    ("'[\\]?.'" . font-lock-string-face)
     (" where[ $\n]\\|type\\| float\\| char[ $\n]\\|case\\|of[ $\n]\\|open \\|when \\| option"
      . font-lock-keyword-face)
     ("map \\|error \\|and \\|or" . font-lock-function-name-face)
     ("\\([a-zA-Z_']*\\)\\([a-zA-Z_' ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
-    ("'[\\]?.'" . font-lock-string-face)
     ("[0-9]*\\|@\\|::" . font-lock-constant-face)
     ("type \\([a-zA-Z_']*\\)". (1 font-lock-function-name-face))
     ("\\([a-zA-Z_']*\\).*=" . (1 font-lock-function-name-face))))
