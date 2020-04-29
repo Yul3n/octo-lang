@@ -62,7 +62,6 @@ parse_expr tokens =
     LAM :: (IDE v) :: ARROW :: tl ->
       (Lam (v, e), t) where
         e, t = (parse_expr tl)
-        -- e, t = (parse_til tl None EOL)
     LPAR :: tl -> (parse_til tl None RPAR)
 
 to_deb e v n =
@@ -86,7 +85,7 @@ string_of_expr e =
 
 parse_decl t =
   case t of
-    (IDE name) :: EQUAL :: tl -> ((name, to_deb e "x" -1), ttl) where
+    (IDE name) :: EQUAL :: tl -> ((name, to_deb e "" -1), ttl) where
       e, ttl = (parse_til tl None EOL)
     _ -> (error "Invalid declaration.")
 

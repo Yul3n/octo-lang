@@ -150,8 +150,10 @@ len = 0;"
               | _ -> 0
             in
             sprintf "(pair_length(%s) >= %d)" env (min_len e)
-          | CloApp (_, r, _) ->
+          | CloApp (CloGVar (t, _), r, _) when ((Char.code (String.get t 1) < Char.code 'a')) ->
             "(" ^ env ^ ".has_cell) &&" ^
+            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
+          | CloApp (_, r, _) ->
             get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
           | _ -> "1"
         in

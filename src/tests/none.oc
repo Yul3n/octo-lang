@@ -1,0 +1,4 @@
+main n =
+  case None of
+    Some n -> 1
+    None -> 0

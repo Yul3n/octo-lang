@@ -1,0 +1,4 @@
+main n =
+  case Some n of
+    Some 1 -> 1
+    Some _ -> n
