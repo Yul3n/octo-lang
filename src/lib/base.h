@@ -1,6 +1,5 @@
 #ifndef __BASE_H_
 #define __BASE_H_
-#include "../core.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -197,6 +196,7 @@ lambda_cons(Value *env, Value n)
 {
     Value v;
     v.t = LIST;
+    v.has_cell = 0;
     v.list.list = alloc(n.list.length + 1);
     memcpy(v.list.list, env, sizeof(Value));
     memcpy(v.list.list + 1, n.list.list, n.list.length * sizeof(Value));
@@ -218,6 +218,7 @@ lambda_union(Value *env, Value n)
 {
   Value v;
   v.t = LIST;
+  v.has_cell = 0;
   v.list.list = alloc(n.list.length + ((*(env)).list.length));
   memcpy(v.list.list, ((*(env)).list.list), ((*(env)).list.length) * sizeof(Value));
   memcpy(v.list.list + ((*(env)).list.length), n.list.list, n.list.length * sizeof(Value));

@@ -10,7 +10,7 @@
     (" where[ $\n]\\|type\\| float\\| char[ $\n]\\|case\\|of[ $\n]\\|open \\|when \\| option"
      . font-lock-keyword-face)
     ("map \\|error \\|and \\|or" . font-lock-function-name-face)
-    ("\\([a-zA-Z_']*\\)\\([a-zA-Z_' ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
+    ("\\([a-zA-Z_']*\\)\\([a-zA-Z_', ]*\\)[ \n]*=" . (2 font-lock-variable-name-face))
     ("[0-9]*\\|@\\|::" . font-lock-constant-face)
     ("type \\([a-zA-Z_']*\\)". (1 font-lock-function-name-face))
     ("\\([a-zA-Z_']*\\).*=" . (1 font-lock-function-name-face))))
@@ -44,10 +44,10 @@
                  (if (looking-at ".*where[ ]*$\\|.*case.*of[ ]*$\\|.*->[ ]*$")
                      (setq curindent (+ (- e b) 2))
                    (progn
-                     (if (looking-at "[^\\]*->.*") ; Set the indentation according to the last line
+                     (if (looking-at ".*->.*") ; Set the indentation according to the last line
                          (progn
                            (forward-line 1)
-                           (if (looking-at "[^\\]*->.*")
+                           (if (looking-at ".*->.*")
                                (setq curindent (- e b))
                              (setq curindent (- (- e b) 2))))
                            (setq curindent (- e b)))))))))))

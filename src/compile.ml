@@ -89,7 +89,7 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
     []       -> c1, c2, c3, c4, c5, c6, nlam, ctx
   | hd :: tl ->
     let s =
-      read_from_file ("lib/" ^ (String.lowercase_ascii hd) ^ ".oc") in
+      read_from_file ("/usr/lib/octo/" ^ (String.lowercase_ascii hd) ^ ".oc") in
     let t, _ = Lexer.lexer s 0 0 in
     let t, _ = List.split t in
     let p, _ = Parser.parse_tops t in

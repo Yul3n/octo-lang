@@ -157,7 +157,7 @@ len = 0;"
             get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
           | _ -> "1"
         in
-        let prelude = sprintf "if(%s){\n" (get_prelude e "(*(tenv))") in
+        let prelude = sprintf "if(%s){\n" (get_prelude e "n") in
         match e with
           CloGVar (v, _) when (Char.code (String.get v 1) >= Char.code 'a') -> "", "", "1", nlam, "", ""
         | CloApp (CloApp((CloGVar ("lor@", _)), l, _), r, _) ->
@@ -224,7 +224,7 @@ len = 0;"
 let rec decls_to_c decls funs body nlam  =
   match decls with
     [] ->
-    "#include \"core.h\"\n#include \"lib/base.h\"\n#include <stdlib.h>
+    "#include \"core.h\"\n#include \"/usr/lib/octo/base.h\"\n#include <stdlib.h>
 #include <stdio.h>\n" ^
     funs ^
     "\nint main (int argc, char* argv[]) {
