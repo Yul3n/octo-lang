@@ -77,6 +77,7 @@ let rec closure_to_c clo nlam env  =
       match c with
         '\\' -> "make_char('\\\\')", "", "", nlam, env
       | '\n' -> "make_char('\\n')", "", "", nlam, env
+      | '\'' -> "make_char('\\'')", "", "", nlam, env
       | c    -> sprintf "make_char('%c')" c, "", "", nlam, env
     end
   | CloVar (n, _) ->
@@ -193,8 +194,7 @@ len = 0;"
         %s
         %s
         %s
-        puts(\"Non-exhaustive pattern-matching\");
-        exit(1);
+        err(\"Non-exhaustive pattern-matching\");
 }\n" nlam pr p b
     in
     sprintf "l%d" nlam, nf ^ f,

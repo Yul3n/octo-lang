@@ -36,7 +36,8 @@ let rec lexer input pos act_ident =
         match indent with
           len when len = act_ident ->
           lexer input (pos + 1 + indent) len
-        | len when len < act_ident -> if (act_ident - indent) > 2 then [], pos else [], pos + len + 1
+        | len when len < act_ident ->
+          if (act_ident - indent) > 2 then [], pos else [], pos + len + 1
         | len when len > act_ident ->
           let block, fpos1 = lexer input (pos + indent + 1) len   in
           let toks, fpos2  = lexer input (fpos1) act_ident in
@@ -83,6 +84,7 @@ let rec lexer input pos act_ident =
               '\\' -> '\\', 3
             | 'n'  -> '\n', 3
             | 't'  -> '\t', 3
+            | '\'' -> '\'', 3
             | c -> (unexpected_char (pos + 2) c)
           end
         | c -> c, 2
@@ -133,7 +135,17 @@ let rec lexer input pos act_ident =
       in
       slex len tok
     | '"' ->
-      let str = parse_f ((<>) '"') input (pos + 1) in
+      let rec parse_s str pos =
+        match pos with
+          len when len = String.length str -> ""
+        | _ -> match String.get str pos with
+            '\\' ->
+            (String.make 1 '\\') ^  (String.make 1 (String.get str (pos + 1))) ^
+            parse_s str (pos + 2)
+          | chr when chr <> '"' -> (String.make 1 chr) ^ parse_s str (pos + 1)
+          | _ -> ""
+      in
+      let str = parse_s input (pos + 1) in
       let len = String.length str                  in
       let rec de_scp s =
         try
@@ -141,11 +153,13 @@ let rec lexer input pos act_ident =
             '\\' ->
             let c =
               match (String.get s 1) with
-              'n' -> "\n"
+                 'n' -> "\n"
               | '\\' -> "\\"
+              | '"'  -> "\""
               | c -> unexpected_char (pos) c
             in
             c ^ (de_scp (String.sub s 2 ((String.length s) - 2)))
+          | '\'' -> "\\'"
           | c ->
             (String.make 1 c) ^ (de_scp (String.sub s 1 ((String.length s) - 1)))
         with _ -> ""
