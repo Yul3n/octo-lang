@@ -1,5 +1,6 @@
 #!/bin/sh
 
+[ -z "$CC" ] && CC="gcc"
 build() {
     # Without that dune would output build informations
     cd ../ && # SC2164

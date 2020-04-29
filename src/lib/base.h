@@ -290,18 +290,18 @@ get_body (Value *env, Value n, int len)
   return (*(n.cell));
 }
 
-Value grtl;
-Value eql;
-Value suml;
-Value difl;
-Value divl;
-Value timl;
-Value modl;
-Value conl;
-Value unil;
-Value indl;
-Value ddivl;
-Value _head, _tail, _fst, _snd, get_b, _map, _char_code;
+static Value grtl;
+static Value eql;
+static Value suml;
+static Value difl;
+static Value divl;
+static Value timl;
+static Value modl;
+static Value conl;
+static Value unil;
+static Value indl;
+static Value ddivl;
+static Value _head, _tail, _fst, _snd, get_b, _map, _char_code;
 
 Value
 char_code (Value *env, Value n, int len)
@@ -345,14 +345,13 @@ print_value(Value n)
   }
 }
 
-Value _char_code;
 Value _char_chr;
 Value _error;
 
 void
 base_init ()
 {
-  difl = make_closure(dif, NULL, 0);
+    difl = make_closure(dif, NULL, 0);
     eql = make_closure(eq, NULL, 0);
     modl = make_closure(mod, NULL, 0);
     divl = make_closure(dv, NULL, 0);
