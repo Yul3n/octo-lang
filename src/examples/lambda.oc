@@ -44,7 +44,7 @@ parse_til tokens e del =
     c :: tl when c = del ->
       case e of
         Some expr -> (expr, tl)
-    RPAR :: _ ->
+    (RPAR :: _) ->
        case e of
         Some expr -> (expr, tokens)
     t ->
@@ -61,7 +61,8 @@ parse_expr tokens =
     (IDE v) :: tl -> (Var v, tl)
     LAM :: (IDE v) :: ARROW :: tl ->
       (Lam (v, e), t) where
-        e, t = (parse_til tl None EOL)
+        e, t = (parse_expr tl)
+        -- e, t = (parse_til tl None EOL)
     LPAR :: tl -> (parse_til tl None RPAR)
 
 to_deb e v n =
@@ -85,7 +86,7 @@ string_of_expr e =
 
 parse_decl t =
   case t of
-    (IDE name) :: EQUAL :: tl -> ((name, to_deb e "" -1), ttl) where
+    (IDE name) :: EQUAL :: tl -> ((name, to_deb e "x" -1), ttl) where
       e, ttl = (parse_til tl None EOL)
     _ -> (error "Invalid declaration.")
 
@@ -97,11 +98,11 @@ eval e env ind ctx =
           (env ! (n - ind))
         _ -> (Deb n)
     App (l, r) ->
-      case (eval l env ind) of
+      case eval l env ind ctx of
         Lam (_, b) ->
-          eval b (r :: env) ind
+          eval b (r :: env) ind ctx
         n -> n
-    Lam (_, b) -> (Lam ("", eval b env (ind + 1)))
+    Lam (_, b) -> (Lam ("", eval b env (ind + 1) ctx))
     Var n -> (lookup ctx n)
     n -> n
 
@@ -114,7 +115,7 @@ program t d =
 exec d ctx =
   case d of
     [] -> ""
-    ("main", b) :: _ -> (string_of_expr (eval b [] 0 d))
+    ("main", b) :: _ -> (string_of_expr (eval b [] 0 ctx))
     hd :: tl -> (exec tl ctx)
 
 main s =

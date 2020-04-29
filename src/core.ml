@@ -171,6 +171,8 @@ make_int(double n)
 Value
 intern_eq (Value l1, Value l2)
 {
+  if (l1.has_cell != l2.has_cell || l1.t != l2.t)
+    return (make_int (0));
   switch (l1.t) {
   case INT :
     if (l1._float != l2._float)

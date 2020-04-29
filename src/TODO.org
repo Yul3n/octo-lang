@@ -23,6 +23,7 @@
 ** DONE Polymorphic custom types
 ** DONE Add memory safety (a bit)
 ** TODO Lazy evaluation
+** DONE Safety on pattern matching datatypes
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations
@@ -32,3 +33,4 @@
 ** TODO CLI interface with GNU/Emacs
 ** TODO Website
 ** TODO The Octonomicon
+** TODO Documentation generator

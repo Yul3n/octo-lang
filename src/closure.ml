@@ -134,7 +134,6 @@ len = 0;"
       let equ_to_c l r = sprintf "(intern_eq(%s, %s))._float" l r in
       let rec pattern_to_c e nlam =
         let rec get_prelude e env =
-
           match e with
             (CloApp(CloApp(CloGVar ("conl@", _), _, _), _, _)) ->
             let rec min_len e =
@@ -151,7 +150,9 @@ len = 0;"
               | _ -> 0
             in
             sprintf "(pair_length(%s) >= %d)" env (min_len e)
-          | CloApp (_, r, _) -> get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
+          | CloApp (_, r, _) ->
+            "(" ^ env ^ ".has_cell) &&" ^
+            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
           | _ -> "1"
         in
         let prelude = sprintf "if(%s){\n" (get_prelude e "(*(tenv))") in

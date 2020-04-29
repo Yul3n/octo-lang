@@ -2,16 +2,16 @@
 --- list of pairs l.
 lookup_opt l e =
   case l of
+    [] -> None
     (f, s) :: tl when f = e -> (Some s)
     hd :: tl -> (lookup_opt tl e)
-    [] -> None
 
 --- lookup_opt l e: return the value corresponding to the key e in the list of
 --- pairs l or throw an error if there is not one.
 lookup l e =
   case lookup_opt l e of
-    Some n -> n
     None -> (error "The element is not in the list.")
+    Some n -> n
 
 --- zip l r: return a list of pairs made from a pair of lists.
 zip l r =
