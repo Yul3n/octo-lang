@@ -22,7 +22,7 @@
 ** DONE Runtime errors
 ** DONE Polymorphic custom types
 ** DONE Add memory safety (a bit)
-** TODO Lazy evaluation
+** DONE Optional lazy evaluation
 ** DONE Safety on pattern matching datatypes
 * Standard library
 ** DONE Boolean Type
@@ -31,6 +31,7 @@
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs
+** TODO Syntax highilighting and indentation for other IDEs
 ** TODO Website
 ** TODO The Octonomicon
 ** TODO Documentation generator

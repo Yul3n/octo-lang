@@ -24,6 +24,7 @@ let rec parse_args tokens =
 let rec wrap_lam vals expr =
   match vals with
     []       -> expr
+  | hd :: "lazy" :: tl -> wrap_lam tl (LazyL (hd, expr))
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
 let rec parse_expr tokens exprs is_math =
@@ -159,7 +160,7 @@ let rec parse_expr tokens exprs is_math =
           match tl with
             EQUAL :: tl ->
           let e, tl  = parse_expr tl [] false in
-          App(Lambda(v, body), wrap_lam (List.rev vars) (reduce e)), tl
+          App (Lambda(v, body), wrap_lam (List.rev vars) (reduce e)), tl
         | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
         | []       -> parse_error ("Declaration without a body.")
         end

@@ -9,7 +9,8 @@ let rec ftv t =
     TOth  _      -> []
   | TVar v       -> [v]
   | TFun (l, r)  -> (ftv l) @ (ftv r)
-  | TList (t)    -> ftv t
+  | TLazy t
+  | TList t      -> ftv t
   | TPair (l, r) -> (ftv l) @ (ftv r)
 
 let ftv_sch (Forall(v, t)) =
@@ -21,7 +22,7 @@ let ftv_env env =
 (* Apply the substitution subst to the type ty and return it. *)
 let rec app_subst subst ty =
   match ty with
-    TVar var      ->
+    TVar var     ->
     let rec findvar subst =
       match subst with
         []                               -> TVar var
@@ -29,10 +30,11 @@ let rec app_subst subst ty =
       | _ :: tl                          -> findvar tl
     in
     findvar subst
-  | TOth v        -> TOth v
-  | TFun (lt, rt) -> TFun ((app_subst subst lt), (app_subst subst rt))
-  | TList t       -> TList (app_subst subst t)
-  | TPair (l, r)  -> TPair (app_subst subst l, app_subst subst r)
+  | TOth v       -> TOth v
+  | TFun (l, r)  -> TFun ((app_subst subst l), (app_subst subst r))
+  | TLazy t      -> TLazy (app_subst subst t)
+  | TList t      -> TList (app_subst subst t)
+  | TPair (l, r) -> TPair (app_subst subst l, app_subst subst r)
 
 (* Apply a substitution to a scheme by ignoring bound variables. *)
 let subst_scheme subst (Forall(vars, ty)) =
@@ -99,6 +101,8 @@ let rec unify t1 t2 =
     let sub2 = unify (app_subst sub1 r1) (app_subst sub1 r2) in
     compose_subst sub1 sub2
   | t, TVar v | TVar v, t -> bind v t
+  | TLazy t1, TLazy t2
+  | TLazy t1, t2
   | TList t1, TList t2 -> unify t1 t2
   | t1, t2 ->
     raise (Type_error ("Can't unify types: " ^ (string_of_type t1) ^ " and "
@@ -160,9 +164,14 @@ and infer expr context nvar =
     begin
       match List.assoc_opt var context with
         None     -> raise (Type_error ("Use of an unbound variable:" ^ var))
-      | Some sch -> let Forall(l, _) = sch in
-        let t = (inst sch nvar) in
-        [], t, (nvar + List.length l), TyVar (var, t)
+      | Some sch -> let Forall(l, ts) = sch in
+        match ts with
+          TLazy t ->
+          let t = inst (Forall (l, t)) nvar in
+          [], t, (nvar + List.length l + 1), TyApp (TyVar (var, t), TyVar ("", TVar nvar), t)
+        | _ ->
+          let t = inst sch nvar in
+          [], t, (nvar + List.length l), TyVar (var, t)
     end
   | App (fn, arg) ->
     let res_t              = TVar nvar in
@@ -171,6 +180,12 @@ and infer expr context nvar =
     let s3                 = unify (app_subst s2 fun_t) (TFun (arg_t, res_t)) in
     let fs                 = compose_subst s3 (compose_subst s2 s1) in
     let t                  = (app_subst s3 res_t) in
+    let r =
+      match fun_t with
+        TFun (TLazy _, _) ->
+        TyLambda ("", r, arg_t)
+      | _ -> r
+        in
     fs, t, nvar, TyApp (l, r, t)
   | Case cases ->
     let patterns, exprs = List.split cases in
@@ -190,3 +205,9 @@ and infer expr context nvar =
     let t               = TPair(lt, rt)            in
     compose_subst s2 s1, t, nvar, TyPair(l, r, t)
   | Char c -> [], TOth "char", nvar, TyChar (c, TOth "char")
+  | LazyL (var, body) ->
+    let var_t                = TLazy (TVar nvar)                      in
+    let tmp_ctx              = (var, (Forall ([], var_t))) :: context in
+    let s, body_t, nvar, b   = infer body tmp_ctx (nvar + 1)          in
+    let t                    = TFun ((app_subst s var_t), body_t)     in
+    s, t, nvar, TyLambda (var, b, t)

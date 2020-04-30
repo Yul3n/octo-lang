@@ -92,10 +92,7 @@ parse_decl t =
 eval e env ind ctx =
   case e of
     Deb n ->
-      case "" of
-        _ when (and ((length env) > (n - ind)) (n - ind > -1)) ->
-          (env ! (n - ind))
-        _ -> (Deb n)
+      if (and ((length env) > (n - ind)) (n - ind > -1)) (env ! (n - ind)) (Deb n)
     App (l, r) ->
       case eval l env ind ctx of
         Lam (_, b) ->

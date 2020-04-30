@@ -70,6 +70,16 @@ let rec to_closure expr =
   | TyChar (c, t)      -> CloChar (c, t)
 
 let rec closure_to_c clo nlam env  =
+  begin
+  match clo with
+    CloApp (_,_, TLazy _)
+  | CloNum (_, TLazy _)
+  | CloVar (_, TLazy _)
+  | CloCase (_, TLazy _)
+  | CloList (_, TLazy _)
+  | Closure (_,_,TLazy _) -> print_string "rr"
+    | _ -> ()
+           end ;
   match clo with
     CloNum (n, _) -> sprintf "make_int(%f)" n, "", "", nlam, env
   | CloChar (c, _) ->

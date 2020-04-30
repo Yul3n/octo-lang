@@ -39,10 +39,12 @@ type expr_t
   | TOth  of string
   | TList of expr_t
   | TPair of expr_t * expr_t
+  | TLazy of expr_t
 
 type expr
   = Var    of string
   | Lambda of string * expr
+  | LazyL  of string * expr
   | App    of expr * expr
   | Num    of float
   | Case   of (expr * expr) list

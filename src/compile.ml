@@ -90,10 +90,10 @@ let rec compile_module m nlam ctx c1 c2 c3 c4 c5 c6 =
   | hd :: tl ->
     let s =
       read_from_file ("/usr/lib/octo/" ^ (String.lowercase_ascii hd) ^ ".oc") in
-    let t, _ = Lexer.lexer s 0 0 in
-    let t, _ = List.split t in
+    let t, _ = Lexer.lexer s 0 0   in
+    let t, _ = List.split t        in
     let p, _ = Parser.parse_tops t in
-    let c, n = get_ctx p nlam in
+    let c, n = get_ctx p nlam      in
     let rec compile_funs d fs b n =
       match d with
         [] -> fs, b, n
@@ -117,8 +117,9 @@ let compile f =
   let c1, c2, c3, c4, c5, c6, nlam, ctx =
     compile_module (["stdlib"; "list"; "char"; "pair"] @ m) n (Types.initial_ctx @ c)
       "" "" "" "" "" "" in
-  let _, t, n, e, lt, i, m, tp, nlam =
+  let c, t, n, e, lt, i, m, tp, nlam =
     def_ctx f ctx "" "" nlam [] "" "" "" "" in
+  Utils.print_context c;
   let oc = open_out "out.c"      in
   fprintf oc "%s\n" (decls_to_c e (c1 ^ tp) (c2 ^ m) nlam);
   close_out oc;

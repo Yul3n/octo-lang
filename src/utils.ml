@@ -80,6 +80,7 @@ let rec string_of_type t =
     TVar v       -> string_of_int v
   | TFun (f, t)  -> "(" ^ (string_of_type f) ^ " ――→ " ^ (string_of_type t) ^ ")"
   | TOth v       -> v
+  | TLazy t      -> "lazy " ^ (string_of_type t)
   | TList t      -> "(" ^ string_of_type t ^ " list)"
   | TPair (l, r) -> (string_of_type l) ^ " * " ^ (string_of_type r)
 
