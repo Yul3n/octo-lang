@@ -115,4 +115,4 @@ parse_all tokens expr =
         e, tl = (parser t expr)
 
 main s =
-  eval (parse_all (lexer "1") Null)
+  eval (parse_all (lexer s) Null)

@@ -195,7 +195,7 @@ simplify e =
     Binop (l, Pow, Const 0) -> (Const 1)
     Binop (l, Pow, Const 1) -> (simplify l)
     Binop (l, o, r) ->
-      if (and (l' = l) (r' = r)) (Binop (l', o, r')) (simplify (Binop (l', o, r')))
+      (if (and (l' = l) (r' = r)) (Binop (l', o, r')) (simplify (Binop (l', o, r'))))
       where
         l' = (simplify l)
         r' = (simplify r)

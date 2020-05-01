@@ -111,9 +111,32 @@ program t d =
 exec d ctx =
   case d of
     [] -> ""
-    ("main", b) :: _ -> (string_of_expr (eval b [] 0 ctx))
+    ("main", b) :: _ -> (string_of_expr (reduce_ski (brack b [] ctx)))
     hd :: tl -> (exec tl ctx)
 
+free e n =
+  case e of
+    Var _ -> False
+    App (l, r) -> (or (free l n) (free r n))
+    Deb v when n = v -> True
+    Deb _ -> False
+    Lam (_, b) -> (free b (n + 1))
+
+brack e env funs =
+  case e of
+    App (m, n) -> (App (brack m env funs, brack n env funs))
+    Deb n ->
+      if (and ((length env) > n) (n > -1)) (env ! n) (Deb n)
+    Lam (_, Deb 0) -> (App (App (Var "S", Var "K"), Var "K"))
+    Lam (_, App (m, n)) ->
+      (App (App (Var "S", brack (Lam ("", m)) env funs), brack (Lam ("", n)) env funs))
+    Lam (_, b) when (not (free b 0)) -> (App (Var "K", brack b env funs))
+    Var n -> (brack (lookup funs n) [] funs)
+
+reduce_ski e =
+  case e of
+    (App (App (Var "K", s), _)) -> s
+    s -> s
 main s =
   (exec d d) where
     d = (program (lexer s) [])
