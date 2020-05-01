@@ -25,6 +25,8 @@
 ** DONE Optional lazy evaluation
 ** DONE Safety on pattern matching datatypes
 ** TODO Fix the bug with fib and octodocs
+** DONE As in pattern matching
+** TODO True IO
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations
@@ -36,3 +38,7 @@
 ** TODO Website
 ** TODO The Octonomicon
 ** TODO Documentation generator
+* Octo 1.0
+** TODO Untyped lambda calculus compiler (WASM)
+** TODO Dependent types
+** TODO Assembly

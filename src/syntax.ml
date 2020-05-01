@@ -26,6 +26,7 @@ type token
   | WHEN
   | GRT
   | INFXL
+  | AS
   | STR   of string
   | CHAR  of char
   | BLOCK of (token * int) list

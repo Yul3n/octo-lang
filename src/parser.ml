@@ -207,6 +207,9 @@ let rec parse_expr tokens exprs is_math =
               let l2, b2 = parse_pattern env l body in
               let r2, b3 = parse_pattern env r b2   in
               App (App (Var "lor@", l2), r2), b3
+            | App (App (Var "las@", l), Var v) ->
+              let l2, b2 = parse_pattern env l body in
+              l2, App (Lambda (v, b2), l2)
             | App (App (Var "land@", l), r) ->
               let l2, b2 = parse_pattern env l body in
               let _, r2  = parse_pattern env l r    in
@@ -223,7 +226,9 @@ let rec parse_expr tokens exprs is_math =
             | WHEN :: tl ->
               let e, tl = parse_arr tl [] in
               parse_arr tl [App (App (Var "land@", reduce exprs), e)]
-            | tl         ->
+            | AS :: IDENT v :: tl ->
+              parse_arr tl [App (App (Var "las@", reduce exprs), Var v)]
+            | tl ->
               let e, tl = parse_expr tl exprs false in
               parse_arr tl e
           in
@@ -299,6 +304,8 @@ let rec parse_expr tokens exprs is_math =
   | GRT :: tl ->
     let l, tl = parse_expr tl [] false in
     [binop (reduce exprs) "grtl@" (reduce l)], tl
+  | AS :: IDENT v :: tl ->
+    [App (App (Var "las@", reduce exprs), Var v)], tl
   | tok :: _ -> parse_error ("Unexpected token: " ^ (Utils.string_of_token tok))
   in
   match is_math with

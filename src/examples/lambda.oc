@@ -110,8 +110,8 @@ program t d =
 
 exec d ctx =
   case d of
-    [] -> ""
-    ("main", b) :: _ -> (string_of_expr (reduce_ski (brack b [] ctx)))
+    [] -> (error "There is no main function")
+    ("main", b) :: _ -> (brack (App(App(b, Var "U"), Var"Z")) ctx)
     hd :: tl -> (exec tl ctx)
 
 free e n =
@@ -121,22 +121,46 @@ free e n =
     Deb v when n = v -> True
     Deb _ -> False
     Lam (_, b) -> (free b (n + 1))
+    n -> False
 
-brack e env funs =
+comb e =
   case e of
-    App (m, n) -> (App (brack m env funs, brack n env funs))
-    Deb n ->
-      if (and ((length env) > n) (n > -1)) (env ! n) (Deb n)
-    Lam (_, Deb 0) -> (App (App (Var "S", Var "K"), Var "K"))
-    Lam (_, App (m, n)) ->
-      (App (App (Var "S", brack (Lam ("", m)) env funs), brack (Lam ("", n)) env funs))
-    Lam (_, b) when (not (free b 0)) -> (App (Var "K", brack b env funs))
-    Var n -> (brack (lookup funs n) [] funs)
+    (Var "K") | (Var "S") | (Var "U") | (Var "Z") -> True
+    App (l, r) -> (and (comb l) (comb r))
+    _ -> False
 
-reduce_ski e =
+brack e funs =
   case e of
-    (App (App (Var "K", s), _)) -> s
-    s -> s
+    App (m, n) -> (App (brack m funs, brack n funs))
+    Lam (_, b) ->
+      case b of
+        App (App (Var "S", Var "K"), _) -> (App (Var "S", Var "K"))
+        Deb 0 -> (App (App (Var "S", Var "K"), Var "K"))
+        App (m, n) ->
+          (App (App (Var "S", brack (Lam ("", m)) funs), brack (Lam ("", n)) funs))
+        _ when not (free b 0) -> (App (Var "K", brack b funs))
+        App (m, Deb 0) when not (free m 0) -> m
+        App (App(Deb 0, m), Deb 0) ->
+          (Lam ("", App (App (App (App (Var "S", Var "S"), Var "K"), Deb 0), m)))
+    Var "S" -> (Var "S")
+    Var "K" -> (Var "K")
+    Var "U" -> (Var "U")
+    Var "Z" -> (Var "Z")
+    Var n -> (brack (lookup funs n) funs)
+
+arr i e =
+  case e of
+    Var "S" -> [0]
+    Var "K" -> [1]
+    Var "U" -> [2]
+    Var "Z" -> [3]
+    App ((Var _) as l, (Var _) as r) -> (arr i l) @ (arr i r)
+    App ((Var _) as l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r)
+    App (l, (Var _) as r) -> [i + 1] @ (arr i l) @ (arr (i + 2) r)
+    App (l, r) -> [i + 2, len] @ f @ (arr len l) where
+      len = (length f)
+      f   = (arr (i + 2) r)
+
 main s =
-  (exec d d) where
+  [0, 0] @ (arr 2 (exec d d)) where
     d = (program (lexer s) [])
