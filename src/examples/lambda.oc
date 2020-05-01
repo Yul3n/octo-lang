@@ -138,14 +138,16 @@ brack e funs =
         Deb 0 -> (App (App (Var "S", Var "K"), Var "K"))
         App (m, n) ->
           (App (App (Var "S", brack (Lam ("", m)) funs), brack (Lam ("", n)) funs))
-        _ when not (free b 0) -> (App (Var "K", brack b funs))
         App (m, Deb 0) when not (free m 0) -> m
         App (App(Deb 0, m), Deb 0) ->
           (Lam ("", App (App (App (App (Var "S", Var "S"), Var "K"), Deb 0), m)))
+        _ -> (App (Var "K", brack b funs))
     Var "S" -> (Var "S")
     Var "K" -> (Var "K")
     Var "U" -> (Var "U")
     Var "Z" -> (Var "Z")
+    Deb 0 -> (error "Unexpected")
+    Deb n -> (Var "K")
     Var n -> (brack (lookup funs n) funs)
 
 arr i e =
@@ -156,11 +158,16 @@ arr i e =
     Var "Z" -> [3]
     App ((Var _) as l, (Var _) as r) -> (arr i l) @ (arr i r)
     App ((Var _) as l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r)
-    App (l, (Var _) as r) -> [i + 1] @ (arr i l) @ (arr (i + 2) r)
+    App (l, (Var _) as r) -> [i + 2] @ (arr i l) @ (arr (i + 2) r)
     App (l, r) -> [i + 2, len] @ f @ (arr len l) where
-      len = (length f)
+      len = i + 2 + (length f)
       f   = (arr (i + 2) r)
 
+run m s =
+  case head s of
+    2 -> 1 +
+    3 -> 0
+
 main s =
-  [0, 0] @ (arr 2 (exec d d)) where
+  [0, 0, 0, 0] @ (arr 4 (exec d d)) where
     d = (program (lexer s) [])
