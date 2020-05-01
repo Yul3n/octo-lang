@@ -32,7 +32,7 @@ error (Value *env, Value n, int length)
 }
 
 Value
-lambda_sum (Value *env, Value n)
+lambda_sum (Value *env, Value n, int len)
 {
   return make_int((*env)._float + n._float);
 }
@@ -47,7 +47,7 @@ sum (Value *env, Value n, int len)
 }
 
 Value
-lambda_ddiv (Value *env, Value n)
+lambda_ddiv (Value *env, Value n, int len)
 {
   return make_int(((int) (*env)._float) / ((int) n._float));
 }
@@ -74,7 +74,7 @@ ddiv (Value *env, Value n, int len)
 }
 
 Value
-lambda_grt (Value *env, Value n)
+lambda_grt (Value *env, Value n, int len)
 {
   if (n._float < (*(env))._float) return make_True();
   else return make_False();
@@ -93,7 +93,7 @@ grt (Value *env, Value n, int len)
 
 
 Value
-lambda_eq (Value *env, Value n)
+lambda_eq (Value *env, Value n, int len)
 {
   double d = intern_eq(n, *(env))._float;
   if (d) return make_True();
@@ -111,7 +111,7 @@ eq (Value *env, Value n, int len)
 }
 
 Value
-lambda_dif (Value *env, Value n)
+lambda_dif (Value *env, Value n, int len)
 {
   return make_int((*env)._float - n._float);
 }
@@ -126,7 +126,7 @@ dif (Value *env, Value n, int len)
 }
 
 Value
-lambda_div (Value *env, Value n)
+lambda_div (Value *env, Value n, int len)
 {
     return make_int((*env)._float / n._float);
 }
@@ -141,7 +141,7 @@ dv (Value *env, Value n, int len)
 }
 
 Value
-lambda_tim (Value *env, Value n)
+lambda_tim (Value *env, Value n, int len)
 {
     return make_int(((*env)._float) * (n._float));
 }
@@ -156,7 +156,7 @@ tim (Value *env, Value n, int len)
 }
 
 Value
-lambda_mod (Value *env, Value n)
+lambda_mod (Value *env, Value n, int len)
 {
     return make_int(fmod((*env)._float, n._float));
 }
@@ -192,7 +192,7 @@ octo_map (Value *env, Value n, int len)
 
 
 Value
-lambda_cons(Value *env, Value n)
+lambda_cons(Value *env, Value n, int len)
 {
     Value v;
     v.t = LIST;
@@ -214,7 +214,7 @@ cons (Value *env, Value n, int len)
 }
 
 Value
-lambda_union(Value *env, Value n)
+lambda_union(Value *env, Value n, int len)
 {
   Value v;
   v.t = LIST;
@@ -236,7 +236,7 @@ octo_union (Value *env, Value n, int len)
 }
 
 Value
-lambda_index (Value *env, Value n)
+lambda_index (Value *env, Value n, int len)
 {
   if ((n._float >= ((*(env)).list.length)) || (n._float < 0)){
     printf("Error: invalid array index. Size of the array %d, index: %lf.\n",
