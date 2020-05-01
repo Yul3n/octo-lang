@@ -24,6 +24,7 @@
 ** DONE Add memory safety (a bit)
 ** DONE Optional lazy evaluation
 ** DONE Safety on pattern matching datatypes
+** TODO Fix the bug with fib and octodocs
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations

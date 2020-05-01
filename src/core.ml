@@ -10,7 +10,7 @@ enum Type;
 #include <stdio.h>
 
 int nalloc = 0;
-typedef struct Value (*Lambda)();
+typedef struct Value (*Lambda)(struct Value*, struct Value, int);
 
 struct Closure {
   Lambda lam;

@@ -10,7 +10,7 @@ is_num c =
 
 -- int_of_char c: return the number contained in c
 int_of_char c =
-  (char_code c) - 48
+  where (char_code c) - 48
 
 int_of_string_ s n =
   case s of

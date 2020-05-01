@@ -67,10 +67,9 @@ parse_expr tokens =
 to_deb e v n =
   case e of
     Var var when var = v -> (Deb n)
-    Var var -> (Var var)
-    Deb n -> (Deb n)
     App (l, r) -> (App (to_deb l v n, to_deb r v n))
     Lam (var, b) -> (Lam ("", to_deb (to_deb b var 0) v (n + 1)))
+    n -> n
 
 string_of_expr e =
   case e of
@@ -96,8 +95,9 @@ eval e env ind ctx =
     App (l, r) ->
       case eval l env ind ctx of
         Lam (_, b) ->
-          eval b (r :: env) ind ctx
-        n -> n
+          (eval b (nr :: env) ind ctx) where
+            nr = (eval r env ind ctx)
+        n -> (App (n, (eval r env ind ctx)))
     Lam (_, b) -> (Lam ("", eval b env (ind + 1) ctx))
     Var n -> (lookup ctx n)
     n -> n

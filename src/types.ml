@@ -102,6 +102,7 @@ let rec unify t1 t2 =
     compose_subst sub1 sub2
   | t, TVar v | TVar v, t -> bind v t
   | TLazy t1, TLazy t2
+  | t2, TLazy t1
   | TLazy t1, t2
   | TList t1, TList t2 -> unify t1 t2
   | t1, t2 ->
