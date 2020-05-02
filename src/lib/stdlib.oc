@@ -11,10 +11,10 @@ if c lazy x lazy y =
 not True = False
 not False = True
 
-or True lazy _ = True
+or True _ = True
 or False x = x
 
-and False lazy _ = False
+and False _ = False
 and True x = x
 
 xor True x = (not x)

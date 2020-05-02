@@ -16,7 +16,8 @@ int_of_char c =
 int_of_string_ s n =
   case s of
     [] -> n
-    c :: tl -> (int_of_string_ tl ((10 * n) + (int_of_char c)))
+    c :: tl when is_num c -> (int_of_string_ tl ((10 * n) + (int_of_char c)))
+    c :: _ -> (error "The character: " @ [c] @ "is not a number.")
 
 -- int_of_string s: return the number contained in s
 int_of_string s =

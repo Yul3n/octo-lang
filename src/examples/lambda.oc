@@ -63,6 +63,7 @@ parse_expr tokens =
       (Lam (v, e), t) where
         e, t = (parse_expr tl)
     LPAR :: tl -> (parse_til tl None RPAR)
+    _ -> (error "Unexpected token.")
 
 to_deb e v n =
   case e of
@@ -111,7 +112,7 @@ program t d =
 exec d ctx =
   case d of
     [] -> (error "There is no main function")
-    ("main", b) :: _ -> (brack (App(App(b, Var "U"), Var"Z")) ctx)
+    ("main", b) :: _ -> (brack (App(App (b, Var "U"), Var"Z")) ctx)
     hd :: tl -> (exec tl ctx)
 
 free e n =
@@ -123,32 +124,35 @@ free e n =
     Lam (_, b) -> (free b (n + 1))
     n -> False
 
-comb e =
+dec_deb e =
   case e of
-    (Var "K") | (Var "S") | (Var "U") | (Var "Z") -> True
-    App (l, r) -> (and (comb l) (comb r))
+    Deb n -> (Deb (n - 1))
+    App (l, r) -> (App (dec_deb l, dec_deb r))
+    Lam (_, b) -> (Lam ("", dec_deb b))
+    n -> n
+
+in_lam e =
+  case e of
+    App (l, r) -> (or (in_lam l) (in_lam r))
+    Lam _ -> True
     _ -> False
+
+opt e =
+  case e of
+    App (App (Var "S", App (Var "K", p)), Var "I") -> p
+
+abs e i =
+  case e of
+    Deb n when i = n -> (Var "I")
+    App (m, n) when (not (or (in_lam m) (in_lam n))) ->
+      (App (App (Var "S", abs m i), abs n i))
+    n -> (App (Var "K", dec_deb n))
 
 brack e funs =
   case e of
     App (m, n) -> (App (brack m funs, brack n funs))
-    Lam (_, b) ->
-      case b of
-        App (App (Var "S", Var "K"), _) -> (App (Var "S", Var "K"))
-        Deb 0 -> (App (App (Var "S", Var "K"), Var "K"))
-        App (m, n) ->
-          (App (App (Var "S", brack (Lam ("", m)) funs), brack (Lam ("", n)) funs))
-        App (m, Deb 0) when not (free m 0) -> m
-        App (App(Deb 0, m), Deb 0) ->
-          (Lam ("", App (App (App (App (Var "S", Var "S"), Var "K"), Deb 0), m)))
-        _ -> (App (Var "K", brack b funs))
-    Var "S" -> (Var "S")
-    Var "K" -> (Var "K")
-    Var "U" -> (Var "U")
-    Var "Z" -> (Var "Z")
-    Deb 0 -> (error "Unexpected")
-    Deb n -> (Var "K")
-    Var n -> (brack (lookup funs n) funs)
+    Lam (_, b) -> (abs (brack b funs) 0)
+    n -> n
 
 arr i e =
   case e of
@@ -158,16 +162,31 @@ arr i e =
     Var "Z" -> [3]
     App ((Var _) as l, (Var _) as r) -> (arr i l) @ (arr i r)
     App ((Var _) as l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r)
-    App (l, (Var _) as r) -> [i + 2] @ (arr i l) @ (arr (i + 2) r)
+    App (l, (Var _) as r) -> [i + 1] @ (arr (i + 1) l) @ (arr i r)
     App (l, r) -> [i + 2, len] @ f @ (arr len l) where
       len = i + 2 + (length f)
       f   = (arr (i + 2) r)
 
-run m s =
-  case head s of
-    2 -> 1 +
+run s pc =
+  case s ! pc of
+    1 -> (run s (pc + 1))
+    2 -> (1 + (run s (pc + 1)))
     3 -> 0
+    n -> (run s n)
+
+run_e e =
+  case e of
+    App (Var "I", b) -> (run_e b)
+    App (App (Var "K", l), _) -> (run_e l)
+    App (App (App (Var "S", x), y), z) ->
+      (run_e (App(App (x, z'), App(y, z')))) where
+        z' = (run_e z)
+    App (l, r) ->
+      (if (and (l = l') (r = r')) (App (l', r')) (run_e (App (l', r')))) where
+        r' = (run_e r)
+        l' = (run_e l)
+    n -> n
 
 main s =
-  [0, 0, 0, 0] @ (arr 4 (exec d d)) where
+  (string_of_expr (run_e (exec d d))) where
     d = (program (lexer s) [])
