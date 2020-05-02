@@ -138,10 +138,16 @@ len = 0;"
             (CloApp(CloApp(CloGVar ("conl@", _), _, _), _, _)) ->
             let rec min_len e =
               match e with
+
                 (CloApp(CloApp(CloGVar ("conl@", _), _, _), l, _)) -> 1 + min_len l
               | _ -> 0
             in
-            sprintf "(%s.list.length >= %d)" env (min_len e)
+            let get_allp e =
+              match e with
+                (CloApp(CloApp(CloGVar ("conl@", _), r, _), _, _)) -> (get_prelude r ("_head.clo.lam(tenv," ^ env ^ ", 0)"))
+              | e -> get_prelude e env
+            in
+            sprintf "%s && (%s.list.length >= %d)" (get_allp e) env (min_len e)
           | CloPair (_, _, _) ->
             let rec min_len e =
               match e with

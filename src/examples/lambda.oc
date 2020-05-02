@@ -44,17 +44,14 @@ parse_til tokens e del =
     c :: tl when c = del ->
       case e of
         Some expr -> (expr, tl)
-    (RPAR :: _) ->
-       case e of
-        Some expr -> (expr, tokens)
     t ->
       (parse_til tl (Some expr) del) where
         expr, tl =
           case e of
-            None -> (expr, ntl) where
-              expr, ntl = (parse_expr t)
-            Some ex -> (App (ex, expr), ntl) where
-              expr, ntl = (parse_expr t)
+            None -> (expr, ntl)
+            Some ex -> (App (ex, expr), ntl)
+          where
+            expr, ntl = (parse_expr t)
 
 parse_expr tokens =
   case tokens of
