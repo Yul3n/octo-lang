@@ -157,18 +157,20 @@ arr i e =
     Var "K" -> [1]
     Var "U" -> [2]
     Var "Z" -> [3]
+    Var "I" -> [4]
     App ((Var _) as l, (Var _) as r) -> (arr i l) @ (arr i r)
-    App ((Var _) as l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r)
-    App (l, (Var _) as r) -> [i + 1] @ (arr (i + 1) l) @ (arr i r)
-    App (l, r) -> [i + 2, len] @ f @ (arr len l) where
-      len = i + 2 + (length f)
-      f   = (arr (i + 2) r)
+    App (l, (Var _) as r) -> (arr (i) l) @ (arr i r)
+    App (l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r) where
 
 run s pc =
   case s ! pc of
+    0 -> (run (s @ l) len) where
+      l = [s ! (pc + 1), s ! (pc + 3), len + 3, s ! (pc + 2), s ! (pc + 3)]
+      len = (length s)
     1 -> (run s (pc + 1))
     2 -> (1 + (run s (pc + 1)))
     3 -> 0
+    4 -> (run s (pc + 1))
     n -> (run s n)
 
 run_e e =
@@ -185,5 +187,5 @@ run_e e =
     n -> n
 
 main s =
-  (string_of_expr (run_e (exec d d))) where
+  (run [0, 0, 0, 0] @ (arr 4 (exec d d)) 4) where
     d = (program (lexer s) [])
