@@ -138,7 +138,6 @@ len = 0;"
             (CloApp(CloApp(CloGVar ("conl@", _), _, _), _, _)) ->
             let rec min_len e =
               match e with
-
                 (CloApp(CloApp(CloGVar ("conl@", _), _, _), l, _)) -> 1 + min_len l
               | _ -> 0
             in
@@ -158,8 +157,6 @@ len = 0;"
             sprintf "(pair_length(%s) >= %d)" env (min_len e)
           | CloApp (CloGVar (t, _), r, _) when ((Char.code (String.get t 1) < Char.code 'a')) ->
             "(" ^ env ^ ".has_cell) &&" ^
-            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
-          | CloApp (_, r, _) ->
             get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
           | _ -> "1"
         in
