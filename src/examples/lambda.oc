@@ -134,10 +134,6 @@ in_lam e =
     Lam _ -> True
     _ -> False
 
-opt e =
-  case e of
-    App (App (Var "S", App (Var "K", p)), Var "I") -> p
-
 is_comb e =
   case e of
     Var "U" -> True
@@ -159,7 +155,7 @@ brack e funs =
   case e of
     App (m, n) -> (App (brack m funs, brack n funs))
     Lam (_, b) -> (abs (brack b funs) 0)
-    (Var v) as c when (not (is_comb c)) -> (lookup funs v)
+    (Var v) as c when (not (is_comb c)) -> (brack (lookup funs v) funs)
     n -> n
 
 type cell
