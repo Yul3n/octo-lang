@@ -138,6 +138,16 @@ opt e =
   case e of
     App (App (Var "S", App (Var "K", p)), Var "I") -> p
 
+is_comb e =
+  case e of
+    Var "U" -> True
+    Var "K" -> True
+    Var "I" -> True
+    Var "Z" -> True
+    Var "S" -> True
+    App (l, r) -> (and (is_comb l) (is_comb r))
+    _ -> False
+
 abs e i =
   case e of
     Deb n when i = n -> (Var "I")
@@ -149,6 +159,7 @@ brack e funs =
   case e of
     App (m, n) -> (App (brack m funs, brack n funs))
     Lam (_, b) -> (abs (brack b funs) 0)
+    (Var v) as c when (not (is_comb c)) -> (lookup funs v)
     n -> n
 
 type cell
