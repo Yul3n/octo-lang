@@ -151,29 +151,29 @@ brack e funs =
     Lam (_, b) -> (abs (brack b funs) 0)
     n -> n
 
-arr i e =
-  case e of
-    Var "S" -> [0]
-    Var "K" -> [1]
-    Var "U" -> [2]
-    Var "Z" -> [3]
-    Var "I" -> [4]
-    App ((Var _) as l, (Var _) as r) -> (arr i l) @ (arr i r)
-    App ((Var _) as l, r) -> (arr i l) @ [i + 2] @ (arr (i + 2) r)
-    App (l, (Var _) as r) -> (i + 2) :: (arr i r) @ (arr (i + 2) l)
-    App (l, r) -> [i + 2, len] @ f @ (arr len r) where
-      len = i + 2 + (length f)
-      f   = (arr (i + 2) r)
+type cell
+  = Leaf float
+  | Cell cell list
 
-run s m =
+arr e =
+  case e of
+    Var "S" -> [Leaf 0]
+    Var "K" -> [Leaf 1]
+    Var "U" -> [Leaf 2]
+    Var "Z" -> [Leaf 3]
+    Var "I" -> [Leaf 4]
+    App (l, (Var _) as r) -> (arr l) @ (arr r)
+    App (l, r) -> (arr l) @ [Cell (arr r)]
+
+run s =
   case s of
-    0 :: a1 :: a2 :: a3 :: tl ->
-      (run (a1 :: a3 :: (length m) :: tl) (m @ [a2, a3]))
-    1 :: a :: _ :: tl -> (run (a :: tl) m)
-    2 :: tl -> (1 + (run tl m))
-    3 :: _ -> 0
-    4 :: tl -> (run tl m)
-    n :: tl -> (run ((m ! n) :: (m ! (n + 1)) :: tl) m)
+    (Leaf 0) :: a1 :: a2 :: a3 :: tl ->
+      (run a1 :: a3 :: (Cell [a2, a3]) :: tl )
+    (Leaf 1) :: a :: _ :: tl -> (run a :: tl)
+    (Leaf 2) :: tl -> (1 + (run tl))
+    (Leaf 3) :: _  -> 0
+    (Leaf 4) :: tl -> (run tl)
+    (Cell l) :: tl -> (run l @ tl)
 
 run_e e =
   case e of
@@ -188,7 +188,17 @@ run_e e =
         l' = (run_e l)
     n -> n
 
+string_of_cells l =
+  case l of
+    [] -> ""
+    (Leaf 0) :: tl -> "S" @ (string_of_cells tl)
+    (Leaf 1) :: tl -> "K" @ (string_of_cells tl)
+    (Leaf 2) :: tl -> "U" @ (string_of_cells tl)
+    (Leaf 3) :: tl -> "Z" @ (string_of_cells tl)
+    (Leaf 4) :: tl -> "I" @ (string_of_cells tl)
+    (Cell l2) :: tl -> "(" @ (string_of_cells l2) @ ")" @ (string_of_cells tl)
+
 main s =
-  (([0, 0, 0, 0, 0] @ l)) where
-    l = (arr 5 (exec d d))
+  run l where
+    l = (arr (exec d d))
     d = (program (lexer s) [])
