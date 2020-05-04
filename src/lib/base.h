@@ -175,9 +175,8 @@ Value
 lambda_map (Value *env, Value n, int len)
 {
     Value *l = alloc(n.list.length);
-    #pragma omp parallel for
-      for (int i = 0; i < n.list.length; i ++)
-        *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len);
+    for (int i = 0; i < n.list.length; i ++)
+      *(l + i) = (*(env)).clo.lam((*(env)).clo.env, *(n.list.list + i), len);
     return make_list(l, n.list.length);
 }
 
@@ -189,7 +188,6 @@ octo_map (Value *env, Value n, int len)
     *tenv = n;
     return (make_closure(lambda_map, tenv, len + 1));
 }
-
 
 Value
 lambda_cons(Value *env, Value n, int len)
@@ -249,8 +247,7 @@ lambda_index (Value *env, Value n, int len)
 Value
 ind (Value *env, Value n, int len)
 {
-    Value *tenv = alloc(len + 1);
-    memcpy (tenv + 1, env, len * sizeof(Value));
+    Value *tenv = alloc(1);
     *tenv = n;
     return (make_closure(lambda_index, tenv, len + 1));
 }

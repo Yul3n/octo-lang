@@ -143,14 +143,15 @@ len = 0;"
             in
             let get_allp e =
               match e with
-                (CloApp(CloApp(CloGVar ("conl@", _), r, _), _, _)) -> (get_prelude r ("_head.clo.lam(tenv," ^ env ^ ", 0)"))
+                (CloApp(CloApp(CloGVar ("conl@", _), r, _), _, _)) -> 
+                        (get_prelude r ("_head.clo.lam(tenv," ^ env ^ ", 0)"))
               | e -> get_prelude e env
             in
             sprintf "%s && (%s.list.length >= %d)" (get_allp e) env (min_len e)
           | CloPair (_, _, _) ->
             let rec min_len e =
               match e with
-                CloPair (l, _, _) -> 1 + (min_len l)
+                CloPair (l, r, _) -> 1 + (min_len l) + (min_len r)
               | CloApp (_, r, _) -> min_len r
               | _ -> 0
             in
