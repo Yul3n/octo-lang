@@ -95,7 +95,7 @@ let rec closure_to_c clo nlam env  =
     let nv, len =
       match f with
         CloGVar (_,_) -> "tenv", "0"
-      | _             -> s1 ^ ".clo.env", "len + 1"
+      | _             -> s1 ^ ".clo.env", s1 ^ ".clo.len"
     in
     n, nf ^ na, p2 ^ p1 ^
                 (sprintf "Value %s = %s.clo.lam(%s, %s, %s);\n"

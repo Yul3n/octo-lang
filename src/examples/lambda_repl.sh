@@ -14,5 +14,8 @@ do
 $IN"
     else ACC=$IN
     fi
-    ./o "$ACC"
+    case $IN in
+        main*) ./o "$ACC";;
+        *);;
+    esac
 done
