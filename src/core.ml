@@ -22,6 +22,7 @@ enum Type {
   INT,
   CHAR,
   LIST,
+  CLO,
   PAIR%s
 };
 
@@ -133,6 +134,7 @@ make_closure(Lambda lam, Value *env, int env_len)
   memcpy(v.clo.env, env, env_len * sizeof(Value));
   v.has_cell = 0;
   v.clo.len = env_len;
+  v.t = CLO;
   return v;
 }
 
