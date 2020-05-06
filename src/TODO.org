@@ -30,15 +30,16 @@
 * Standard library
 ** DONE Boolean Type
 ** TODO Mathematic operations
-** TODO More examples
+** DONE More examples
 * Tooling
 ** DONE GNU/Emacs syntax highlighting mode
 ** TODO CLI interface with GNU/Emacs
-** TODO Syntax highilighting and indentation for other IDEs
+** DONE Syntax highilighting and indentation for other IDEs
 ** TODO Website
 ** TODO The Octonomicon
 ** TODO Documentation generator
 * Octo 1.0
-** TODO Untyped lambda calculus compiler (WASM)
+** DONE Untyped lambda calculus compiler
+** TODO Hindley-Milner-Damas type inference
 ** TODO Dependent types
-** TODO Assembly
+** DONE Assembly

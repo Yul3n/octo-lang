@@ -85,3 +85,11 @@ index l e =
   case index_opt l e of
     Some n -> n
     None -> (error "The element is not in the list.")
+
+mapi_ l i f =
+  case l of
+    [] -> []
+    hd :: tl -> (f i hd) :: (mapi_ tl (i + 1) f)
+
+mapi l f =
+  mapi_ l 0 f

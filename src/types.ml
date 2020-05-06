@@ -94,7 +94,7 @@ let rec unify t1 t2 =
     | _                                -> [var, t]
   in
   match t1, t2 with
-    TOth _, TOth _ -> []
+    TOth o1, TOth o2 when o1 = o2 -> []
   | TPair (l1, r1), TPair (l2, r2)
   | TFun (l1, r1), TFun (l2, r2) ->
     let sub1 = unify l1 l2 in
