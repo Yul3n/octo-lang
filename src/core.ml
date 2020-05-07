@@ -58,8 +58,8 @@ struct cell {
   int is_double;
 } cell;
 
-struct cell alloc_t[100000];
-struct cell freed  [100000];
+struct cell alloc_t[1000000];
+struct cell freed  [1000000];
 
 void
 free_all()

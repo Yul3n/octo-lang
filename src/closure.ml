@@ -4,7 +4,7 @@ open Printf
 let pr =
 "   Value *tenv = alloc(len + 1);
         memcpy (tenv + 1, env, len * sizeof(Value));
-        *tenv = n;\n"
+        *tenv = n;"
 
 exception Error of string
 
@@ -101,27 +101,14 @@ let rec closure_to_c clo nlam env  =
                 (sprintf "Value %s = %s.clo.lam(%s, %s, %s);\n"
                    n s1 nv s2 len), nlam, v
   | CloGVar (v, _) -> List.hd (String.split_on_char '@' v), "", "", nlam, env
-  | Closure (_, body, _) ->
+  | Closure (l, body, _) ->
     let pr =
-      let rec has_free e =
-        match e with
-          CloPair (l, r, _)
-        | CloApp (l, r, _) -> (has_free l) || (has_free r)
-        | Closure (_, e, _) -> has_free e
-        | CloNum _
-        | CloChar _
-        | CloGVar _
-        | CloVar (1, _) -> false
-        | CloVar _ -> true
-        | CloCase (e, _) -> let l, r = List.split e in
-          List.fold_left (||) false ((List.map has_free l) @ (List.map has_free r))
-        | CloList (l, _) -> List.fold_left (||) false (List.map has_free l)
-      in
-      match has_free body with
-        false ->
+      match l with
+        []
+      | [0] ->
         "Value *tenv = &n;
 len = 0;"
-      | true -> pr
+      | _ -> let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  (sprintf "len = %d;" n) ^pr
     in
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
