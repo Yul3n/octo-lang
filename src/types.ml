@@ -40,7 +40,7 @@ let rec app_subst subst ty =
 let subst_scheme subst (Forall(vars, ty)) =
   let rec delete_bound vars subst =
     match subst with
-      []              -> []
+      []               -> []
     | (nvar, ty) :: tl ->
       begin
         match List.find_opt ((=) nvar) vars with

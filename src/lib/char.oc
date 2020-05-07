@@ -10,7 +10,7 @@ is_num c =
 
 -- int_of_char c: return the number contained in c
 int_of_char c =
-  (if (is_num num) num (error "The charcter is not a number.")) where
+  (if (or (10 > num) (not (-1 > num))) num (error "The charcter is not a number.")) where
     num = (char_code c) - 48
 
 int_of_string_ s n =

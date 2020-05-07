@@ -25,3 +25,11 @@ split l =
     [] -> ([], [])
     (f, s) :: tl -> (f :: tlf, s :: tlr) where
       tlf, tlr = (split tl)
+
+--- smap f l: return a list of pairs by appliying the function f to all the second
+--- elements of the list of pairs l
+
+smap f l =
+  (zip r l'') where
+    l''   = (map f l')
+    r, l' = (split l)
