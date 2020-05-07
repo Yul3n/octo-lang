@@ -58,15 +58,17 @@ struct cell {
   int is_double;
 } cell;
 
-struct cell alloc_t[1000000];
-struct cell freed  [1000000];
+struct cell *alloc_t;
+struct cell *freed;
+int maxalloc = 100000;
 
 void
 free_all()
 {
   for (int i = 0; i < nalloc; i++)
-    if (!alloc_t[i].is_double)
-      free(alloc_t[i].p);
+    if (!(alloc_t + i)->is_double)
+      free((alloc_t + i)->p);
+  free(alloc_t);
 }
 
 void
@@ -94,13 +96,18 @@ alloc(int length)
       return alloc_t[i].p;
     }
   }*/
+  if (maxalloc <= nalloc) {
+        alloc_t = (struct cell *) realloc(alloc_t, (maxalloc + 100000) * sizeof(struct cell));
+        maxalloc += 100000;
+  }
   Value *p = malloc(sizeof(Value) * length);
   if (!p)
     err (\"Unable to allocate memory\");
-  alloc_t[nalloc].p = p;
-  alloc_t[nalloc].size = length;
-  alloc_t[nalloc].is_double = 0;
-    freed[nalloc].p = NULL;
+  alloc_t += nalloc;
+  alloc_t->p = p;
+  alloc_t->size = length;
+  alloc_t->is_double = 0;
+  alloc_t -= nalloc;
   nalloc ++;
   return p;
 }

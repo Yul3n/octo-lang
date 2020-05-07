@@ -348,6 +348,7 @@ Value _error;
 void
 base_init ()
 {
+    alloc_t = (struct cell*) malloc(100000 * sizeof(struct cell));
     difl = make_closure(dif, NULL, 0);
     eql = make_closure(eq, NULL, 0);
     modl = make_closure(mod, NULL, 0);

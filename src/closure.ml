@@ -24,8 +24,8 @@ let rec free e s =
     TyVar _
   | TyNum _
   | TyChar _ -> []
-  | TyApp(l, r, _) -> free l s @ free r s
-  | TyIndVar (n, _) when n >= s -> [n]
+  | TyApp(l, r, _) -> (free l s) @ (free r s)
+  | TyIndVar (n, _) when n > s -> [n - s]
   | TyIndVar _ -> []
   | TyLambda(_, body, _) -> free body (s + 1)
   | TyCase (c, _) -> let ps, es = List.split c in
@@ -59,7 +59,7 @@ let rec to_closure expr =
                        -> CloGVar (n, t)
   | TyVar (n, t )      -> CloGVar ("_" ^ n, t)
   | TyIndVar (n, t)    -> CloVar (n, t)
-  | TyLambda (_, b, t) -> Closure (free expr 1, to_closure b, t)
+  | TyLambda (_, b, t) -> Closure (free b 1, to_closure b, t)
   | TyApp (l, r, t)    -> CloApp (to_closure l, to_closure r, t)
   | TyCase (c, t)      -> let p, e = List.split c in
     let cp = List.map to_closure p in
@@ -105,10 +105,12 @@ let rec closure_to_c clo nlam env  =
     let pr =
       match l with
         []
-      | [0] ->
+      | [1] ->
         "Value *tenv = &n;
 len = 0;"
-      | _ -> let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  (sprintf "len = %d;" n) ^pr
+      | _ -> 
+        (* FIXME let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  
+        (sprintf "len = %d - 1;" n) ^*) pr
     in
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
@@ -188,6 +190,7 @@ len = 0;"
         %s
         %s
         %s
+        puts(\"ee\");
         err(\"Non-exhaustive pattern-matching\");
 }\n" nlam pr p b
     in
