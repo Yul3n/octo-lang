@@ -136,18 +136,12 @@ len = 0;"
                         (get_prelude r ("_head.clo.lam(tenv," ^ env ^ ", 0)"))
               | e -> get_prelude e env
             in
-            sprintf "%s && (%s.list.length >= %d)" (get_allp e) env (min_len e)
-          | CloPair (_, _, _) ->
-            let rec min_len e =
-              match e with
-                CloPair (l, r, _) -> 1 + (min_len l) + (min_len r)
-              | CloApp (_, r, _) -> min_len r
-              | _ -> 0
-            in
-            sprintf "(pair_length(%s) >= %d)" env (min_len e)
+            sprintf "(%s) && (%s.list.length >= %d)" (get_allp e) env (min_len e)
+          | CloPair (l, r, _) ->
+            sprintf "(%s.t == PAIR) && (%s) && (%s)" env (get_prelude l ("(*(" ^ env ^ ".pair.fst))")) (get_prelude r ("(*(" ^ env ^ ".pair.snd))"))
           | CloApp (CloGVar (t, _), r, _) when ((Char.code (String.get t 1) < Char.code 'a')) ->
-            "(" ^ env ^ ".has_cell) &&" ^
-            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
+            "(" ^ env ^ ".has_cell) && (" ^
+            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)") ^ ")"
           | _ -> "1"
         in
         let prelude = sprintf "if(%s){\n" (get_prelude e "n") in

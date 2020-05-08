@@ -68,7 +68,7 @@ free_all()
   for (int i = 0; i < nalloc; i++)
     if (!(alloc_t + i)->is_double)
       free((alloc_t + i)->p);
-  free(alloc_t);
+      free(alloc_t);
 }
 
 void
@@ -97,8 +97,8 @@ alloc(int length)
     }
   }*/
   if (maxalloc <= nalloc) {
-        alloc_t = (struct cell *) realloc(alloc_t, (maxalloc + 100000) * sizeof(struct cell));
         maxalloc += 100000;
+        alloc_t = (struct cell *) realloc(alloc_t, maxalloc * sizeof(struct cell));
   }
   Value *p = malloc(sizeof(Value) * length);
   if (!p)
