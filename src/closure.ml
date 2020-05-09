@@ -104,8 +104,7 @@ let rec closure_to_c clo nlam env  =
   | Closure (l, body, _) ->
     let pr =
       match l with
-        []
-      | [1] ->
+        [] ->
         "Value *tenv = &n;
 len = 0;"
       | _ -> 

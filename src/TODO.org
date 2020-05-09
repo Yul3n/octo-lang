@@ -24,7 +24,7 @@
 ** DONE Add memory safety (a bit)
 ** DONE Optional lazy evaluation
 ** DONE Safety on pattern matching datatypes
-** TODO Fix the bug with fib and octodocs
+** DONE Fix the bug with fib and octodocs
 ** DONE As in pattern matching
 ** TODO True IO
 * Standard library
@@ -40,6 +40,7 @@
 ** TODO Documentation generator
 * Octo 1.0
 ** DONE Untyped lambda calculus compiler
-** TODO Hindley-Milner-Damas type inference
+** DONE Hindley-Milner-Damas type inference
 ** TODO Dependent types
 ** DONE Assembly
+** TODO Custom types
