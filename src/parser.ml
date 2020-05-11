@@ -398,32 +398,56 @@ let rec parse_tops tokens =
             | _ ->
               let rec parse_multype ?(t=None) tokens =
                 match tokens with
-                  IDENT v :: IDENT "list" :: []
-                | IDENT v :: IDENT "list" :: PIPE :: _ ->
+                  IDENT "list" :: []
+                | IDENT "list" :: RPARENT :: _
+                | IDENT "list" :: PIPE :: _ ->
                   begin
                     match t with
-                      None   -> TList (ty_of_s v)
-                    | Some t -> TPair(t, TList (ty_of_s v))
-                  end, List.tl (List.tl tokens)
+                      None   -> parse_error "invalid type declaration"
+                    | Some t -> TList t
+                  end, (List.tl tokens)
                 | IDENT v :: []
+                | IDENT v :: RPARENT :: _
                 | IDENT v :: PIPE :: _ ->
                   begin
                     match t with
                       None   -> ty_of_s v
                     | Some t -> TPair(t, ty_of_s v)
                   end, List.tl tokens
-                | IDENT v :: IDENT "list" :: tl ->
+                | IDENT "list" :: tl ->
                   begin
                     match t with
-                      None   -> parse_multype tl ~t:(Some(TList (ty_of_s v)))
+                      None   -> parse_error "invalid type declaration"
                     | Some t ->
-                      parse_multype tl ~t:(Some(TPair(t, TList (ty_of_s v))))
+                      parse_multype tl ~t:(Some (TList t))
                   end
                 | IDENT v :: tl ->
                   begin
                     match t with
                       None   -> parse_multype tl ~t:(Some(ty_of_s v))
                     | Some t -> parse_multype tl ~t:(Some(TPair(t, ty_of_s v)))
+                  end
+                | LPARENT :: tl ->
+                  let lt, tl = parse_multype tl in
+                  let t      =
+                    begin
+                      match t with
+                        None   -> lt
+                      | Some t -> TPair(t, lt)
+                    end
+                  in
+                  parse_multype tl ~t:(Some t)
+                | RPARENT :: [] ->
+                  begin
+                    match t with
+                      None   -> parse_error "invalid type declaration"
+                    | Some t -> t
+                  end, []
+                | RPARENT :: tl ->
+                  begin
+                    match t with
+                      None -> parse_error "invalid type declaration"
+                    | t    -> parse_multype tl ~t:t
                   end
                 | tok :: _ -> parse_error
                                 ("Unexpected token: " ^ (Utils.string_of_token tok))
