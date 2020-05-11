@@ -1,14 +1,22 @@
--- is_alpha c: return true if c is a latin letter ([a-zA-Z])
+--- is_alpha c: return true if c is a latin letter ([a-zA-Z])
 is_alpha c =
   or (and ((char_code c) > 64) (91 > (char_code c))) (and ((char_code c) > 96) (123 > (char_code c)))
 
--- is_num c : return True if and only if c is a digital character
+--- is_upper c: return true if c is an uppercase latin letter ([A-Z])
+is_upper c =
+  and ((char_code c) > 64) (91 > (char_code c))
+
+--- is_lower c: return true if c is an lowercase latin letter ([a-z])
+is_lower c =
+  and ((char_code c) > 96) (123 > (char_code c))
+
+--- is_num c : return True if and only if c is a digital character
 is_num c =
   case c of
     '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> True
     c -> False
 
--- int_of_char c: return the number contained in c
+--- int_of_char c: return the number contained in c
 int_of_char c =
   (if (or (10 > num) (not (-1 > num))) num (error "The charcter is not a number.")) where
     num = (char_code c) - 48
@@ -19,11 +27,11 @@ int_of_string_ s n =
     c :: tl when is_num c -> (int_of_string_ tl ((10 * n) + (int_of_char c)))
     c :: _ -> (error "The character: " @ [c] @ "is not a number.")
 
--- int_of_string s: return the number contained in s
+--- int_of_string s: return the number contained in s
 int_of_string s =
   int_of_string_ s 0
 
--- char_of_int n: return the character coresponding to the digit n
+--- char_of_int n: return the character coresponding to the digit n
 char_of_int n =
   char_chr (n + 48)
 
@@ -32,7 +40,7 @@ string_of_int_ n =
     0 -> ""
     i -> ((string_of_int_ (i // 10)) @ [(char_of_int (i % 10))])
 
--- string_of_int n: return the number n as a string
+--- string_of_int n: return the number n as a string
 string_of_int n =
   case n of
     0 -> "0"
