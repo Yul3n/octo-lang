@@ -13,6 +13,7 @@ octo_str_to_c_str (Value s)
     err ("Unable to allocate memory");
   for (int i = 0; i < s.list.length; i ++)
     *(str + i) = (*(s.list.list + i))._char;
+
   return str;
 }
 
@@ -328,9 +329,9 @@ print_value(Value n)
       printf("%c", n._char);
       break;
     case LIST:
-      for (int i = 0; i < n.list.length; i ++)
-        print_value(*(n.list.list + i));
-      puts("");
+      	for (int i = 0; i < n.list.length; i ++)
+        	print_value(*(n.list.list + i));
+      	puts("");
       break;
     case PAIR:
       print_value(*n.pair.fst);
@@ -348,6 +349,7 @@ Value _error;
 void
 base_init ()
 {
+    alloc_t = (struct cell*) malloc(100000 * sizeof(struct cell));
     difl = make_closure(dif, NULL, 0);
     eql = make_closure(eq, NULL, 0);
     modl = make_closure(mod, NULL, 0);

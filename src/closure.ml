@@ -2,7 +2,8 @@ open Syntax
 open Printf
 
 let pr =
-"   Value *tenv = alloc(len + 1);
+" 
+        Value *tenv = alloc(len + 1);
         memcpy (tenv + 1, env, len * sizeof(Value));
         *tenv = n;"
 
@@ -24,8 +25,8 @@ let rec free e s =
     TyVar _
   | TyNum _
   | TyChar _ -> []
-  | TyApp(l, r, _) -> free l s @ free r s
-  | TyIndVar (n, _) when n >= s -> [n]
+  | TyApp(l, r, _) -> (free l s) @ (free r s)
+  | TyIndVar (n, _) when n > s -> [n - s]
   | TyIndVar _ -> []
   | TyLambda(_, body, _) -> free body (s + 1)
   | TyCase (c, _) -> let ps, es = List.split c in
@@ -59,7 +60,7 @@ let rec to_closure expr =
                        -> CloGVar (n, t)
   | TyVar (n, t )      -> CloGVar ("_" ^ n, t)
   | TyIndVar (n, t)    -> CloVar (n, t)
-  | TyLambda (_, b, t) -> Closure (free expr 1, to_closure b, t)
+  | TyLambda (_, b, t) -> Closure (free b 1, to_closure b, t)
   | TyApp (l, r, t)    -> CloApp (to_closure l, to_closure r, t)
   | TyCase (c, t)      -> let p, e = List.split c in
     let cp = List.map to_closure p in
@@ -104,16 +105,17 @@ let rec closure_to_c clo nlam env  =
   | Closure (l, body, _) ->
     let pr =
       match l with
-        []
-      | [0] ->
+        [] ->
         "Value *tenv = &n;
 len = 0;"
-      | _ -> let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  (sprintf "len = %d;" n) ^pr
+      | _ -> 
+        (* FIXME let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  
+        (sprintf "len = %d - 1;" n) ^ *) pr
     in
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s%sfree_cell(tenv);\n\nreturn(%s);\n}\n" nlam pr c cbody),
+     %s%s\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure(__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, _) ->
@@ -134,18 +136,12 @@ len = 0;"
                         (get_prelude r ("_head.clo.lam(tenv," ^ env ^ ", 0)"))
               | e -> get_prelude e env
             in
-            sprintf "%s && (%s.list.length >= %d)" (get_allp e) env (min_len e)
-          | CloPair (_, _, _) ->
-            let rec min_len e =
-              match e with
-                CloPair (l, r, _) -> 1 + (min_len l) + (min_len r)
-              | CloApp (_, r, _) -> min_len r
-              | _ -> 0
-            in
-            sprintf "(pair_length(%s) >= %d)" env (min_len e)
+            sprintf "(%s) && (%s.list.length >= %d)" (get_allp e) env (min_len e)
+          | CloPair (l, r, _) ->
+            sprintf "(%s.t == PAIR) && (%s) && (%s)" env (get_prelude l ("(*(" ^ env ^ ".pair.fst))")) (get_prelude r ("(*(" ^ env ^ ".pair.snd))"))
           | CloApp (CloGVar (t, _), r, _) when ((Char.code (String.get t 1) < Char.code 'a')) ->
-            "(" ^ env ^ ".has_cell) &&" ^
-            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)")
+            "(" ^ env ^ ".has_cell) && (" ^
+            get_prelude r ("get_b.clo.lam(tenv, " ^ env ^ ", len + 1)") ^ ")"
           | _ -> "1"
         in
         let prelude = sprintf "if(%s){\n" (get_prelude e "n") in
@@ -169,7 +165,7 @@ len = 0;"
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env in
         let pr, po, p3, nlam, nf2, p4 =
           let pr, po, np, nlam, nf2, p4 = pattern_to_c f nlam in
-          pr, po, (sprintf "if (%s) {\n%s\nfree_cell(tenv);\nreturn %s;\n}\n"
+          pr, po, (sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
              np p2 nbody), nlam + 1, nf2, p4
         in
         pr ^ p4 ^ p3 ^ po, nf ^ nf2, "", nlam, tl
@@ -188,6 +184,7 @@ len = 0;"
         %s
         %s
         %s
+        puts(\"ee\");
         err(\"Non-exhaustive pattern-matching\");
 }\n" nlam pr p b
     in
@@ -203,7 +200,7 @@ len = 0;"
         let pl = sprintf "*(%s + %d) = %s;\n" lp pos b in
         f ^ nf, p ^ np ^ pl, nlam
     in
-    let f, p, nlam = l_to_c nlam 0 clo in
+    let f, p, nlam = l_to_c (nlam + 1) 0 clo in
     (sprintf "make_list(%s, %d)" lp (List.length clo)), f,
     (sprintf "Value *%s = alloc (%d);\n" lp
        (List.length clo)) ^ p, nlam + 1, env
