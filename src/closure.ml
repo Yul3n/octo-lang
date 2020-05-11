@@ -2,7 +2,8 @@ open Syntax
 open Printf
 
 let pr =
-"   Value *tenv = alloc(len + 1);
+" 
+        Value *tenv = alloc(len + 1);
         memcpy (tenv + 1, env, len * sizeof(Value));
         *tenv = n;"
 
@@ -109,12 +110,12 @@ let rec closure_to_c clo nlam env  =
 len = 0;"
       | _ -> 
         (* FIXME let n = try Utils.last (List.sort compare l) with _ -> List.hd l in  
-        (sprintf "len = %d - 1;" n) ^*) pr
+        (sprintf "len = %d - 1;" n) ^ *) pr
     in
     let n = sprintf "l%d" nlam in
     let cbody, nf, c, nnlam, _ = closure_to_c body (nlam + 1) "tenv"  in
     n, nf ^ (sprintf "Value __lam%d(Value *env, Value n, int len) {
-     %s%sfree_cell(tenv);\n\nreturn(%s);\n}\n" nlam pr c cbody),
+     %s%s\nreturn(%s);\n}\n" nlam pr c cbody),
     (sprintf "Value %s = make_closure(__lam%d, %s, len + 1);\n" n nlam env),
     nnlam, env
   | CloCase (c, _) ->
@@ -164,7 +165,7 @@ len = 0;"
         let nbody, nf, p2, nlam, _ = closure_to_c s (nlam + 1) env in
         let pr, po, p3, nlam, nf2, p4 =
           let pr, po, np, nlam, nf2, p4 = pattern_to_c f nlam in
-          pr, po, (sprintf "if (%s) {\n%s\nfree_cell(tenv);\nreturn %s;\n}\n"
+          pr, po, (sprintf "if (%s) {\n%s\nreturn %s;\n}\n"
              np p2 nbody), nlam + 1, nf2, p4
         in
         pr ^ p4 ^ p3 ^ po, nf ^ nf2, "", nlam, tl
@@ -199,7 +200,7 @@ len = 0;"
         let pl = sprintf "*(%s + %d) = %s;\n" lp pos b in
         f ^ nf, p ^ np ^ pl, nlam
     in
-    let f, p, nlam = l_to_c nlam 0 clo in
+    let f, p, nlam = l_to_c (nlam + 1) 0 clo in
     (sprintf "make_list(%s, %d)" lp (List.length clo)), f,
     (sprintf "Value *%s = alloc (%d);\n" lp
        (List.length clo)) ^ p, nlam + 1, env

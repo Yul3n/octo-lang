@@ -66,9 +66,8 @@ void
 free_all()
 {
   for (int i = 0; i < nalloc; i++)
-    if (!(alloc_t + i)->is_double)
       free((alloc_t + i)->p);
-      free(alloc_t);
+  free(alloc_t);
 }
 
 void

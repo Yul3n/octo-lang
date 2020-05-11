@@ -177,7 +177,7 @@ and infer expr context nvar =
           [], t, (nvar + List.length l + 1), TyApp (TyVar (var, t), TyVar ("", TVar nvar), t)
         | _ ->
           let t = inst sch nvar in
-          [], t, (nvar + List.length l), TyVar (var, t)
+          [], t, (nvar + List.length l + 1), TyVar (var, t)
     end
   | App (fn, arg) ->
     let res_t              = TVar nvar in
