@@ -24,6 +24,7 @@ let rec parse_args tokens =
 let rec wrap_lam vals expr =
   match vals with
     []       -> expr
+  | "" as hd :: tl
   | hd :: "lazy" :: tl -> wrap_lam tl (LazyL (hd, expr))
   | hd :: tl -> wrap_lam tl (Lambda (hd, expr))
 
