@@ -10,11 +10,17 @@ is_upper c =
 is_lower c =
   and ((char_code c) > 96) (123 > (char_code c))
 
---- is_num c : return True if and only if c is a digital character
+--- is_num c : return True if c is a digital character
 is_num c =
   case c of
     '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> True
     c -> False
+
+--- is_space c : return True if c is a space character
+is_space c =
+  case c of
+    ' '  -> True
+    _ -> False
 
 --- int_of_char c: return the number contained in c
 int_of_char c =
